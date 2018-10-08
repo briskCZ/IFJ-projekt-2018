@@ -71,6 +71,15 @@ Porovna dva stringy
 int stringCompare(string *sa, string *sb);
 
 /*
+Porovna char * a string
+@param sa - string
+@param sb - cckove pole charu
+
+@return -stejny jako strcmp()
+*/
+int stringCompareConst(string *sa, char *sb);
+
+/*
 Vrati delku stringu
 @param s - string
 

@@ -50,7 +50,9 @@ t_Token getNextToken(){
             case 2: //'='
                 printf("DEBUG: '='| znak: %c\n", symbol);
                 if (symbol == 'b'){ //moznost viceradkoveho komentare
+                    stringAddChar(&str, symbol);
                     cmnt_begin = 1;
+                    state = 5;
                 }else if (symbol == '='){
                     token.type = EQ_REL;
                     token.attr = stringGet(&str);
@@ -62,11 +64,26 @@ t_Token getNextToken(){
                 }
                 break;
             case 3: //=begin TODO
-                state = 0;
+                if (symbol == '='){
+                    stringClear(&str);
+                    state = 4;
+                }else{
+                    state = 3;
+                }
                 break;
 
             case 4: //=
-                state = 0;
+            printf("DEBUG: Koment: Uz mozna koncim! \n");
+                stringAddChar(&str, symbol);
+                if (str->length < 3){
+                    state = 4;
+                }else{
+                    if (stringCompreConst(&str, "end")){
+                        state = 0;
+                    }else{
+                        state = 3;
+                    }
+                }
                 break;
             //TODO END
 
@@ -78,6 +95,26 @@ t_Token getNextToken(){
                 }else if (symbol == '?' || symbol == '!'){
                     stringAddChar(&str, symbol);
                     state = 6;
+                }
+                else if (stringCompareConst(&str, "def")){ token.type = KW; token.attr = "def"; return token;}
+                else if (stringCompareConst(&str, "do")){ token.type = KW; token.attr = "do"; return token;}
+                else if (stringCompareConst(&str, "else")){ token.type = KW; token.attr = "else"; return token;}
+                else if (stringCompareConst(&str, "end")){ token.type = KW; token.attr = "end"; return token;}
+                else if (stringCompareConst(&str, "if")){ token.type = KW; token.attr = "if"; return token;}
+                else if (stringCompareConst(&str, "not")){ token.type = KW; token.attr = "not"; return token;}
+                else if (stringCompareConst(&str, "nil")){ token.type = KW; token.attr = "nil"; return token;}
+                else if (stringCompareConst(&str, "then")){ token.type = KW; token.attr = "then"; return token;}
+                else if (stringCompareConst(&str, "while")){ token.type = KW; token.attr = "while"; return token;}
+                }else if (stringCompareConst(&str, "begin")){
+                    if(cmnt_begin == 1){
+                        state = 3;
+                    }else{
+                        printf("DEBUG: Koment: Zkurvilo se to, nejsu begin, vracam 5 uvidzime co dal\n");
+                        ungetc(stdin, 5);
+                        token.type = EQ;
+                        token.attr = "";
+                        return token;
+                    }
                 }else{
                     token.type = ID;
                     token.attr = stringGet(&str);

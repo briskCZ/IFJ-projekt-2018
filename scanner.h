@@ -19,6 +19,8 @@
 #define ID 0
 #define EQ_REL 1
 #define ASSIGNMENT 2
+#define KW 3
+
 /* Datovy typ token */
 typedef struct {
     int type;
