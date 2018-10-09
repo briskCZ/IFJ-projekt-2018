@@ -53,6 +53,18 @@ int stringInsert(string *s, char *str){
     }
 }
 
+int stringCopy(string *sa, string *sb){
+    if (sb->allocated_size > sa->allocated_size){
+        sa->val = realloc(sa->val, sb->allocated_size * sizeof(char));
+        if (sa->val == NULL){
+            return STR_ERROR;
+        }
+        sa->allocated_size = sb->allocated_size;
+    }
+    strcpy(sa->val, sb->val);
+    sa->length = sb->length;
+    return STR_SUC;
+}
 
 void stringClear(string *s){
     s->val[0] = '\0';

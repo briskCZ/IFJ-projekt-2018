@@ -12,15 +12,25 @@
 #include "string.h"
 #include "ret_vals.h"
 
-string auxBuffer;
+//Globalni promenne pro "zbyly token"
+string restBuffer;
+int restType;
+int restTokenAvailable = 0;
 
 void scannerInit(){
-    if (stringInit(&auxBuffer) == STR_ERROR){
+    if (stringInit(&restBuffer) == STR_ERROR){
         HANDLE_STR_ERROR;
     }
 }
 void scannerClean(){
-    stringFree(&auxBuffer);
+    stringFree(&restBuffer);
+}
+
+t_Token getRestToken(){
+    t_Token tmp;
+    tmp.type = restType;
+    tmp.attr = stringGet(&restBuffer);
+    return tmp;
 }
 
 t_Token getNextToken(){
@@ -29,85 +39,82 @@ t_Token getNextToken(){
     string str;     //buffer pro identifikatory a kw
     stringInit(&str);
     stringPrint(&str);
+    if (restTokenAvailable){
+        return getRestToken();
+    }
 
     int state = 0;
 
-    int cmnt_begin = 0;
-    int cmnt_end = 0;
     while(42){
         //printf("DEBUG: State: %d\n", state);
         char symbol = getchar();
         switch (state) {
-            case 0: //vychozi stav
+            case S_START: //vychozi stav
                 //printf("DEBUG: begin | znak: %c\n", symbol);
                 if (isspace(symbol)){
-                    state = 0;
+                    state = S_START;
                 }else if (symbol == '#'){ //
-                    state = 1;
+                    state = S_LINE_COMMENT;
                 }else if (symbol == '='){
-                    state = 2;
+                    state = S_EQUALS;
                 }else if (symbol == '_' || islower(symbol)){
                     stringAddChar(&str, symbol);
-                    state = 5;
+                    state = S_ID_KW;
                 }
                 break;
-            case 1: //radkovy komentar
+            case S_LINE_COMMENT: //radkovy komentar
                 //printf("DEBUG: komentar | znak: %c\n", symbol);
                 if (symbol == '\n'){
-                    state = 0;
+                    state = S_START;
                 }else{
-                    state = 1;
+                    state = S_LINE_COMMENT;
                 }
                 break;
-            case 2: //'='
+            case S_EQUALS: //'='
                 //printf("DEBUG: '='| znak: %c\n", symbol);
                 if (symbol == 'b'){ //moznost viceradkoveho komentare
+                    //pln oba buffery, jeste nevime jestli to nebudou dva tokeny
                     stringAddChar(&str, symbol);
-                    cmnt_begin = 1;
-                    state = 5;
+                    state = S_BC_BEGIN;
                 }else if (symbol == '='){
                     token.type = EQ_REL;
                     token.attr = stringGet(&str);
-                    state = 0;
+                    state = S_START;
                     return token;
                 }else{
                     ungetc(symbol, stdin);
                     token.type = ASSIGNMENT;
                     token.attr = "";
-                    state = 0;
+                    state = S_START;
                     return token;
                 }
-                break;//printf("DEBUG: '='| znak: %c\n", symbol);
-            case 3: //=begin TODO
-                if (symbol == '='){
-                    stringClear(&str);
-                    state = 4;
-                }else{
-                    state = 3;
-                }
                 break;
+            case S_BC_BEGIN: //=begin TODO
 
-            case 4: //=
-            //printf("DEBUG: Koment: Uz mozna koncim! %s\n", stringGet(&str));
-                stringAddChar(&str, symbol);
-                if (stringGetLength(&str) < 3){
-                    state = 4;
-                }else{
-                    if (stringCompareConst(&str, "end") == 0){
-                        state = 0;
-                    }else{
-                        state = 3;
+                /*if (isalnum(symbol)){
+                    stringAddChar(&str, symbol);
+                    if (stringCompareConst(&str, "begin") == 0){
+                        state = S_BLOCK_COMMENT; //jdi do stavu blokoveho komentare
                     }
-                    stringClear(&str);
-                }
-                break;
-            //TODO END
+                }else{
+                    stringCopy(&restBuffer, &str);
+                    token.type = ASSIGNMENT;
+                    token.attr = "";
+                    return token;
+                }*/
 
-            case 5: //identifikator / klicove slovo
+                break;
+
+            case S_BLOCK_COMMENT: //uvnitr blokoveho komentare
+
+                break;
+
+            case S_ID_KW: //identifikator / klicove slovo
                 //printf("DEBUG: 'ID/KW'| znak: %c | buffer: %s\n ", symbol, stringGet(&str));
                 if (isalnum(symbol) || symbol == '_'){
                     stringAddChar(&str, symbol);
                     stringPrint(&str);
+                    state = S_ID_KW;
                     if (stringCompareConst(&str, "def") == 0){ token.type = KW; token.attr = "def"; return token;}
                     else if (stringCompareConst(&str, "do") == 0){ token.type = KW; token.attr = "do"; return token;}
                     else if (stringCompareConst(&str, "else") == 0){ token.type = KW; token.attr = "else"; return token;}
@@ -119,17 +126,15 @@ t_Token getNextToken(){
                     else if (stringCompareConst(&str, "while") == 0){ token.type = KW; token.attr = "while"; return token;}
                 }else if (symbol == '?' || symbol == '!'){
                     stringAddChar(&str, symbol);
-                    state = 6;
+                    token.type = ID;
+                    token.attr = stringGet(&str);
+                    return token;
                 }else{
                     ungetc(symbol, stdin);
                     token.type = ID;
                     token.attr = stringGet(&str);
                     return token;
                 }
-                break;
-            case 6: //indetifikator + ? nebo ! (mozny konec identifikatoru)
-                //printf("DEBUG: mozny konec id\n");
-
                 break;
         }
     }

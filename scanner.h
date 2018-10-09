@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "string.h"
 
 #define LEX_ERR 1
 /* Definice navratovych hodnot */
@@ -20,10 +19,17 @@
 #define ASSIGNMENT 2
 #define KW 3
 
+/* Stavy */
+#define S_START 0
+#define S_LINE_COMMENT 1
+#define S_EQUALS 2
+#define S_BC_BEGIN 3
+#define S_BLOCK_COMMENT 4
+#define S_ID_KW 5
 /* Datovy typ token */
 typedef struct {
     int type;
-    string attr;
+    char* attr;
 } t_Token;
 
 /*
@@ -37,4 +43,6 @@ Cisteni po scanneru
 void scannerClean();
 /*
 */
+
+t_Token getRestToken();
 t_Token getNextToken();

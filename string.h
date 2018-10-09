@@ -55,6 +55,15 @@ Vycisti obsah stringu, ovsem necha alokovanou pamet
 @param s - string, ktery chceme vyctisti
 */
 void stringClear(string *s);
+
+/*
+Zkopiruje strng sb do stringu sa
+@param sa - destinace
+@param sb - zdroj
+
+@return STR_ERROR nebo STR_SUC podle uspesnosti
+*/
+int stringCopy(string *sa, string *sb);
 /*
 Vlozi do stringu char
 @param s - cilovy string
