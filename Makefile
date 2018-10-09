@@ -9,7 +9,7 @@ string: string.c string.h
 scanner: scanner.c scanner.h
 	${CC} ${CFLAGS} scanner.c -o scanner
 
-all: scanner.c scanner.h string.c string.h
+all: scanner.c scanner.h string.c string.h parser.c
 	${CC} ${CFLAGS} *.c -o all
 clean:
 	rm all string

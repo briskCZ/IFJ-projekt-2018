@@ -11,10 +11,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-
+#include "string.h"
 
 #define LEX_ERR 1
-
 /* Definice navratovych hodnot */
 #define ID 0
 #define EQ_REL 1
@@ -24,8 +23,18 @@
 /* Datovy typ token */
 typedef struct {
     int type;
-    char* attr;
+    string attr;
 } t_Token;
 
+/*
+Inicializaci scanneru
+*/
+void scannerInit();
 
+/*
+Cisteni po scanneru
+*/
+void scannerClean();
+/*
+*/
 t_Token getNextToken();

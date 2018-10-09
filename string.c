@@ -80,7 +80,7 @@ int stringCompare(string *sa, string *sb){
 }
 
 int stringCompareConst(string *sa, char *sb){
-    return strcmp(sa->val, sb);
+    return strcmp(stringGet(sa), sb);
 }
 int stringGetLength(string *s){
     return s->length;

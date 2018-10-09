@@ -10,6 +10,18 @@
 
 #include "scanner.h"
 #include "string.h"
+#include "ret_vals.h"
+
+string auxBuffer;
+
+void scannerInit(){
+    if (stringInit(&auxBuffer) == STR_ERROR){
+        HANDLE_STR_ERROR;
+    }
+}
+void scannerClean(){
+    stringFree(&auxBuffer);
+}
 
 t_Token getNextToken(){
     t_Token token;  //token, ktery bude vracen
@@ -23,11 +35,11 @@ t_Token getNextToken(){
     int cmnt_begin = 0;
     int cmnt_end = 0;
     while(42){
-        printf("DEBUG: State: %d\n", state);
+        //printf("DEBUG: State: %d\n", state);
         char symbol = getchar();
         switch (state) {
             case 0: //vychozi stav
-                printf("DEBUG: begin | znak: %c\n", symbol);
+                //printf("DEBUG: begin | znak: %c\n", symbol);
                 if (isspace(symbol)){
                     state = 0;
                 }else if (symbol == '#'){ //
@@ -40,7 +52,7 @@ t_Token getNextToken(){
                 }
                 break;
             case 1: //radkovy komentar
-                printf("DEBUG: komentar | znak: %c\n", symbol);
+                //printf("DEBUG: komentar | znak: %c\n", symbol);
                 if (symbol == '\n'){
                     state = 0;
                 }else{
@@ -48,7 +60,7 @@ t_Token getNextToken(){
                 }
                 break;
             case 2: //'='
-                printf("DEBUG: '='| znak: %c\n", symbol);
+                //printf("DEBUG: '='| znak: %c\n", symbol);
                 if (symbol == 'b'){ //moznost viceradkoveho komentare
                     stringAddChar(&str, symbol);
                     cmnt_begin = 1;
@@ -56,13 +68,16 @@ t_Token getNextToken(){
                 }else if (symbol == '='){
                     token.type = EQ_REL;
                     token.attr = stringGet(&str);
+                    state = 0;
                     return token;
                 }else{
+                    ungetc(symbol, stdin);
                     token.type = ASSIGNMENT;
                     token.attr = "";
+                    state = 0;
                     return token;
                 }
-                break;
+                break;//printf("DEBUG: '='| znak: %c\n", symbol);
             case 3: //=begin TODO
                 if (symbol == '='){
                     stringClear(&str);
@@ -73,66 +88,51 @@ t_Token getNextToken(){
                 break;
 
             case 4: //=
-            printf("DEBUG: Koment: Uz mozna koncim! \n");
+            //printf("DEBUG: Koment: Uz mozna koncim! %s\n", stringGet(&str));
                 stringAddChar(&str, symbol);
-                if (str->length < 3){
+                if (stringGetLength(&str) < 3){
                     state = 4;
                 }else{
-                    if (stringCompreConst(&str, "end")){
+                    if (stringCompareConst(&str, "end") == 0){
                         state = 0;
                     }else{
                         state = 3;
                     }
+                    stringClear(&str);
                 }
                 break;
             //TODO END
 
             case 5: //identifikator / klicove slovo
-                printf("DEBUG: 'ID/KW'| znak: %c | buffer: %s\n ", symbol, stringGet(&str));
+                //printf("DEBUG: 'ID/KW'| znak: %c | buffer: %s\n ", symbol, stringGet(&str));
                 if (isalnum(symbol) || symbol == '_'){
                     stringAddChar(&str, symbol);
-                    state = 5;
+                    stringPrint(&str);
+                    if (stringCompareConst(&str, "def") == 0){ token.type = KW; token.attr = "def"; return token;}
+                    else if (stringCompareConst(&str, "do") == 0){ token.type = KW; token.attr = "do"; return token;}
+                    else if (stringCompareConst(&str, "else") == 0){ token.type = KW; token.attr = "else"; return token;}
+                    else if (stringCompareConst(&str, "end") == 0){ token.type = KW; token.attr = "end"; return token;}
+                    else if (stringCompareConst(&str, "if") == 0){ token.type = KW; token.attr = "if"; return token;}
+                    else if (stringCompareConst(&str, "not") == 0){ token.type = KW; token.attr = "not"; return token;}
+                    else if (stringCompareConst(&str, "nil") == 0){ token.type = KW; token.attr = "nil"; return token;}
+                    else if (stringCompareConst(&str, "then") == 0){ token.type = KW; token.attr = "then"; return token;}
+                    else if (stringCompareConst(&str, "while") == 0){ token.type = KW; token.attr = "while"; return token;}
                 }else if (symbol == '?' || symbol == '!'){
                     stringAddChar(&str, symbol);
                     state = 6;
-                }
-                else if (stringCompareConst(&str, "def")){ token.type = KW; token.attr = "def"; return token;}
-                else if (stringCompareConst(&str, "do")){ token.type = KW; token.attr = "do"; return token;}
-                else if (stringCompareConst(&str, "else")){ token.type = KW; token.attr = "else"; return token;}
-                else if (stringCompareConst(&str, "end")){ token.type = KW; token.attr = "end"; return token;}
-                else if (stringCompareConst(&str, "if")){ token.type = KW; token.attr = "if"; return token;}
-                else if (stringCompareConst(&str, "not")){ token.type = KW; token.attr = "not"; return token;}
-                else if (stringCompareConst(&str, "nil")){ token.type = KW; token.attr = "nil"; return token;}
-                else if (stringCompareConst(&str, "then")){ token.type = KW; token.attr = "then"; return token;}
-                else if (stringCompareConst(&str, "while")){ token.type = KW; token.attr = "while"; return token;}
-                }else if (stringCompareConst(&str, "begin")){
-                    if(cmnt_begin == 1){
-                        state = 3;
-                    }else{
-                        printf("DEBUG: Koment: Zkurvilo se to, nejsu begin, vracam 5 uvidzime co dal\n");
-                        ungetc(stdin, 5);
-                        token.type = EQ;
-                        token.attr = "";
-                        return token;
-                    }
                 }else{
+                    ungetc(symbol, stdin);
                     token.type = ID;
                     token.attr = stringGet(&str);
                     return token;
                 }
                 break;
             case 6: //indetifikator + ? nebo ! (mozny konec identifikatoru)
-
-
+                //printf("DEBUG: mozny konec id\n");
 
                 break;
         }
     }
 
     stringFree(&str);
-}
-int main(){
-    t_Token ret_token = getNextToken();
-    printf("DEBUG: Token: %d | Attr: %s\n", ret_token.type, ret_token.attr);
-    return 0;
 }
