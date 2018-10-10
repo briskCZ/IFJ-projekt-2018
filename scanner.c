@@ -28,8 +28,7 @@ void scannerClean(){
 
 t_Token getRestToken(){
     t_Token tmp;
-    tmp.type = restType;
-    tmp.attr = stringGet(&restBuffer);
+    tmp.type = restType; tmp.attr = stringGet(&restBuffer);
     return tmp;
 }
 
@@ -38,7 +37,6 @@ t_Token getNextToken(){
 
     string str;     //buffer pro identifikatory a kw
     stringInit(&str);
-    stringPrint(&str);
     if (restTokenAvailable){
         return getRestToken();
     }
@@ -60,6 +58,32 @@ t_Token getNextToken(){
                 }else if (symbol == '_' || islower(symbol)){
                     stringAddChar(&str, symbol);
                     state = S_ID_KW;
+                }else if (symbol == '<'){
+                    state = S_LESS;
+                }else if (symbol == '>'){
+                    state = S_MORE;
+                }else if (symbol == '!'){
+                    state = S_NOT_EQ;
+                }else if (symbol == '*'){
+                    token.type = MUL; token.attr = "";
+                    return token;
+                }else if (symbol == '/'){
+                    token.type = DIV; token.attr = "";
+                    return token;
+                }else if (symbol == '+'){
+                    token.type = PLUS; token.attr = "";
+                    return token;
+                }else if (symbol == '-'){
+                    token.type = MINUS; token.attr = "";
+                    return token;
+                }else if (symbol == '('){
+                    token.type = LEFT_PAR; token.attr = "";
+                    return token;
+                }else if (symbol == ')'){
+                    token.type = RIGHT_PAR; token.attr = "";
+                    return token;
+                }else if (symbol == '"'){
+                    state = S_STRING;
                 }
                 break;
             case S_LINE_COMMENT: //radkovy komentar
@@ -73,39 +97,24 @@ t_Token getNextToken(){
             case S_EQUALS: //'='
                 //printf("DEBUG: '='| znak: %c\n", symbol);
                 if (symbol == 'b'){ //moznost viceradkoveho komentare
-                    //pln oba buffery, jeste nevime jestli to nebudou dva tokeny
                     stringAddChar(&str, symbol);
                     state = S_BC_BEGIN;
                 }else if (symbol == '='){
-                    token.type = EQ_REL;
-                    token.attr = stringGet(&str);
+                    token.type = EQ_REL; token.attr = stringGet(&str);
                     state = S_START;
                     return token;
                 }else{
                     ungetc(symbol, stdin);
-                    token.type = ASSIGNMENT;
-                    token.attr = "";
+                    token.type = ASSIGNMENT; token.attr = "";
                     state = S_START;
                     return token;
                 }
                 break;
-            case S_BC_BEGIN: //=begin TODO
-
-                /*if (isalnum(symbol)){
-                    stringAddChar(&str, symbol);
-                    if (stringCompareConst(&str, "begin") == 0){
-                        state = S_BLOCK_COMMENT; //jdi do stavu blokoveho komentare
-                    }
-                }else{
-                    stringCopy(&restBuffer, &str);
-                    token.type = ASSIGNMENT;
-                    token.attr = "";
-                    return token;
-                }*/
+            case S_BC_BEGIN: //pokud nactes b tak zkus, zda neni zacatek blokoveho komentare
 
                 break;
 
-            case S_BLOCK_COMMENT: //uvnitr blokoveho komentare
+            case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
 
                 break;
 
@@ -126,14 +135,47 @@ t_Token getNextToken(){
                     else if (stringCompareConst(&str, "while") == 0){ token.type = KW; token.attr = "while"; return token;}
                 }else if (symbol == '?' || symbol == '!'){
                     stringAddChar(&str, symbol);
-                    token.type = ID;
-                    token.attr = stringGet(&str);
+                    token.type = ID; token.attr = stringGet(&str);
                     return token;
                 }else{
                     ungetc(symbol, stdin);
-                    token.type = ID;
-                    token.attr = stringGet(&str);
+                    token.type = ID; token.attr = stringGet(&str);
                     return token;
+                }
+                break;
+
+            case S_LESS:
+                token.attr = "";
+                if (symbol == '='){
+                    token.type = LESS_EQ;
+                    return token;
+                }else{
+                    token.type = LESS;
+                    ungetc(symbol, stdin);
+                    return token;
+                }
+                break;
+
+            case S_MORE:
+                token.attr = "";
+                if (symbol == '='){
+                    token.type = MORE_EQ;
+                    return token;
+                }else{
+                    token.type = MORE;
+                    ungetc(symbol, stdin);
+                    return token;
+                }
+                break;
+
+            case S_NOT_EQ:
+                if (symbol == '='){
+                    token.type = NOT_EQ;
+                    token.attr = "";
+                    return token;
+                }else{
+                    fprintf(stderr, "LEX_ERR\n");
+                    exit(LEX_ERR);
                 }
                 break;
         }
