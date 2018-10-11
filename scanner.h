@@ -14,21 +14,39 @@
 
 #define LEX_ERR 1
 /* Definice navratovych hodnot */
-#define ID 0        // _promenne
 #define EQ_REL 1    // ==
 #define ASSIGNMENT 2// =
-#define KW 3        // klicove slova
-#define MUL 4       // *
-#define DIV 5       // /
-#define PLUS 6      // +
-#define MINUS 7     // -
-#define LEFT_PAR 8  // (
-#define RIGHT_PAR 9 // )
-#define LESS 10     // <
-#define MORE 11     // >
-#define LESS_EQ 12  // <=
-#define MORE_EQ 13  // >=
-#define NOT_EQ 14   // !=
+#define MUL 3       // *
+#define DIV 4       // /
+#define PLUS 5      // +
+#define MINUS 6     // -
+#define LEFT_PAR 7  // (
+#define RIGHT_PAR 8 // )
+#define LESS 9      // <
+#define MORE 10     // >
+#define LESS_EQ 11  // <=
+#define MORE_EQ 12  // >=
+#define NOT_EQ 13   // !=
+#define STR 14      // ""
+#define COMMA 15    // ,
+/* Klicova slova */
+#define NIL 0
+#define DEF 16
+#define DO 17
+#define ELSE 18
+#define END 19
+#define IF 20
+#define NOT 21
+#define THEN 22
+#define WHILE 23
+
+/* Identifikator */
+#define ID 24
+/* Typy */
+#define INT 25
+#define DOUBLE 26
+#define STRING 27
+
 
 /* Stavy */
 #define S_START 0
@@ -41,6 +59,8 @@
 #define S_MORE 7
 #define S_NOT_EQ 8
 #define S_STRING 9
+#define S_DIGIT 10
+
 /* Datovy typ token */
 typedef struct {
     int type;

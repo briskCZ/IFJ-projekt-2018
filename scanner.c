@@ -12,42 +12,19 @@
 #include "string.h"
 #include "ret_vals.h"
 
-//Globalni promenne pro "zbyly token"
-string restBuffer;
-int restType;
-int restTokenAvailable = 0;
-
-void scannerInit(){
-    if (stringInit(&restBuffer) == STR_ERROR){
-        HANDLE_STR_ERROR;
-    }
-}
-void scannerClean(){
-    stringFree(&restBuffer);
-}
-
-t_Token getRestToken(){
-    t_Token tmp;
-    tmp.type = restType; tmp.attr = stringGet(&restBuffer);
-    return tmp;
-}
-
 t_Token getNextToken(){
     t_Token token;  //token, ktery bude vracen
 
     string str;     //buffer pro identifikatory a kw
     stringInit(&str);
-    if (restTokenAvailable){
-        return getRestToken();
-    }
 
     int state = 0;
 
     while(42){
         //printf("DEBUG: State: %d\n", state);
-        char symbol = getchar();
+        char symbol = getc(stdin);
         switch (state) {
-            case S_START: //vychozi stav
+            case S_START: //vychozi stav, pokud nacte lexem s delkou jedna, vrati ho
                 //printf("DEBUG: begin | znak: %c\n", symbol);
                 if (isspace(symbol)){
                     state = S_START;
@@ -58,12 +35,17 @@ t_Token getNextToken(){
                 }else if (symbol == '_' || islower(symbol)){
                     stringAddChar(&str, symbol);
                     state = S_ID_KW;
+                }else if (isdigit(symbol)){
+                    stringAddChar(&str, symbol);
+                    state = S_DIGIT;
                 }else if (symbol == '<'){
                     state = S_LESS;
                 }else if (symbol == '>'){
                     state = S_MORE;
                 }else if (symbol == '!'){
                     state = S_NOT_EQ;
+                }else if (symbol == '"'){
+                    state = S_STRING;
                 }else if (symbol == '*'){
                     token.type = MUL; token.attr = "";
                     return token;
@@ -82,11 +64,11 @@ t_Token getNextToken(){
                 }else if (symbol == ')'){
                     token.type = RIGHT_PAR; token.attr = "";
                     return token;
-                }else if (symbol == '"'){
-                    state = S_STRING;
+                }else if (symbol == ','){
+                    token.type = COMMA, token.attr = "";
                 }
                 break;
-            case S_LINE_COMMENT: //radkovy komentar
+            case S_LINE_COMMENT: // #radkovy komentar
                 //printf("DEBUG: komentar | znak: %c\n", symbol);
                 if (symbol == '\n'){
                     state = S_START;
@@ -94,7 +76,7 @@ t_Token getNextToken(){
                     state = S_LINE_COMMENT;
                 }
                 break;
-            case S_EQUALS: //'='
+            case S_EQUALS: // =, =b, ==
                 //printf("DEBUG: '='| znak: %c\n", symbol);
                 if (symbol == 'b'){ //moznost viceradkoveho komentare
                     stringAddChar(&str, symbol);
@@ -119,20 +101,19 @@ t_Token getNextToken(){
                 break;
 
             case S_ID_KW: //identifikator / klicove slovo
-                //printf("DEBUG: 'ID/KW'| znak: %c | buffer: %s\n ", symbol, stringGet(&str));
                 if (isalnum(symbol) || symbol == '_'){
                     stringAddChar(&str, symbol);
                     stringPrint(&str);
                     state = S_ID_KW;
-                    if (stringCompareConst(&str, "def") == 0){ token.type = KW; token.attr = "def"; return token;}
-                    else if (stringCompareConst(&str, "do") == 0){ token.type = KW; token.attr = "do"; return token;}
-                    else if (stringCompareConst(&str, "else") == 0){ token.type = KW; token.attr = "else"; return token;}
-                    else if (stringCompareConst(&str, "end") == 0){ token.type = KW; token.attr = "end"; return token;}
-                    else if (stringCompareConst(&str, "if") == 0){ token.type = KW; token.attr = "if"; return token;}
-                    else if (stringCompareConst(&str, "not") == 0){ token.type = KW; token.attr = "not"; return token;}
-                    else if (stringCompareConst(&str, "nil") == 0){ token.type = KW; token.attr = "nil"; return token;}
-                    else if (stringCompareConst(&str, "then") == 0){ token.type = KW; token.attr = "then"; return token;}
-                    else if (stringCompareConst(&str, "while") == 0){ token.type = KW; token.attr = "while"; return token;}
+                    if (stringCompareConst(&str, "def") == 0){ token.type = DEF; return token;}
+                    else if (stringCompareConst(&str, "do") == 0){ token.type = DO; return token;}
+                    else if (stringCompareConst(&str, "else") == 0){ token.type = ELSE; return token;}
+                    else if (stringCompareConst(&str, "end") == 0){ token.type = END; return token;}
+                    else if (stringCompareConst(&str, "if") == 0){ token.type = IF; return token;}
+                    else if (stringCompareConst(&str, "not") == 0){ token.type = NOT; return token;}
+                    else if (stringCompareConst(&str, "nil") == 0){ token.type = NIL; return token;}
+                    else if (stringCompareConst(&str, "then") == 0){ token.type = THEN; return token;}
+                    else if (stringCompareConst(&str, "while") == 0){ token.type = WHILE; return token;}
                 }else if (symbol == '?' || symbol == '!'){
                     stringAddChar(&str, symbol);
                     token.type = ID; token.attr = stringGet(&str);
@@ -144,7 +125,7 @@ t_Token getNextToken(){
                 }
                 break;
 
-            case S_LESS:
+            case S_LESS:    // <, <=
                 token.attr = "";
                 if (symbol == '='){
                     token.type = LESS_EQ;
@@ -156,7 +137,7 @@ t_Token getNextToken(){
                 }
                 break;
 
-            case S_MORE:
+            case S_MORE:    // >, >=
                 token.attr = "";
                 if (symbol == '='){
                     token.type = MORE_EQ;
@@ -168,15 +149,30 @@ t_Token getNextToken(){
                 }
                 break;
 
-            case S_NOT_EQ:
+            case S_NOT_EQ: //!=
                 if (symbol == '='){
                     token.type = NOT_EQ;
                     token.attr = "";
                     return token;
                 }else{
                     fprintf(stderr, "LEX_ERR\n");
-                    exit(LEX_ERR);
+                    exit(LEX_ERROR);
                 }
+                break;
+
+            case S_STRING:
+                if (symbol == '"'){
+                    token.type = STR; token.attr = stringGet(&str);
+                    return token;
+                }else if (symbol > 31){ //znaky vetsi nez 31
+                    state = S_STRING;
+                }else if (symbol == '\\'){
+                    //specialni znak
+                    printf("Specialek\n");
+                }
+                break;
+
+            case S_DIGIT:
                 break;
         }
     }
