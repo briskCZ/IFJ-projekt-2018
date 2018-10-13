@@ -20,6 +20,7 @@ t_Token getNextToken(int *error){
     int string_hex_count = 0;
     int state = 0;
     int digit_zc = 0; //pocet nul v cisle
+    int exponent_sign = 0;
 
     while(42){
         //printf("DEBUG: State: %d\n", state);
@@ -230,11 +231,10 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_DIGIT: //vychozi stav pro cisla (kvuli poctu nul)
-                if (symbol == '0'){
-                    strAdc(&buffer, symbol);
+                //printf("DEBUG: WNZ %d | DZC %d | SYM %d \n", was_nonzero, digit_zc, symbol);
+                if (symbol == '0')
                     digit_zc++;
-                }
-                if (isdigit(symbol) && symbol != '0' && digit_zc == 0){
+                if ((isdigit(symbol) && symbol != '0' && digit_zc == 0) || (isdigit(symbol) && buffer.val[0] != '0')){
                     strAdc(&buffer, symbol);
                     state = S_INT;
                 }else if (isNumberEnding(symbol) && digit_zc <= 1){
@@ -246,8 +246,14 @@ t_Token getNextToken(int *error){
                     *error = ERROR_LEX;
                     state = S_START;
                     digit_zc = 0;
+                //naschval tady
+                }else if (symbol == '.' && digit_zc <= 1){
+                    strAdc(&buffer, symbol);
+                    state = S_DOUBLE;
+                }else if ((symbol == 'e' || symbol == 'E') && digit_zc <= 1){
+                    strAdc(&buffer, symbol);
+                    state = S_EXPONENT;
                 }
-
                 break;
 
             case S_INT:
@@ -279,8 +285,54 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_EXPONENT:
+                if ((symbol == '+' || symbol == '-') && exponent_sign == 0){
+                    exponent_sign = 1;
+                    strAdc(&buffer, symbol);
+                }else if (exponent_sign == 1){
+                    //je to ok, za exponentem je jeste nejake cislo
+                    if (isdigit(symbol)){
+                        strAdc(&buffer, symbol);
+                        //aby se do teto vetve nedostal znovu
+                        exponent_sign++;
+                    }else{
+                        fprintf(stderr, "ERROR_LEX: Wrong exponent format!\n");
+                        stringClear(&buffer);
+                        *error = ERROR_LEX;
+                        state = S_START;
+                        exponent_sign = 0;
+
+                    }
+                }else if (isdigit(symbol)){
+                    strAdc(&buffer, symbol);
+                    state = S_EXPONENT;
+                }else if (isNumberEnding(symbol)){
+                    token.type = DOUBLE;
+                    stringCopy(&token.attr, &buffer);
+                    return token;
+                }else{
+                    fprintf(stderr, "ERROR_LEX: Wrong exponent format!\n");
+                    stringClear(&buffer);
+                    *error = ERROR_LEX;
+                    state = S_START;
+                    exponent_sign = 0;
+                }
                 break;
+
             case S_DOUBLE:
+                if (isdigit(symbol)){
+                    strAdc(&buffer, symbol);
+                }else if (symbol == 'e' || symbol == 'E'){
+                    strAdc(&buffer, symbol);
+                    state = S_EXPONENT;
+                }else if (isNumberEnding(symbol)){
+                    token.type = DOUBLE; stringCopy(&token.attr, &buffer);
+                    return token;
+                }else{
+                    fprintf(stderr, "ERROR_LEX: Wrong double format!\n");
+                    stringClear(&buffer);
+                    *error = ERROR_LEX;
+                    state = S_START;
+                }
                 break;
         }
     }
@@ -298,6 +350,7 @@ int isValidHex(char c){
 int isNumberEnding(char c){
     if (c == '+' || c == '-' || c == '*' || c == ')' || c == '='
         || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' '){
+        ungetc(c, stdin);
         return 1;
     }else{
         return 0;

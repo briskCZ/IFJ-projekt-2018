@@ -51,7 +51,7 @@
 #define STRING 27
 
 
-/* Stavy */
+/* Stavy pro konecny automat */
 #define S_START 0
 #define S_LINE_COMMENT 1
 #define S_EQUALS 2
