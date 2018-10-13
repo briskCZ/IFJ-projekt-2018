@@ -11,8 +11,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
+#include "string.h"
+#include "ret_vals.h"
 
-#define LEX_ERR 1
 /* Definice navratovych hodnot */
 #define EQ_REL 1    // ==
 #define ASSIGNMENT 2// =
@@ -40,6 +42,7 @@
 #define THEN 22
 #define WHILE 23
 
+#define T_EOF -1
 /* Identifikator */
 #define ID 24
 /* Typy */
@@ -62,12 +65,26 @@
 #define S_SPECIAL_SYMBOL 10
 #define S_SPECIAL_HEX 11
 #define S_DIGIT 12
+#define S_INT 13
+#define S_DOUBLE 14
+#define S_EXPONENT 15
+
+/* Define pro zjednoduseni programu */
+#define strAdc(a, b) if(stringAddChar(a, b) == STR_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return token;}
 
 /* Datovy typ token */
 typedef struct {
     int type;
-    char* attr;
+    string attr;
 } t_Token;
+
+
+/* Vyprintuje token */
+void printToken(t_Token t, int error);
+
+/* Spousteci a koncici funkce scanneru */
+int scannerInit();
+void scannerClean();
 
 /*
 Test zda charakter odpovida hexa formatu
@@ -77,5 +94,17 @@ Test zda charakter odpovida hexa formatu
 */
 int isValidHex(char c);
 
+/*
+Test zda znak, muze byt validni konec cisla
+@param c - testovany znaky
 
+@return - vraci 1 pokud je konec cisla mozny, jinak 0
+*/
+int isNumberEnding(char c);
+
+/*
+Zadost o dalsi token
+@param error - hodnotou predavany error
+
+*/
 t_Token getNextToken(int *error);

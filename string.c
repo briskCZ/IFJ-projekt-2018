@@ -36,7 +36,6 @@ int stringInsert(string *s, char *str){
             new_s_size += 1;
         }
         memory_blocks_needed = (int)new_s_size;
-        printf("MEM: %d\n", memory_blocks_needed);
         s->val = realloc(s->val, (memory_blocks_needed * STR_ALLOC_INC)*sizeof(char));
         if (s->val == NULL){
             return STR_ERROR;
@@ -72,10 +71,7 @@ void stringClear(string *s){
 }
 int stringAddChar(string *s, char c){
     if (s->length + 1 >= s->allocated_size){
-        //free(s->val);
-        //s->val = malloc(s->allocated_size + STR_ALLOC_INC);
         s->val = realloc(s->val, s->allocated_size + STR_ALLOC_INC);
-        stringPrint(s);
         if (s->val == NULL){
             return STR_ERROR;
         }else{

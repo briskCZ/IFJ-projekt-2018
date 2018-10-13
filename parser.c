@@ -1,11 +1,15 @@
 #include "scanner.h"
 #include "ret_vals.h"
 
+//DEBUG FUNKCe
 int main(){
-    while(1){
+    t_Token ret_token;
+    scannerInit();
+    do {
         int error;
-        t_Token ret_token = getNextToken(&error);
-        printf("DEBUG: Token: %d | Attr: %s | errorptr: %d\n", ret_token.type, ret_token.attr, error);
-    }
+        ret_token = getNextToken(&error);
+        printToken(ret_token, error);
+    } while (ret_token.type != T_EOF);
+    scannerClean();
     return 0;
 }
