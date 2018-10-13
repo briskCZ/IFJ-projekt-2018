@@ -12,12 +12,24 @@
 #include "string.h"
 #include "ret_vals.h"
 
-t_Token getNextToken(){
+
+int isValidHex(char c){
+    printf("IVH: %d\n", c);
+    if ((c >= 47 && c <= 57) || (c >= 65 && c <= 70)){
+        printf("hex ok\n");
+        return 1;
+    }else{
+        printf("hex rip\n");
+        return 0;
+    }
+}
+t_Token getNextToken(int *error){
     t_Token token;  //token, ktery bude vracen
 
     string str;     //buffer pro identifikatory a kw
     stringInit(&str);
-
+    int string_hex_count = 0;
+    int string_hex = 0;
     int state = 0;
 
     while(42){
@@ -156,22 +168,68 @@ t_Token getNextToken(){
                     return token;
                 }else{
                     fprintf(stderr, "LEX_ERR\n");
-                    exit(LEX_ERROR);
+                    *error = ERROR_LEX;
                 }
                 break;
 
-            case S_STRING:
+            case S_STRING: //"string"
                 if (symbol == '"'){
                     token.type = STR; token.attr = stringGet(&str);
                     return token;
-                }else if (symbol > 31){ //znaky vetsi nez 31
+                }else if (symbol > 31 && symbol != '\\'){ //znaky vetsi nez ascii 31
+                    printf("31>\n");
+                    stringAddChar(&str, symbol);
                     state = S_STRING;
                 }else if (symbol == '\\'){
                     //specialni znak
-                    printf("Specialek\n");
+                    printf("SS\n");
+                    stringAddChar(&str, symbol);
+                    state = S_SPECIAL_SYMBOL;
+                    string_hex_count = 0;
+                }else{
+                    fprintf(stderr, "ERROR_LEX: Invalid symbols in string\n");
+                    *error = ERROR_LEX;
+                    state = S_START;
                 }
                 break;
 
+            case S_SPECIAL_SYMBOL: //
+                if (symbol == '"' || symbol == 'n' || symbol == 't' || symbol == 's' || symbol == '\\'){
+                    printf("special\n");
+                    stringAddChar(&str, symbol);
+                    state = S_STRING;
+                }else if (symbol == 'x'){
+                    stringAddChar(&str, symbol);
+                    state = S_SPECIAL_HEX;
+                }else{
+                    fprintf(stderr, "ERROR_LEX: Invalid escape sequence symbol\n");
+                    *error = ERROR_LEX;
+                    state = S_START;
+                }
+                break;
+
+            case S_SPECIAL_HEX: //\xhh
+                if (isValidHex(symbol) && string_hex_count <= 2){ //max hex
+                    string_hex_count++;
+                    printf("Valid hex\n");
+                    stringAddChar(&str, symbol);
+                    if (string_hex_count == 2){
+                        state = S_STRING;
+                    }else{
+                        state = S_SPECIAL_HEX;
+                    }
+                }else{
+                    //pokud je hexa pouze jeden symbol
+                    if (!isValidHex(symbol) && string_hex_count == 1){
+                        state = S_STRING;
+                        ungetc(symbol, stdin);
+                    }else{
+                        fprintf(stderr, "ERROR_LEX: Invalid hexadecimal\n");
+                        *error = ERROR_LEX;
+                        state = S_START;
+                    }
+                }
+                break;
             case S_DIGIT:
                 break;
         }

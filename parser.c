@@ -3,8 +3,9 @@
 
 int main(){
     while(1){
-        t_Token ret_token = getNextToken();
-        printf("DEBUG: Token: %d | Attr: %s\n", ret_token.type, ret_token.attr);
+        int error;
+        t_Token ret_token = getNextToken(&error);
+        printf("DEBUG: Token: %d | Attr: %s | errorptr: %d\n", ret_token.type, ret_token.attr, error);
     }
     return 0;
 }

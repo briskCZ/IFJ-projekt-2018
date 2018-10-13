@@ -59,7 +59,9 @@
 #define S_MORE 7
 #define S_NOT_EQ 8
 #define S_STRING 9
-#define S_DIGIT 10
+#define S_SPECIAL_SYMBOL 10
+#define S_SPECIAL_HEX 11
+#define S_DIGIT 12
 
 /* Datovy typ token */
 typedef struct {
@@ -68,16 +70,12 @@ typedef struct {
 } t_Token;
 
 /*
-Inicializaci scanneru
-*/
-void scannerInit();
+Test zda charakter odpovida hexa formatu
+@param c - testovany charakter
 
-/*
-Cisteni po scanneru
+@return - vraci 1 pokud je charakter validni, jinak 0
 */
-void scannerClean();
-/*
-*/
+int isValidHex(char c);
 
-t_Token getRestToken();
-t_Token getNextToken();
+
+t_Token getNextToken(int *error);
