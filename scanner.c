@@ -11,47 +11,11 @@
 #include "scanner.h"
 
 t_Token token;  //token, ktery bude vracen
-
-void printToken(t_Token t, int error){
-    char * type;
-    switch (t.type){
-        case NIL: type="NIL"; break;
-        case EQ_REL: type="EQ_REL"; break;
-        case ASSIGNMENT: type = "ASSIGNMENT"; break;
-        case MUL: type = "MUL"; break;
-        case DIV: type = "DIV"; break;
-        case PLUS: type = "PLUS"; break;
-        case MINUS: type = "MINUS"; break;
-        case LEFT_PAR: type = "LEFT_PAR"; break;
-        case RIGHT_PAR: type = "RIGHT_PAR"; break;
-        case LESS: type = "LESS"; break;
-        case MORE: type = "MORE"; break;
-        case LESS_EQ: type = "LESS_EQ"; break;
-        case MORE_EQ: type = "MORE_EQ"; break;
-        case NOT_EQ: type = "NOT_EQ"; break;
-        case STR: type = "STR"; break;
-        case COMMA: type = "COMMA"; break;
-        case DEF: type = "DEF"; break;
-        case DO: type = "DO"; break;
-        case ELSE: type = "ELSE"; break;
-        case END: type = "END"; break;
-        case IF: type = "IF"; break;
-        case NOT: type = "NOT"; break;
-        case THEN: type = "THEN"; break;
-        case WHILE: type = "WHILE"; break;
-        case T_EOF: type = "EOF"; break;
-        case ID: type = "ID"; break;
-        case INT: type = "INT"; break;
-        case DOUBLE: type = "DOUBLE"; break;
-        case STRING: type = "STRING"; break;
-    }
-    printf("TOKEN: %s | Attr: %s | Error: %d \n", type, stringGet(&t.attr), error);
-}
+string buffer;     //buffer pro identifikatory a kw
 
 t_Token getNextToken(int *error){
     *error = SUCCESS;
-    string buffer;     //buffer pro identifikatory a kw
-    stringInit(&buffer);
+    stringClear(&buffer);
     stringClear(&token.attr);
     int string_hex_count = 0;
     int state = 0;
@@ -321,7 +285,6 @@ t_Token getNextToken(int *error){
         }
     }
 
-    stringFree(&buffer);
 }
 
 int isValidHex(char c){
@@ -342,8 +305,48 @@ int isNumberEnding(char c){
 }
 
 int scannerInit(){
-    return stringInit(&token.attr);
+    int ret_val = stringInit(&buffer);
+    ret_val += stringInit(&token.attr);
+    return (ret_val == 0) ? SUCCESS : ERROR_INTERNAL;
 }
+
 void scannerClean(){
     stringFree(&token.attr);
+    stringFree(&buffer);
+}
+
+void printToken(t_Token t, int error){
+    char * type;
+    switch (t.type){
+        case NIL: type="NIL"; break;
+        case EQ_REL: type="EQ_REL"; break;
+        case ASSIGNMENT: type = "ASSIGNMENT"; break;
+        case MUL: type = "MUL"; break;
+        case DIV: type = "DIV"; break;
+        case PLUS: type = "PLUS"; break;
+        case MINUS: type = "MINUS"; break;
+        case LEFT_PAR: type = "LEFT_PAR"; break;
+        case RIGHT_PAR: type = "RIGHT_PAR"; break;
+        case LESS: type = "LESS"; break;
+        case MORE: type = "MORE"; break;
+        case LESS_EQ: type = "LESS_EQ"; break;
+        case MORE_EQ: type = "MORE_EQ"; break;
+        case NOT_EQ: type = "NOT_EQ"; break;
+        case STR: type = "STR"; break;
+        case COMMA: type = "COMMA"; break;
+        case DEF: type = "DEF"; break;
+        case DO: type = "DO"; break;
+        case ELSE: type = "ELSE"; break;
+        case END: type = "END"; break;
+        case IF: type = "IF"; break;
+        case NOT: type = "NOT"; break;
+        case THEN: type = "THEN"; break;
+        case WHILE: type = "WHILE"; break;
+        case T_EOF: type = "EOF"; break;
+        case ID: type = "ID"; break;
+        case INT: type = "INT"; break;
+        case DOUBLE: type = "DOUBLE"; break;
+        case STRING: type = "STRING"; break;
+    }
+    printf("TOKEN: %s | Attr: %s | Error: %d \n", type, stringGet(&t.attr), error);
 }
