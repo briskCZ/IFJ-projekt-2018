@@ -71,6 +71,7 @@
 #define S_INT 13
 #define S_DOUBLE 14
 #define S_EXPONENT 15
+#define S_BC_END 16
 
 /* Makra pro zjednoduseni programu */
 #define strAdc(a, b) if(stringAddChar(a, b) == STR_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return sc_token;}
