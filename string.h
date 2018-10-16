@@ -13,6 +13,9 @@
 #include <string.h>
 #include "ret_vals.h"
 
+#ifndef STRING_H
+#define STRING_H
+
 #define STR_ALLOC_INC 16    //blok po kterem se ma alokovat pamet pro s->val
 #define STR_ERROR 1         //pokud se neco interne nepodari
 #define STR_SUC 0           //success
@@ -111,3 +114,5 @@ char * stringGet(string *s);
 Debugovaci funkce - vytiskne string
 */
 void stringPrint(string *s);
+
+#endif

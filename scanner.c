@@ -5,29 +5,35 @@
  *      David Miksanik (xmiksa05)
  *  Fakulta informacnich technologii VUT v Brne
  *  Popis souboru:
- *  Implementace funkci pro string
+ *  Implementace scanneru
+ *  Pozn. u funkci pro praci se stringem se pomoci makra kontroluji chyby.
 */
 
 #include "scanner.h"
 
-t_Token token;  //token, ktery bude vracen
-string buffer;     //buffer pro identifikatory a kw
+t_Token sc_token;  //token, ktery bude vracen
+string sc_buffer;  //buffer pro identifikatory a kw
+string sc_aux_buffer; //pomocny buffer pro blokove komentare a hexa cisla
 
 t_Token getNextToken(int *error){
     *error = SUCCESS;
-    stringClear(&buffer);
-    stringClear(&token.attr);
-    int string_hex_count = 0;
-    int state = 0;
-    int digit_zc = 0; //pocet nul v cisle
-    int exponent_sign = 0;
+    stringClear(&sc_buffer);
+    stringClear(&sc_token.attr);
+    stringClear(&sc_aux_buffer);
 
+    int double_sad = 0;         //symbols after dot in double
+    int string_hex_count = 0;   //pocet cisel za x
+    int state = 0;              //stav automatu
+    int digit_zc = 0;           //pocet nul v cisle
+    int exponent_sign = 0;      //pomocna promena pro znamenko,
+    int digits_ae = 0;          //cisla po exponentu
+                                //pokud je desetine cislo v exponencialnim formatu
     while(42){
-        //printf("DEBUG: State: %d\n", state);
+        printf("DEBUG: State: %d\n", state);
         char symbol = getc(stdin);
         if (symbol == EOF){
-            token.type = T_EOF;
-            return token;
+            sc_token.type = T_EOF;
+            return sc_token;
         }
         switch (state) {
             case S_START: //vychozi stav, pokud nacte lexem s delkou jedna, vrati ho
@@ -39,11 +45,11 @@ t_Token getNextToken(int *error){
                 }else if (symbol == '='){
                     state = S_EQUALS;
                 }else if (symbol == '_' || islower(symbol)){
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_ID_KW;
                 }else if (isdigit(symbol)){
                     if(symbol == '0') digit_zc++;
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_DIGIT;
                 }else if (symbol == '<'){
                     state = S_LESS;
@@ -54,28 +60,28 @@ t_Token getNextToken(int *error){
                 }else if (symbol == '"'){
                     state = S_STRING;
                 }else if (symbol == '*'){
-                    token.type = MUL; stringClear(&token.attr);
-                    return token;
+                    sc_token.type = MUL; stringClear(&sc_token.attr);
+                    return sc_token;
                 }else if (symbol == '/'){
-                    token.type = DIV; stringClear(&token.attr);
-                    return token;
+                    sc_token.type = DIV; stringClear(&sc_token.attr);
+                    return sc_token;
                 }else if (symbol == '+'){
-                    token.type = PLUS; stringClear(&token.attr);
-                    return token;
+                    sc_token.type = PLUS; stringClear(&sc_token.attr);
+                    return sc_token;
                 }else if (symbol == '-'){
-                    token.type = MINUS; stringClear(&token.attr);
-                    return token;
+                    sc_token.type = MINUS; stringClear(&sc_token.attr);
+                    return sc_token;
                 }else if (symbol == '('){
-                    token.type = LEFT_PAR; stringClear(&token.attr);
-                    return token;
+                    sc_token.type = LEFT_PAR; stringClear(&sc_token.attr);
+                    return sc_token;
                 }else if (symbol == ')'){
-                    token.type = RIGHT_PAR; stringClear(&token.attr);
-                    return token;
+                    sc_token.type = RIGHT_PAR; stringClear(&sc_token.attr);
+                    return sc_token;
                 }else if (symbol == ','){
-                    token.type = COMMA; stringClear(&token.attr);
+                    sc_token.type = COMMA; stringClear(&sc_token.attr);
                 }else{
                     *error = ERROR_LEX;
-                    stringClear(&buffer);
+                    stringClear(&sc_buffer);
                     fprintf(stderr, "ERROR_LEX: Unexpected symbol\n");
                 }
                 break;
@@ -90,17 +96,17 @@ t_Token getNextToken(int *error){
             case S_EQUALS: // =, =b, ==
                 //printf("DEBUG: '='| znak: %c\n", symbol);
                 if (symbol == 'b'){ //moznost viceradkoveho komentare
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_BC_BEGIN;
                 }else if (symbol == '='){
-                    token.type = EQ_REL; stringCopy(&token.attr, &buffer);
+                    sc_token.type = EQ_REL; strCopy(&sc_token.attr, &sc_buffer);
                     state = S_START;
-                    return token;
+                    return sc_token;
                 }else{
                     ungetc(symbol, stdin);
-                    token.type = ASSIGNMENT; stringClear(&token.attr);
+                    sc_token.type = ASSIGNMENT; stringClear(&sc_token.attr);
                     state = S_START;
-                    return token;
+                    return sc_token;
                 }
                 break;
             case S_BC_BEGIN: //pokud nactes b tak zkus, zda neni zacatek blokoveho komentare
@@ -113,61 +119,61 @@ t_Token getNextToken(int *error){
 
             case S_ID_KW: //identifikator / klicove slovo
                 if (isalnum(symbol) || symbol == '_'){
-                    strAdc(&buffer, symbol);
-                    //stringPrint(&buffer);
+                    strAdc(&sc_buffer, symbol);
+                    //stringPrint(&sc_buffer);
                     state = S_ID_KW;
-                    if (stringCompareConst(&buffer, "def") == 0){ token.type = DEF; return token;}
-                    else if (stringCompareConst(&buffer, "do") == 0){ token.type = DO; return token;}
-                    else if (stringCompareConst(&buffer, "else") == 0){ token.type = ELSE; return token;}
-                    else if (stringCompareConst(&buffer, "end") == 0){ token.type = END; return token;}
-                    else if (stringCompareConst(&buffer, "if") == 0){ token.type = IF; return token;}
-                    else if (stringCompareConst(&buffer, "not") == 0){ token.type = NOT; return token;}
-                    else if (stringCompareConst(&buffer, "nil") == 0){ token.type = NIL; return token;}
-                    else if (stringCompareConst(&buffer, "then") == 0){ token.type = THEN; return token;}
-                    else if (stringCompareConst(&buffer, "while") == 0){ token.type = WHILE; return token;}
+                    if (stringCompareConst(&sc_buffer, "def") == 0){ sc_token.type = DEF; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "do") == 0){ sc_token.type = DO; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "else") == 0){ sc_token.type = ELSE; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "end") == 0){ sc_token.type = END; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "if") == 0){ sc_token.type = IF; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "not") == 0){ sc_token.type = NOT; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "nil") == 0){ sc_token.type = NIL; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "then") == 0){ sc_token.type = THEN; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "while") == 0){ sc_token.type = WHILE; return sc_token;}
                 }else if (symbol == '?' || symbol == '!'){
-                    strAdc(&buffer, symbol);
-                    token.type = ID; stringCopy(&token.attr, &buffer);
-                    return token;
+                    strAdc(&sc_buffer, symbol);
+                    sc_token.type = ID; strCopy(&sc_token.attr, &sc_buffer);
+                    return sc_token;
                 }else{ //TODO mozna tu maji byt specialni znaky, ne cokoliv
                     ungetc(symbol, stdin);
-                    token.type = ID; stringCopy(&token.attr, &buffer);
-                    return token;
+                    sc_token.type = ID; strCopy(&sc_token.attr, &sc_buffer);
+                    return sc_token;
                 }
                 break;
 
             case S_LESS:    // <, <=
-                stringClear(&token.attr);
+                stringClear(&sc_token.attr);
                 if (symbol == '='){
-                    token.type = LESS_EQ;
-                    return token;
+                    sc_token.type = LESS_EQ;
+                    return sc_token;
                 }else{
-                    token.type = LESS;
+                    sc_token.type = LESS;
                     ungetc(symbol, stdin);
-                    return token;
+                    return sc_token;
                 }
                 break;
 
             case S_MORE:    // >, >=
-                stringClear(&token.attr);
+                stringClear(&sc_token.attr);
                 if (symbol == '='){
-                    token.type = MORE_EQ;
-                    return token;
+                    sc_token.type = MORE_EQ;
+                    return sc_token;
                 }else{
-                    token.type = MORE;
+                    sc_token.type = MORE;
                     ungetc(symbol, stdin);
-                    return token;
+                    return sc_token;
                 }
                 break;
 
             case S_NOT_EQ: //!=
                 if (symbol == '='){
-                    token.type = NOT_EQ;
-                    stringClear(&token.attr);
-                    return token;
+                    sc_token.type = NOT_EQ;
+                    stringClear(&sc_token.attr);
+                    return sc_token;
                 }else{
                     fprintf(stderr, "LEX_ERR\n");
-                    stringClear(&buffer);
+                    stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
                 }
@@ -175,19 +181,19 @@ t_Token getNextToken(int *error){
 
             case S_STRING: //"string"
                 if (symbol == '"'){
-                    token.type = STR; stringCopy(&token.attr, &buffer);
-                    return token;
+                    sc_token.type = STR; strCopy(&sc_token.attr, &sc_buffer);
+                    return sc_token;
                 }else if (symbol > 31 && symbol != '\\'){ //znaky vetsi nez ascii 31
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_STRING;
                 }else if (symbol == '\\'){
                     //specialni znak
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_SPECIAL_SYMBOL;
                     string_hex_count = 0;
                 }else{
                     fprintf(stderr, "ERROR_LEX: Invalid symbols in string\n");
-                    stringClear(&buffer);
+                    stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
                 }
@@ -195,10 +201,11 @@ t_Token getNextToken(int *error){
 
             case S_SPECIAL_SYMBOL: //
                 if (symbol == '"' || symbol == 'n' || symbol == 't' || symbol == 's' || symbol == '\\'){
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_STRING;
                 }else if (symbol == 'x'){
-                    strAdc(&buffer, symbol);
+                    string_hex_count = 0;
+                    stringClear(&sc_aux_buffer);
                     state = S_SPECIAL_HEX;
                 }else{
                     /*fprintf(stderr, "ERROR_LEX: Invalid escape sequence symbol\n");
@@ -210,8 +217,10 @@ t_Token getNextToken(int *error){
             case S_SPECIAL_HEX: //\xhh
                 if (isValidHex(symbol) && string_hex_count <= 2){ //max hex
                     string_hex_count++;
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_aux_buffer, symbol);
+                    // strAdc(&sc_buffer, symbol);
                     if (string_hex_count == 2){
+                        sc_buffer.val[sc_buffer.length-1] = hexToChar(&sc_aux_buffer);
                         state = S_STRING;
                     }else{
                         state = S_SPECIAL_HEX;
@@ -219,11 +228,12 @@ t_Token getNextToken(int *error){
                 }else{
                     //pokud je hexa pouze jeden symbol
                     if (!isValidHex(symbol) && string_hex_count == 1){
+                        sc_buffer.val[sc_buffer.length-1] = hexToChar(&sc_aux_buffer);
                         state = S_STRING;
                         ungetc(symbol, stdin);
                     }else{
                         fprintf(stderr, "ERROR_LEX: Invalid hexadecimal\n");
-                        stringClear(&buffer);
+                        stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
                     }
@@ -234,104 +244,123 @@ t_Token getNextToken(int *error){
                 //printf("DEBUG: WNZ %d | DZC %d | SYM %d \n", was_nonzero, digit_zc, symbol);
                 if (symbol == '0')
                     digit_zc++;
-                if ((isdigit(symbol) && symbol != '0' && digit_zc == 0) || (isdigit(symbol) && buffer.val[0] != '0')){
-                    strAdc(&buffer, symbol);
+                if ((isdigit(symbol) && symbol != '0' && digit_zc == 0) || (isdigit(symbol) && sc_buffer.val[0] != '0')){
+                    strAdc(&sc_buffer, symbol);
                     state = S_INT;
                 }else if (isNumberEnding(symbol) && digit_zc <= 1){
-                    token.type = INT; stringCopy(&token.attr, &buffer);
-                    return token;
+                    sc_token.type = INT; strCopy(&sc_token.attr, &sc_buffer);
+                    return sc_token;
                 }else if (isNumberEnding(symbol) && digit_zc > 1){  //maximum nul pred cislem
                     fprintf(stderr, "ERROR_LEX: Too many 0s in whole number part\n");
-                    stringClear(&buffer);
+                    stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
                     digit_zc = 0;
                 //naschval tady
                 }else if (symbol == '.' && digit_zc <= 1){
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_DOUBLE;
                 }else if ((symbol == 'e' || symbol == 'E') && digit_zc <= 1){
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_EXPONENT;
                 }
                 break;
 
             case S_INT:
                 if (isdigit(symbol)){
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_INT;
                 }else if (symbol ==  'e' || symbol == 'E'){
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_EXPONENT;
                 }else if (symbol == '.'){
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     state = S_DOUBLE;
+                    double_sad = 0;
                 }else if (isNumberEnding(symbol)){
-                    if(strtol(stringGet(&buffer), NULL, 10) <= INT_MAX){
-                        token.type = INT; stringCopy(&token.attr, &buffer);
-                        return token;
+                    if(strtol(stringGet(&sc_buffer), NULL, 10) <= INT_MAX){
+                        sc_token.type = INT; strCopy(&sc_token.attr, &sc_buffer);
+                        return sc_token;
                     }else{
                         fprintf(stderr, "ERROR_LEX: Number limit!\n");
-                        stringClear(&buffer);
+                        stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
+                        double_sad = 0;
+                        digit_zc = 0;
                     }
                 }else{
                     fprintf(stderr, "ERROR_LEX: Wrong number format!\n");
-                    stringClear(&buffer);
+                    stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
+                    double_sad = 0;
+                    digit_zc = 0;
+
                 }
                 break;
 
             case S_EXPONENT:
                 if ((symbol == '+' || symbol == '-') && exponent_sign == 0){
                     exponent_sign = 1;
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                 }else if (exponent_sign == 1){
                     //je to ok, za exponentem je jeste nejake cislo
                     if (isdigit(symbol)){
-                        strAdc(&buffer, symbol);
+                        digits_ae++;
+                        strAdc(&sc_buffer, symbol);
                         //aby se do teto vetve nedostal znovu
                         exponent_sign++;
                     }else{
                         fprintf(stderr, "ERROR_LEX: Wrong exponent format!\n");
-                        stringClear(&buffer);
+                        stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
                         exponent_sign = 0;
+                        digits_ae = 0;
+                        digit_zc = 0;
+
 
                     }
                 }else if (isdigit(symbol)){
-                    strAdc(&buffer, symbol);
+                    digits_ae++;
+                    strAdc(&sc_buffer, symbol);
                     state = S_EXPONENT;
-                }else if (isNumberEnding(symbol)){
-                    token.type = DOUBLE;
-                    stringCopy(&token.attr, &buffer);
-                    return token;
+                }else if (isNumberEnding(symbol) && digits_ae >= 1  ){
+                    sc_token.type = DOUBLE;
+                    strCopy(&sc_token.attr, &sc_buffer);
+                    return sc_token;
                 }else{
                     fprintf(stderr, "ERROR_LEX: Wrong exponent format!\n");
-                    stringClear(&buffer);
+                    stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
                     exponent_sign = 0;
+                    digits_ae = 0;
+                    digit_zc = 0;
+
                 }
                 break;
 
             case S_DOUBLE:
                 if (isdigit(symbol)){
-                    strAdc(&buffer, symbol);
-                }else if (symbol == 'e' || symbol == 'E'){
-                    strAdc(&buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
+                    double_sad++;
+                }else if ((symbol == 'e' || symbol == 'E') && double_sad > 0){
+                    strAdc(&sc_buffer, symbol);
                     state = S_EXPONENT;
-                }else if (isNumberEnding(symbol)){
-                    token.type = DOUBLE; stringCopy(&token.attr, &buffer);
-                    return token;
+                }else if (isNumberEnding(symbol) && double_sad >= 1){
+                    sc_token.type = DOUBLE; strCopy(&sc_token.attr, &sc_buffer);
+                    return sc_token;
                 }else{
                     fprintf(stderr, "ERROR_LEX: Wrong double format!\n");
-                    stringClear(&buffer);
+                    stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
+                    double_sad = 0;
+                    digit_zc = 0;
+
+
                 }
                 break;
         }
@@ -347,6 +376,11 @@ int isValidHex(char c){
         return 0;
     }
 }
+
+int hexToChar(string *s){
+    return (char)strtol(stringGet(s), NULL, 16); //16tkova soustava
+}
+
 int isNumberEnding(char c){
     if (c == '+' || c == '-' || c == '*' || c == ')' || c == '='
         || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' '){
@@ -358,14 +392,16 @@ int isNumberEnding(char c){
 }
 
 int scannerInit(){
-    int ret_val = stringInit(&buffer);
-    ret_val += stringInit(&token.attr);
+    int ret_val = stringInit(&sc_buffer);
+    ret_val += stringInit(&sc_token.attr);
+    ret_val += stringInit(&sc_aux_buffer);
     return (ret_val == 0) ? SUCCESS : ERROR_INTERNAL;
 }
 
 void scannerClean(){
-    stringFree(&token.attr);
-    stringFree(&buffer);
+    stringFree(&sc_token.attr);
+    stringFree(&sc_buffer);
+    stringFree(&sc_aux_buffer);
 }
 
 void printToken(t_Token t, int error){

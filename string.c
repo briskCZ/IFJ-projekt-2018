@@ -51,7 +51,6 @@ int stringInsert(string *s, char *str){
         return STR_SUC;
     }
 }
-
 int stringCopy(string *sa, string *sb){
     if (sb->allocated_size > sa->allocated_size){
         sa->val = realloc(sa->val, sb->allocated_size * sizeof(char));

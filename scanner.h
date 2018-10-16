@@ -5,7 +5,7 @@
  *      David Miksanik (xmiksa05)
  *  Fakulta informacnich technologii VUT v Brne
  *  Popis souboru:
- *  Implementace funkci pro string
+ *  Hlavickovy soubor scanneru
 */
 
 #include <stdio.h>
@@ -14,6 +14,9 @@
 #include <limits.h>
 #include "string.h"
 #include "ret_vals.h"
+
+#ifndef SCANNER_H
+#define SCANNER_H
 
 /* Definice navratovych hodnot */
 #define EQ_REL 1    // ==
@@ -69,8 +72,9 @@
 #define S_DOUBLE 14
 #define S_EXPONENT 15
 
-/* Define pro zjednoduseni programu */
-#define strAdc(a, b) if(stringAddChar(a, b) == STR_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return token;}
+/* Makra pro zjednoduseni programu */
+#define strAdc(a, b) if(stringAddChar(a, b) == STR_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return sc_token;}
+#define strCopy(a, b) if(stringCopy(a, b) == STR_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return sc_token;}
 
 /* Datovy typ token */
 typedef struct {
@@ -95,6 +99,14 @@ Test zda charakter odpovida hexa formatu
 int isValidHex(char c);
 
 /*
+Vrati znak reprezentovany v sestnactkove soustave
+@param s - string, ve kterem je reprezentovanem
+
+@return - konvertovany znak
+*/
+int hexToChar(string *s);
+
+/*
 Test zda znak, muze byt validni konec cisla
 @param c - testovany znaky
 
@@ -108,3 +120,4 @@ Zadost o dalsi token
 
 */
 t_Token getNextToken(int *error);
+#endif
