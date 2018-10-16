@@ -21,16 +21,34 @@ t_Token getNextToken(int *error){
     stringClear(&sc_token.attr);
     stringClear(&sc_aux_buffer);
 
-    int double_sad = 0;         //symbols after dot in double
+    char symbol;
+    int using_aux_buffer = 0;
+    int ab_index = 0;
+    int cmnt_begin_cc = 0;      //pocet znaku beginu
+    int double_sad = 0;         //symbolu zateckou v double
     int string_hex_count = 0;   //pocet cisel za x
     int state = 0;              //stav automatu
     int digit_zc = 0;           //pocet nul v cisle
     int exponent_sign = 0;      //pomocna promena pro znamenko,
     int digits_ae = 0;          //cisla po exponentu
                                 //pokud je desetine cislo v exponencialnim formatu
+    char *cmnt_start = "begin\0";
     while(42){
         printf("DEBUG: State: %d\n", state);
-        char symbol = getc(stdin);
+        // Rozhodnuti ktery buffer pouzivat
+        if(using_aux_buffer == 0){
+            symbol = getc(stdin);
+        }else{
+            symbol = sc_aux_buffer.val[ab_index];
+            printf("DEBUG: Symbol: %c\n", symbol);
+            ab_index++;
+            // Pokud jiz nejsou dalsi dostupne znaky v aux bufferu
+            if (ab_index == stringGetLength(&sc_aux_buffer)){
+                using_aux_buffer = 0;
+                ab_index = 0;
+                stringClear(&sc_aux_buffer);
+            }
+        }
         if (symbol == EOF){
             sc_token.type = T_EOF;
             return sc_token;
@@ -96,7 +114,8 @@ t_Token getNextToken(int *error){
             case S_EQUALS: // =, =b, ==
                 //printf("DEBUG: '='| znak: %c\n", symbol);
                 if (symbol == 'b'){ //moznost viceradkoveho komentare
-                    strAdc(&sc_buffer, symbol);
+                    strAdc(&sc_aux_buffer, symbol);
+                    cmnt_begin_cc++;
                     state = S_BC_BEGIN;
                 }else if (symbol == '='){
                     sc_token.type = EQ_REL; strCopy(&sc_token.attr, &sc_buffer);
@@ -109,18 +128,35 @@ t_Token getNextToken(int *error){
                     return sc_token;
                 }
                 break;
-            case S_BC_BEGIN: //pokud nactes b tak zkus, zda neni zacatek blokoveho komentare
 
+            case S_BC_BEGIN: //pokud nactes b tak zkus, zda neni zacatek blokoveho komentare
+                if (cmnt_start[cmnt_begin_cc] == symbol){
+                    strAdc(&sc_aux_buffer, symbol);
+                    printf("DEBUG: BCC: %d |C: %c |S: %s\n", cmnt_begin_cc, symbol, stringGet(&sc_aux_buffer));
+                    if (cmnt_begin_cc == 4){
+                        state = S_BLOCK_COMMENT;
+                        cmnt_begin_cc = 0;
+                        stringClear(&sc_aux_buffer);
+                    }
+                    cmnt_begin_cc++;
+
+                }else{
+                    state = S_START;
+                    using_aux_buffer = 1;
+                    ungetc(symbol, stdin);
+                    printf("DEBUG: nejsem begin ale tvaril jsem se tak, musim o vsecko opravit \n");
+                }
                 break;
 
             case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
+                printf("DEBUG: Prej koment blokovy\n");
 
                 break;
 
             case S_ID_KW: //identifikator / klicove slovo
                 if (isalnum(symbol) || symbol == '_'){
                     strAdc(&sc_buffer, symbol);
-                    //stringPrint(&sc_buffer);
+                    stringPrint(&sc_buffer);
                     state = S_ID_KW;
                     if (stringCompareConst(&sc_buffer, "def") == 0){ sc_token.type = DEF; return sc_token;}
                     else if (stringCompareConst(&sc_buffer, "do") == 0){ sc_token.type = DO; return sc_token;}
