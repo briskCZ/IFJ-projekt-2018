@@ -17,3 +17,8 @@
 #define ERROR_SEM_OTHER 6
 #define ERROR_ZERO_DIV 9
 #define ERROR_INTERNAL 99
+
+/* Navratove hodnoty behu internich casti */
+/* Pro kazdou, ktera alokuje dynamicky */
+#define MEMORY_OK 0
+#define MEMORY_ERROR 1

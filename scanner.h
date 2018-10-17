@@ -74,8 +74,8 @@
 #define S_BC_END 16
 
 /* Makra pro zjednoduseni programu */
-#define strAdc(a, b) if(stringAddChar(a, b) == STR_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return sc_token;}
-#define strCopy(a, b) if(stringCopy(a, b) == STR_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return sc_token;}
+#define strAdc(a, b) if(stringAddChar(a, b) == MEMORY_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return sc_token;}
+#define strCopy(a, b) if(stringCopy(a, b) == MEMORY_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return sc_token;}
 
 /* Datovy typ token */
 typedef struct {

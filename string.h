@@ -17,9 +17,7 @@
 #define STRING_H
 
 #define STR_ALLOC_INC 16    //blok po kterem se ma alokovat pamet pro s->val
-#define STR_ERROR 1         //pokud se neco interne nepodari
-#define STR_SUC 0           //success
-#define HANDLE_STR_ERROR fprintf(stderr, "INTERNAL ERROR: string: %s\n",__func__); exit(INTERNAL_ERROR)
+
 
 /* Struktura string */
 typedef struct {

@@ -13,12 +13,12 @@
 int stringInit(string *s){
     s->val = malloc(STR_ALLOC_INC*sizeof(char));
     if (s->val == NULL){
-        return STR_ERROR;
+        return MEMORY_ERROR;
     }
     s->val[0] = '\0';
     s->length = 0;
     s->allocated_size = STR_ALLOC_INC;
-    return STR_SUC;
+    return MEMORY_OK;
 }
 //Frees dynamic memory used by string
 void stringFree(string *s){
@@ -38,30 +38,30 @@ int stringInsert(string *s, char *str){
         memory_blocks_needed = (int)new_s_size;
         s->val = realloc(s->val, (memory_blocks_needed * STR_ALLOC_INC)*sizeof(char));
         if (s->val == NULL){
-            return STR_ERROR;
+            return MEMORY_ERROR;
         }else{
             s->allocated_size = memory_blocks_needed * STR_ALLOC_INC;
             s->length = strlen(str);
             strcpy(s->val, str);
-            return STR_SUC;
+            return MEMORY_OK;
         }
     }else{
         s->length = strlen(str);
         strcpy(s->val, str);
-        return STR_SUC;
+        return MEMORY_OK;
     }
 }
 int stringCopy(string *sa, string *sb){
     if (sb->allocated_size > sa->allocated_size){
         sa->val = realloc(sa->val, sb->allocated_size * sizeof(char));
         if (sa->val == NULL){
-            return STR_ERROR;
+            return MEMORY_ERROR;
         }
         sa->allocated_size = sb->allocated_size;
     }
     strcpy(sa->val, sb->val);
     sa->length = sb->length;
-    return STR_SUC;
+    return MEMORY_OK;
 }
 
 void stringClear(string *s){
@@ -72,14 +72,14 @@ int stringAddChar(string *s, char c){
     if (s->length + 1 >= s->allocated_size){
         s->val = realloc(s->val, s->allocated_size + STR_ALLOC_INC);
         if (s->val == NULL){
-            return STR_ERROR;
+            return MEMORY_ERROR;
         }else{
             s->allocated_size += STR_ALLOC_INC;
         }
     }
     s->val[s->length] = c;
     s->val[++s->length] = '\0';
-    return STR_SUC;
+    return MEMORY_OK;
 }
 
 int stringCompare(string *sa, string *sb){
