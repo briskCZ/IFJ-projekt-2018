@@ -14,31 +14,27 @@
 t_Token sc_token;  //token, ktery bude vracen
 string sc_buffer;  //buffer pro identifikatory a kw
 string sc_aux_buffer; //pomocny buffer pro blokove komentare a hexa cisla
+int sc_uab;
 
 t_Token getNextToken(int *error){
     *error = SUCCESS;
     stringClear(&sc_buffer);
     stringClear(&sc_token.attr);
-    stringClear(&sc_aux_buffer);
 
     char symbol;
-    int using_aux_buffer = 0;   //zda se pouziva pomocny buffer
     int ab_index = 0;           //index v pomocnem bufferu
-    int cmnt_begin_cc = 0;      //pocet znaku v beginu - pro blokove komentare
-    int cmnt_end_cc = 0;        //pocet znaku v endu - pro blokove komentare
     int double_sad = 0;         //symbolu zateckou v double
     int string_hex_count = 0;   //pocet cisel za x
     int state = 0;              //stav automatu
     int digit_zc = 0;           //pocet nul v cisle
     int exponent_sign = 0;      //pomocna promena pro znamenko,
     int digits_ae = 0;          //cisla po exponentu
+    int was_eq = 0;             // 0 - byl komentar, 1 bylo =
                                 //pokud je desetine cislo v exponencialnim formatu
-    char *cmnt_start = "begin";
-    char *cmnt_end = "end";
     while(42){
-        //printf("DEBUG: State: %d\n", state);
+        printf("DEBUG: S: %d | UAB: %d | AB: %s\n", state, sc_uab, stringGet(&sc_aux_buffer));
         // Rozhodnuti ktery buffer pouzivat
-        if(using_aux_buffer == 0){
+        if(sc_uab == 0){
             symbol = getc(stdin);
         }else{
             symbol = sc_aux_buffer.val[ab_index];
@@ -46,7 +42,7 @@ t_Token getNextToken(int *error){
             ab_index++;
             // Pokud jiz nejsou dalsi dostupne znaky v aux bufferu
             if (ab_index == stringGetLength(&sc_aux_buffer)){
-                using_aux_buffer = 0;
+                sc_uab = 0;
                 ab_index = 0;
                 stringClear(&sc_aux_buffer);
             }
@@ -113,12 +109,16 @@ t_Token getNextToken(int *error){
                     state = S_LINE_COMMENT;
                 }
                 break;
+
             case S_EQUALS: // =, =b, ==
                 ////printf("DEBUG: '='| znak: %c\n", symbol);
-                if (symbol == 'b'){ //moznost viceradkoveho komentare
+                /*if (symbol == 'b'){ //moznost viceradkoveho komentare
                     strAdc(&sc_aux_buffer, symbol);
                     cmnt_begin_cc++;
                     state = S_BC_BEGIN;
+                }*/
+                if (was_eq == 0 && isCmntBegin(symbol, &was_eq)){
+                    state = S_BLOCK_COMMENT;
                 }else if (symbol == '='){
                     sc_token.type = EQ_REL; strCopy(&sc_token.attr, &sc_buffer);
                     state = S_START;
@@ -131,48 +131,21 @@ t_Token getNextToken(int *error){
                 }
                 break;
 
-            case S_BC_BEGIN: //pokud nactes b tak zkus, zda neni zacatek blokoveho komentare
-                if (cmnt_start[cmnt_begin_cc] == symbol){
-                    cmnt_begin_cc++;
-                    strAdc(&sc_aux_buffer, symbol);
-                    //printf("DEBUG: BCC: %d |C: %c |S: %s\n", cmnt_begin_cc, symbol, stringGet(&sc_aux_buffer));
-                    if (cmnt_begin_cc == 5){    //delka "begin"
-                        state = S_BLOCK_COMMENT;
-                        cmnt_begin_cc = 0;
-                        stringClear(&sc_aux_buffer);
-                    }
-
-                }else{
-                    state = S_START;
-                    using_aux_buffer = 1;
-                    ungetc(symbol, stdin);
-                    //printf("DEBUG: nejsem begin ale tvaril jsem se tak, musim o vsecko opravit \n");
-                }
-                break;
-
             case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
-                if (symbol == '='){
-                    state = S_BC_END;
+                if (symbol == '=' && isCmntEnd()){
+                    state = S_START;
                 }else{
                     state = S_BLOCK_COMMENT;
                 }
                 break;
 
-            case S_BC_END:
-            //printf("DEBUG: ECC: %d |C: %c |S: %s\n", cmnt_begin_cc, symbol);
-                if (cmnt_end[cmnt_end_cc] == symbol){
-                    cmnt_end_cc++;
-                    if (cmnt_end_cc == 3){  //delka "end"
-                        state = S_START;
-                        cmnt_end_cc = 0;
-                        //printf("DEBUG: koncim blokovy komentar\n");
-                    }
-                }else{
-                    cmnt_end_cc = 0;
-                    state = S_BC_END;
-                    //printf("DEBUG: porad v komentari\n");
-                }
-                break;
+            // case S_BC_END:
+            //     if (isCmntEnd()){
+            //         state = S_START;
+            //     }else{
+            //         state = S_BC_END;
+            //     }
+            //     break;
 
             case S_ID_KW: //identifikator / klicove slovo
                 if (isalnum(symbol) || symbol == '_'){
@@ -460,7 +433,44 @@ void scannerClean(){
     stringFree(&sc_buffer);
     stringFree(&sc_aux_buffer);
 }
+int isCmntEnd(){
+    char *cmnt_end = "end";
+    int cmnt_end_length = 3;
+    char c;
 
+    for (int i = 0; i < cmnt_end_length; i++){
+        c = getc(stdin);
+        if (c != cmnt_end[i]){
+            if (c == '='){
+                ungetc(c, stdin);
+            }
+            return 0;
+        }
+    }
+    return 1;
+
+    stringClear(&sc_aux_buffer);
+    return 0;
+}
+
+int isCmntBegin(char symbol, int *was_eq){
+    ungetc(symbol, stdin);
+    char *cmnt_start = "begin";
+    int cmnt_start_length = 5;
+    char c;
+    stringClear(&sc_aux_buffer);
+    for (int i = 0; i < cmnt_start_length; i++){
+        if (i > 0) sc_uab = 1;
+        c = getc(stdin);
+        stringAddChar(&sc_aux_buffer, c);
+        if (c != cmnt_start[i]){
+            *was_eq = 1;
+            return 0;
+        }
+    }
+    return 1;
+
+}
 void printToken(t_Token t, int error){
     char * type;
     switch (t.type){

@@ -58,7 +58,6 @@
 #define S_START 0
 #define S_LINE_COMMENT 1
 #define S_EQUALS 2
-#define S_BC_BEGIN 3
 #define S_BLOCK_COMMENT 4
 #define S_ID_KW 5
 #define S_LESS 6
@@ -115,6 +114,15 @@ Test zda znak, muze byt validni konec cisla
 */
 int isNumberEnding(char c);
 
+/*
+Funkce testujici, jestli je zacatek/konec komentare
+
+@return -   pri uspechu nenulova hodnota, jinak 0 a (begin)zapise prectene znaky do sc_aux_buffer
+            a nastavi sc_uab na 1, ay dale byly znaky z tohoto bufferu nacitany (/begin)
+
+*/
+int isCmntBegin(char symbol, int *was_eq);
+int isCmntEnd();
 /*
 Zadost o dalsi token
 @param error - hodnotou predavany error
