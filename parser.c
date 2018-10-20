@@ -4,6 +4,8 @@
 //DEBUG FUNKCe
 int main(){
     t_Token ret_token;
+    //pridani znaku noveho radku, na zacatek souboru, kvuli blokovym komentarum
+    ungetc('\n', stdin); // !!! pro funkcnost blokoveho komentare
     scannerInit();
     do {
         int error;

@@ -30,7 +30,7 @@ typedef struct {
 Inicializuje string
 @param s - string urceny pro inicializaci
 
-@return STR_ERROR nebo STR_SUC podle uspesnosti
+@return MEMORY_ERROR nebo MEMORY_OK podle uspesnosti
 */
 int stringInit(string *s);
 
@@ -38,16 +38,25 @@ int stringInit(string *s);
 Uvolni string
 @param s - string urceny pro uvolneni
 
-@return STR_ERROR nebo STR_SUC podle uspesnosti
+@return MEMORY_ERROR nebo MEMORY_OK podle uspesnosti
 */
 void stringFree(string *s);
+
+/*
+Vrati charakter c na zacatek stringu s
+@param c - vraceny charakter
+@param s - string, kam se ma vratit charakter
+
+@return MEMORY_ERROR nebo MEMORY_OK podle uspesnosti
+*/
+int stringUngetChar(char c, string *s);
 
 /*
 Vlozi do stringu retezec
 @param s - cilvoy string
 @param str - vstupni C-type string (char *)
 
-@return STR_ERROR nebo STR_SUC podle uspesnosti
+@return MEMORY_ERROR nebo MEMORY_OK podle uspesnosti
 */
 int stringInsert(string *s, char *str);
 
@@ -62,7 +71,7 @@ Zkopiruje strng sb do stringu sa
 @param sa - destinace
 @param sb - zdroj
 
-@return STR_ERROR nebo STR_SUC podle uspesnosti
+@return MEMORY_ERROR nebo MEMORY_OK podle uspesnosti
 */
 int stringCopy(string *sa, string *sb);
 /*
@@ -70,7 +79,7 @@ Vlozi do stringu char
 @param s - cilovy string
 @param c - znak, urceny pro vlozeni
 
-@return STR_ERROR nebo STR_SUC podle uspesnosti
+@return MEMORY_ERROR nebo MEMORY_OK podle uspesnosti
 */
 int stringAddChar(string *s, char c);
 /*

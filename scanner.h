@@ -121,8 +121,8 @@ Funkce testujici, jestli je zacatek/konec komentare
             a nastavi sc_uab na 1, ay dale byly znaky z tohoto bufferu nacitany (/begin)
 
 */
-int isCmntBegin(char symbol, int *was_eq);
-int isCmntEnd();
+int isCmntBegin();
+int isCmntEnd(char *sym);
 /*
 Zadost o dalsi token
 @param error - hodnotou predavany error
