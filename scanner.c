@@ -15,7 +15,7 @@ t_Token sc_token;  //token, ktery bude vracen
 string sc_buffer;  //buffer pro identifikatory a kw
 string sc_aux_buffer; //pomocny buffer pro blokove komentare a hexa cisla
 int sc_uab = 0;   //zda pouzivat pomocny buffer
-int ab_index = 0; //index v pomocnem bufferu
+int sc_abi = 0; //index v pomocnem bufferu
 int line_cnt = 0; //radek v souboru
 
 t_Token getNextToken(int *error){
@@ -24,7 +24,7 @@ t_Token getNextToken(int *error){
     stringClear(&sc_token.attr);
 
     char symbol = 0;
-    //int ab_index = 0;
+    //int sc_abi = 0;
     int double_sad = 0;         //symbolu zateckou v double
     int string_hex_count = 0;   //pocet cisel za x
     int state = S_START;        //stav automatu
@@ -37,26 +37,28 @@ t_Token getNextToken(int *error){
         if(sc_uab == 0){
             symbol = getc(stdin);
         }else{
-            symbol = sc_aux_buffer.val[ab_index];
-            ab_index++;
+            symbol = sc_aux_buffer.val[sc_abi];
+            sc_abi++;
             // Pokud jiz nejsou dalsi dostupne znaky v aux bufferu
-            if (ab_index == stringGetLength(&sc_aux_buffer)){
+            if (sc_abi == stringGetLength(&sc_aux_buffer)){
                 sc_uab = 0;
-                ab_index = 0;
+                sc_abi = 0;
                 stringClear(&sc_aux_buffer);    }
         }
-        //printf("DEBUG: S: %d |SYM: %c | UAB: %d | AB: %s | ABI: %d| B: %s\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), ab_index, stringGet(&sc_buffer));
+        //printf("DEBUG: S: %d |SYM: %c | UAB: %d | AB: %s | ABI: %d| B: %s\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer));
         if (symbol == EOF){
             sc_token.type = T_EOF;
             return sc_token;
-        }else if (symbol == '\n'){
-            line_cnt++;
         }
         switch (state) {
             case S_START: //vychozi stav, pokud nacte lexem s delkou jedna, vrati ho
                 if (isspace(symbol)){
-                    if (symbol == '\n' && isCmntBegin()){
+                    if ((symbol == '\n' || line_cnt == 0) && isCmntBegin()){
                         state = S_BLOCK_COMMENT;
+                    }else if (symbol == '\n'){
+                        line_cnt++;
+                        sc_token.type = T_EOL;
+                        return sc_token;
                     }else{
                         state = S_START;
                     }
@@ -513,6 +515,7 @@ void printToken(t_Token t, int error){
         case INT: type = "INT"; break;
         case DOUBLE: type = "DOUBLE"; break;
         case STRING: type = "STRING"; break;
+        case T_EOL: type = "EOL"; break;
     }
     printf("TOKEN: %s | Attr: %s | Error: %d \n", type, stringGet(&t.attr), error);
 }

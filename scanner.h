@@ -46,6 +46,7 @@
 #define WHILE 23
 
 #define T_EOF -1
+#define T_EOL 28
 /* Identifikator */
 #define ID 24
 /* Typy */
