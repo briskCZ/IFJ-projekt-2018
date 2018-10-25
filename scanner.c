@@ -135,7 +135,8 @@ t_Token getNextToken(int *error){
                 if (symbol == '=' && isCmntEnd(&symbol)){
                     //pokud symbol po end byl \n
                     if (symbol == '\n'){
-                        state = S_START;
+                        sc_token.type = T_EOL;
+                        return sc_token;
                     //pokud byl jiny whitespace znak, dokonci radek
                     }else{
                         state = S_BC_END;
@@ -145,9 +146,11 @@ t_Token getNextToken(int *error){
                 }
                 break;
 
-            case S_BC_END:
+            case S_BC_END:  //do konce radku za =end
                 if (symbol == '\n'){
-                    state = S_START;
+                    //Vraceni EOL, ktery byl pred komentarem
+                    sc_token.type = T_EOL;
+                    return sc_token;
                 }else{
                     state = S_BC_END;
                 }
