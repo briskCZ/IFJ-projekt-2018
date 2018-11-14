@@ -1,6 +1,6 @@
 
 CC=gcc
-CFLAGS=-Wall -std=c99 -pedantic -lm -Wextra
+CFLAGS=-Wall -std=c99 -pedantic -lm -Wextra -g
 
 
 string: string.c string.h

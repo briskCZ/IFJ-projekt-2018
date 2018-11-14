@@ -83,6 +83,13 @@ typedef struct {
     string attr;
 } t_Token;
 
+/* Globalni promenne */
+t_Token sc_token;  //token, ktery bude vracen
+string sc_buffer;  //buffer pro identifikatory a kw
+string sc_aux_buffer; //pomocny buffer pro blokove komentare a hexa cisla
+int sc_uab;   //zda pouzivat pomocny buffer
+int sc_abi; //index v pomocnem bufferu
+int sc_line_cnt; //radek v souboru
 
 /* Vyprintuje token */
 void printToken(t_Token t, int error);

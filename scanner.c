@@ -11,13 +11,6 @@
 
 #include "scanner.h"
 
-t_Token sc_token;  //token, ktery bude vracen
-string sc_buffer;  //buffer pro identifikatory a kw
-string sc_aux_buffer; //pomocny buffer pro blokove komentare a hexa cisla
-int sc_uab = 0;   //zda pouzivat pomocny buffer
-int sc_abi = 0; //index v pomocnem bufferu
-int line_cnt = 0; //radek v souboru
-
 t_Token getNextToken(int *error){
     *error = SUCCESS;
     stringClear(&sc_buffer);
@@ -45,18 +38,18 @@ t_Token getNextToken(int *error){
                 sc_abi = 0;
                 stringClear(&sc_aux_buffer);    }
         }
-        //printf("DEBUG: S: %d |SYM: %c | UAB: %d | AB: %s | ABI: %d| B: %s\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer));
+        //printf("DEBUG: S: %d |SYM: %d | UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
         if (symbol == EOF){
             sc_token.type = T_EOF;
             return sc_token;
         }
         switch (state) {
-            case S_START: //vychozi stav, pokud nacte lexem s delkou jedna, vrati ho
+            case S_START: //vychozi stav, pokud nacte lexem s delkou jedna, vrati hoe
                 if (isspace(symbol)){
-                    if ((symbol == '\n' || line_cnt == 0) && isCmntBegin()){
+                    if ((symbol == '\n' || sc_line_cnt == 0) && isCmntBegin()){
                         state = S_BLOCK_COMMENT;
                     }else if (symbol == '\n'){
-                        line_cnt++;
+                        sc_line_cnt++;
                         sc_token.type = T_EOL;
                         return sc_token;
                     }else{
@@ -101,10 +94,11 @@ t_Token getNextToken(int *error){
                     return sc_token;
                 }else if (symbol == ','){
                     sc_token.type = COMMA; stringClear(&sc_token.attr);
+                    return sc_token;
                 }else{
                     *error = ERROR_LEX;
                     stringClear(&sc_buffer);
-                    fprintf(stderr, "ERROR_LEX: Unexpected symbol, line: %d.\n", line_cnt);
+                    fprintf(stderr, "ERROR_LEX: Unexpected symbol, line: %d.\n", sc_line_cnt);
                 }
                 break;
             case S_LINE_COMMENT: // #radkovy komentar
@@ -211,7 +205,7 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_token.attr);
                     return sc_token;
                 }else{
-                    fprintf(stderr, "ERROR_LEX: ! must be followed by =, line: %d.\n", line_cnt);
+                    fprintf(stderr, "ERROR_LEX: ! must be followed by =, line: %d.\n", sc_line_cnt);
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
@@ -231,7 +225,7 @@ t_Token getNextToken(int *error){
                     state = S_SPECIAL_SYMBOL;
                     string_hex_count = 0;
                 }else{
-                    fprintf(stderr, "ERROR_LEX: Invalid symbols in string, line: %d.\n", line_cnt);
+                    fprintf(stderr, "ERROR_LEX: Invalid symbols in string, line: %d.\n", sc_line_cnt);
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
@@ -271,7 +265,7 @@ t_Token getNextToken(int *error){
                         state = S_STRING;
                         ungetc(symbol, stdin);
                     }else{
-                        fprintf(stderr, "ERROR_LEX: Invalid hexadecimal, line: %d.\n", line_cnt);
+                        fprintf(stderr, "ERROR_LEX: Invalid hexadecimal, line: %d.\n", sc_line_cnt);
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
@@ -290,7 +284,7 @@ t_Token getNextToken(int *error){
                     sc_token.type = INT; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else if (isNumberEnding(symbol) && digit_zc > 1){  //maximum nul pred cislem
-                    fprintf(stderr, "ERROR_LEX: Too many 0s in whole number part, line: %d.\n", line_cnt);
+                    fprintf(stderr, "ERROR_LEX: Too many 0s in whole number part, line: %d.\n", sc_line_cnt);
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
@@ -321,7 +315,7 @@ t_Token getNextToken(int *error){
                         sc_token.type = INT; strCopy(&sc_token.attr, &sc_buffer);
                         return sc_token;
                     }else{
-                        fprintf(stderr, "ERROR_LEX: Number limit!, line: %d.\n", line_cnt);
+                        fprintf(stderr, "ERROR_LEX: Number limit!, line: %d.\n", sc_line_cnt);
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
@@ -329,7 +323,7 @@ t_Token getNextToken(int *error){
                         digit_zc = 0;
                     }
                 }else{
-                    fprintf(stderr, "ERROR_LEX: Wrong number format!, line: %d.\n", line_cnt);
+                    fprintf(stderr, "ERROR_LEX: Wrong number format!, line: %d.\n", sc_line_cnt);
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
@@ -351,7 +345,7 @@ t_Token getNextToken(int *error){
                         //aby se do teto vetve nedostal znovu
                         exponent_sign++;
                     }else{
-                        fprintf(stderr, "ERROR_LEX: Wrong exponent format!, line: %d.\n", line_cnt);
+                        fprintf(stderr, "ERROR_LEX: Wrong exponent format!, line: %d.\n", sc_line_cnt);
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
@@ -370,7 +364,7 @@ t_Token getNextToken(int *error){
                     strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else{
-                    fprintf(stderr, "ERROR_LEX: Wrong exponent format!, line: %d.\n", line_cnt);
+                    fprintf(stderr, "ERROR_LEX: Wrong exponent format!, line: %d.\n", sc_line_cnt);
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
@@ -392,7 +386,7 @@ t_Token getNextToken(int *error){
                     sc_token.type = DOUBLE; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else{
-                    fprintf(stderr, "ERROR_LEX: Wrong double format!, line: %d.\n", line_cnt);
+                    fprintf(stderr, "ERROR_LEX: Wrong double format!, line: %d.\n", sc_line_cnt);
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
@@ -431,6 +425,9 @@ int isNumberEnding(char c){
 }
 
 int scannerInit(){
+    sc_uab = 0;
+    sc_abi = 0;
+    sc_line_cnt = 0;
     int ret_val = stringInit(&sc_buffer);
     ret_val += stringInit(&sc_token.attr);
     ret_val += stringInit(&sc_aux_buffer);
@@ -520,5 +517,5 @@ void printToken(t_Token t, int error){
         case STRING: type = "STRING"; break;
         case T_EOL: type = "EOL"; break;
     }
-    printf("TOKEN: %s | Attr: %s | Error: %d \n", type, stringGet(&t.attr), error);
+    fprintf(stderr,"TOKEN: %s | Attr: %s | Error: %d \n", type, stringGet(&t.attr), error);
 }
