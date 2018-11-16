@@ -1,0 +1,29 @@
+Prog -> def id l_par Param1 eol Sec1 Prog 
+      | eof 
+      | Code Prog.
+Code -> id Id_eval Prog 
+      | if Expr then eol Sec2 Sec1 
+      | while Expr do eol Sec1 
+      | Expr.
+Id_eval -> eq Assign 
+      | F_call.
+Param1 -> r_par 
+      | Term Param11.
+Param11 -> comma Term Param11 
+      | r_par.
+Sec1 -> Code 
+      | end.
+Term -> id 
+      | int 
+      | float 
+      | string.
+F_call -> l_par Param1  
+      | Param2.
+Assign  -> Expr 
+      | F_call.
+Param2 -> eol 
+      | Term Param22.
+Param22 -> comma Term Param22 
+      | eol.
+Sec2 -> Code 
+      | else eol.
