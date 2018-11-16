@@ -5,6 +5,157 @@
 #define ERROR 1
 int error;
 
+void sec1();
+int sec2();
+int term(t_Token token);
+int param1();
+
+int param2(t_Token token);
+int param22();
+
+
+int expr(t_Token token){
+		//tady se bude volat vyhodnocování výrazů. vrací OK nebo ERROR;
+	printf("-expr\n");
+	if(token.type == NIL){
+		return OK;
+	}else{
+		printf("EXPR error expr expected on line: %d\n", sc_line_cnt);
+		return(ERROR);
+	}
+}
+
+void f_call(t_Token token){
+	printf("-f_call\n");
+	if (token.type == LEFT_PAR){
+		param1();
+		printf("F_CALL() succesfull on line: %d\n", sc_line_cnt);
+		return;
+	}else{
+		if(param2(token) == T_EOL){
+			printf("F_CALL bez () succesfull on line: %d\n", sc_line_cnt);
+			return;
+		}
+	}
+}
+
+void assign(){
+	printf("-assign\n");
+	t_Token token = getNextToken(&error);
+	if(expr(token)==OK){
+		printf("ASSIGN succesfull on line: %d\n", sc_line_cnt);
+		return;
+	}else{
+		f_call(token);
+		return;
+	}
+}
+
+void id_eval(){
+	printf("-id_eval\n");
+	t_Token token = getNextToken(&error);
+	if(token.type == ASSIGNMENT){
+		assign();
+		return;
+	}else{
+		f_call(token);
+		return;
+	}
+}
+
+void code(t_Token token){
+    printf("-code\n");
+	if(token.type == ID){
+		printf("-prirazeni \n");
+		id_eval();
+		return;
+	}
+	else if(token.type == IF){
+		printf("-if \n");
+		if(expr(getNextToken(&error))==OK){
+			token = getNextToken(&error);
+			if (token.type == THEN){
+				printf("-if THEN\n");
+				token = getNextToken(&error);
+				if(token.type == T_EOL){
+					if (sec2()==T_EOL){
+						sec1();
+						printf("IF succesfull on line: %d\n", sc_line_cnt);
+						return;
+					}else{
+						printf("IF error EOL expected on line: %d\n", sc_line_cnt);
+						return;
+					}
+				}else{
+					printf("IF error EOL expected on line: %d\n", sc_line_cnt);
+					return;
+				}
+			}else{
+				printf("IF error THEN expected on line: %d\n", sc_line_cnt);
+				return;
+			}
+		}else{
+			printf("IF error expr expected on line: %d\n", sc_line_cnt);
+			return;
+		}
+	}
+	else if(token.type == WHILE){
+		printf("-while\n");
+		if(expr(getNextToken(&error))==OK){
+			token = getNextToken(&error);
+			if(token.type == DO){
+				token = getNextToken(&error);
+				if(token.type == T_EOL){
+					sec1();
+					printf("WHILE succesfull on line: %d\n", sc_line_cnt);
+					return;
+				}else{
+					printf("WHILE error EOL expected on line: %d\n", sc_line_cnt);
+					return;
+				}
+			}else{
+				printf("WHILE error DO expected on line: %d\n", sc_line_cnt);
+				return;
+			}
+			
+		}else{
+			printf("WHILE error expr expected on line: %d\n", sc_line_cnt);
+			return;
+		}
+		
+		return;
+	}
+	else{
+		expr(token);//FIX ME
+		return;
+	}
+}
+
+void sec1(){
+	printf("-sec1\n");
+    t_Token token = getNextToken(&error);
+	if(token.type == END){
+		printf("-sec1 END\n");
+        return;
+	}else{
+		code(getNextToken(&error));
+		return;
+	}
+}
+
+int sec2(){
+	printf("-sec2\n");
+    t_Token token = getNextToken(&error);
+	if(token.type == ELSE){
+		printf("-sec2 ELSE\n");
+        token = getNextToken(&error); 
+        return token.type; // mel by vratit EOL
+	}else{
+		code(getNextToken(&error));
+		return 0; //FIX ME
+	}
+}
+
 int term(t_Token token){
     printf("-term\n");
     if (token.type == ID || token.type == DOUBLE ||
@@ -13,6 +164,7 @@ int term(t_Token token){
     }
     return ERROR;
 }
+
 int param11(){
     printf("-param11\n");
     t_Token token = getNextToken(&error);
@@ -31,6 +183,7 @@ int param11(){
         }
     }
 }
+
 int param1(){
     printf("-param1\n");
     t_Token token = getNextToken(&error);
@@ -50,6 +203,36 @@ int param1(){
     }
 }
 
+int param2(t_Token token){
+    printf("-param2\n");
+    if (token.type == T_EOL){
+        return T_EOL;
+    }else if(term(token) == OK){
+		if(param22() == T_EOL){
+			return T_EOL;
+		}else{
+			printf("PARAM2 error expected EOL on line: %d\n", sc_line_cnt);
+		}
+    }
+}
+
+int param22(){
+    printf("-param22\n");
+    t_Token token = getNextToken(&error);
+    if (token.type == T_EOL){
+        return T_EOL;
+    }else if (token.type == COMMA){
+        token = getNextToken(&error);
+        if(term(token) == OK){
+            param22();
+        }else{
+            printf("error wrong params22 line: %d\n", sc_line_cnt);
+        }
+    }
+}
+
+
+
 void fun_decl(){
     printf("-fun_decl\n");
     t_Token token = getNextToken(&error);
@@ -60,6 +243,7 @@ void fun_decl(){
         if (token.type == LEFT_PAR){
             if (param1() == T_EOL){
                 printf("-function decl correct line: %d\n", sc_line_cnt);
+				sec1();
                 return;
             }else{
                 printf("error func decl line: %d\n", sc_line_cnt);
@@ -74,18 +258,21 @@ void fun_decl(){
         return;
     }
 }
-void code(){
-    //printf("CODE");
-}
+
 void program(t_Token token){
+	printf("-program\n");
+	//printToken(token, error);
     switch (token.type){
         case T_EOF:
+			printf("-program ended on line: %d\n",sc_line_cnt);
+            return;
+		case T_EOL:
             return;
         case DEF:
             fun_decl();
             break;
         default:
-            code();
+            code(token);
             break;
     }
 }
