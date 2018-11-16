@@ -19,23 +19,23 @@
 #define SCANNER_H
 
 /* Definice navratovych hodnot */
-#define EQ_REL 1    // ==
-#define ASSIGNMENT 2// =
-#define MUL 3       // *
-#define DIV 4       // /
-#define PLUS 5      // +
-#define MINUS 6     // -
-#define LEFT_PAR 7  // (
-#define RIGHT_PAR 8 // )
-#define LESS 9      // <
-#define MORE 10     // >
-#define LESS_EQ 11  // <=
-#define MORE_EQ 12  // >=
-#define NOT_EQ 13   // !=
+#define PLUS 0      // +
+#define MINUS 1     // -
+#define MUL 2       // *
+#define DIV 3       // /
+#define LESS 4      // <
+#define LESS_EQ 5   // <=
+#define MORE 6      // >
+#define MORE_EQ  7  // >=
+#define EQ_REL 8    // ==
+#define NOT_EQ 9    // !=
+#define LEFT_PAR 10  // (
+#define RIGHT_PAR 11 // )
+#define ASSIGNMENT 24// =
 #define STR 14      // ""
 #define COMMA 15    // ,
 /* Klicova slova */
-#define NIL 0
+#define NIL 29
 #define DEF 16
 #define DO 17
 #define ELSE 18
@@ -48,7 +48,7 @@
 #define T_EOF -1
 #define T_EOL 28
 /* Identifikator */
-#define ID 24
+#define ID 12
 /* Typy */
 #define INT 25
 #define DOUBLE 26

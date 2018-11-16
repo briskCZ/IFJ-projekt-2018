@@ -10,7 +10,7 @@
 
 #define SUCCESS 0
 #define ERROR_LEX 1
-#define ERROR_SYNTAX_ 2
+#define ERROR_SYNTAX 2
 #define ERROR_SEMANTIC 3
 #define ERROR_SEM_COMPATIBILITY 4
 #define ERROR_SEM_PARAM 5
@@ -22,3 +22,4 @@
 /* Pro kazdou, ktera alokuje dynamicky */
 #define MEMORY_OK 0
 #define MEMORY_ERROR 1
+#define STACK_ERROR -1

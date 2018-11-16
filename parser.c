@@ -90,7 +90,7 @@ void program(t_Token token){
     }
 }
 
-int main(){
+/*int main(){
     t_Token token;
     //pridani znaku noveho radku, na zacatek souboru, kvuli blokovym komentarum
     scannerInit();
@@ -104,4 +104,4 @@ int main(){
 
     scannerClean();
     return 0;
-}
+}*/

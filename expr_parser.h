@@ -1,0 +1,24 @@
+/*  IFJ Projekt 2018 "Implementace prekladace imperativniho jazyka IFJ18"
+ *  Autori:
+ *      Zdenek Dolezal (xdolez82)
+ *      Marek Nesvadba (xnesva06)
+ *      David Miksanik (xmiksa05)
+ *  Fakulta informacnich technologii VUT v Brne
+ *  Popis souboru:
+ *  Hlavickovy soubor k precedencni analyze vyrazu
+*/
+
+#include "string.h"
+#include "ret_vals.h"
+#include "int_stack.h"
+#include "scanner.h"
+
+#define PT_SIZE 14
+#define PT_X 102
+#define PT_R 101
+#define PT_E 100
+#define PT_L -100
+#define PT_END_INDEX 13
+
+int isEnd(int val);
+int exprParse();
