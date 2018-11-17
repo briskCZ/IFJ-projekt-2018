@@ -22,4 +22,4 @@
 /* Pro kazdou, ktera alokuje dynamicky */
 #define MEMORY_OK 0
 #define MEMORY_ERROR 1
-#define STACK_ERROR -1
+#define STACK_ERROR -10

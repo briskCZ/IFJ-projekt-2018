@@ -19,6 +19,24 @@
 #define PT_E 100
 #define PT_L -100
 #define PT_END_INDEX 13
+#define PT_E_RULE 103
 
+
+int checkRule(t_IStack stack);
 int isEnd(int val);
 int exprParse();
+
+typedef enum{
+    R_PLUS = 200,
+    R_MINUS,
+    R_MUL,
+    R_DIV,
+    R_PAR,
+    R_ID,
+    R_LESS,
+    R_MORE,
+    R_LESSEQ,
+    R_MOREEQ,
+    R_EQ,
+    R_NEQ
+} expr_rules;

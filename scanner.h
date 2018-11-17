@@ -19,6 +19,7 @@
 #define SCANNER_H
 
 /* Definice navratovych hodnot */
+/*BEGIN Pouzivane jako indexy u exprParse*/
 #define PLUS 0      // +
 #define MINUS 1     // -
 #define MUL 2       // *
@@ -31,6 +32,9 @@
 #define NOT_EQ 9    // !=
 #define LEFT_PAR 10  // (
 #define RIGHT_PAR 11 // )
+/* Identifikator */
+#define ID 12
+/* END */
 #define ASSIGNMENT 24// =
 #define STR 14      // ""
 #define COMMA 15    // ,
@@ -47,8 +51,6 @@
 
 #define T_EOF -1
 #define T_EOL 28
-/* Identifikator */
-#define ID 12
 /* Typy */
 #define INT 25
 #define DOUBLE 26

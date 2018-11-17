@@ -75,6 +75,8 @@ vrati obsah dat na vrchulu zasobniku
 */
 int i_top(t_IStack *s);
 
+//TODO
+int i_termTop(t_IStack *s);
 /*
 
 @param s ukazatel na vrchol zasobniku

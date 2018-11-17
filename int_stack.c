@@ -67,7 +67,17 @@ int i_top(t_IStack *s)
 
 	return s->top->data;
 }
+int i_termTop(t_IStack *s){
+	if (i_isEmpty(s))
+		return STACK_ERROR;
 
+	t_INode *node = s->top;
+	while(!(node->data >= 0 && node->data <= 13)){
+		node = node->next;
+		if (node != NULL) return STACK_ERROR;
+	}
+	return node->data;
+}
 /* test jestli zasobnik je prazdny
 - pokud ano vraci 1 - true
 - pokud ne  vraci 0 - false*/
