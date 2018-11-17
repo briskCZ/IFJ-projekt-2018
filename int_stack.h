@@ -77,6 +77,9 @@ int i_top(t_IStack *s);
 
 //TODO
 int i_termTop(t_IStack *s);
+
+//TODO
+int i_termTopPush(t_IStack *s, int val);
 /*
 
 @param s ukazatel na vrchol zasobniku

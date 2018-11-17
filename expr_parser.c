@@ -13,50 +13,59 @@
 int isEnd(int val){
     return (val == DO || val == THEN || val == T_EOL || val == T_EOF) ? PT_END_INDEX : 0;
 }
-int checkRule(t_IStack stack){
+
+
+int checkRule(t_IStack *s){
     int elem1, elem2, elem3;
-    elem1 = i_topPop(&stack);
-    printf("DEBUG: TU: |e1 %d\n", elem1);
-    if (elem1 == ID){
+
+    elem1 = i_topPop(s);
+    if (elem1 == ID)
         return R_ID;
-    }else{
-        elem2 = i_topPop(&stack);
-        elem3 = i_topPop(&stack);
-        if (elem1 == RIGHT_PAR && elem2 == PT_E_RULE && elem3 == LEFT_PAR){
-            return R_PAR;
-        }else if (elem1 == PT_E_RULE && elem3 == PT_E_RULE){
-            printf("DEBUG: TU: |e1 %d |e2 %d |e3 %d\n", elem1, elem2, elem3);
-            switch (elem2){
-                case PLUS:
-                    return R_PLUS;
-                case MINUS:
-                    return R_MINUS;
-                case MUL:
-                    return R_MUL;
-                case DIV:
-                    return R_DIV;
-                case LESS:
-                    return R_LESS;
-                case MORE:
-                    return R_MORE;
-                case LESS_EQ:
-                    return R_LESSEQ;
-                case MORE_EQ:
-                    return R_MOREEQ;
-                case EQ_REL:
-                    return R_EQ;
-                case NOT_EQ:
-                    return R_NEQ;
-                default:
-                    fprintf(stderr, "Syntactic error 1\n");
-                    return ERROR_SYNTAX;
-            }
-        }else{
-            fprintf(stderr, "Syntactic error 2\n");
-            return ERROR_SYNTAX;
+
+    elem2 = i_topPop(s);
+    elem3 = i_topPop(s);
+    if (elem1 == RIGHT_PAR && elem2 == PT_E_RULE && elem3 == LEFT_PAR)
+        return R_PAR;
+    else if (elem1 == PT_E_RULE && elem3 == PT_E_RULE)
+    {
+        switch (elem2)
+        {
+            case PLUS:
+                return R_PLUS;
+            case MINUS:
+                return R_MINUS;
+            case MUL:
+                return R_MUL;
+            case DIV:
+                return R_DIV;
+            case ID:
+                return R_ID;
+            case LESS:
+                return R_LESS;
+            case MORE:
+                return R_MORE;
+            case LESS_EQ:
+                return R_LESSEQ;
+            case MORE_EQ:
+                return R_MOREEQ;
+            case EQ_REL:
+                return R_EQ;
+            case NOT_EQ:
+                return R_NEQ;
+            default:
+                fprintf(stderr, "ERROR1: checkRule\n");
+                return ERROR_SYNTAX;
+
         }
     }
+    else
+    {
+        fprintf(stderr, "ERROR2: checkRule\n");
+        return ERROR_SYNTAX;
+    }
 }
+
+
 int exprParse(){
     int prec_table[PT_SIZE][PT_SIZE] = {
         {PT_R, PT_R, PT_L, PT_L, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
@@ -72,51 +81,75 @@ int exprParse(){
         {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_E, PT_L, PT_X},
         {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
         {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X, PT_L, PT_L, PT_X}
+        {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
     };
-    t_IStack stack = i_stackInit();
-    int error, a;
-    t_Token b = getNextToken(&error);
-    if (error == ERROR_LEX) return ERROR_LEX;
-    i_push(&stack, PT_END_INDEX);
+    int error, r, b;
 
-    do{
-        a = i_termTop(&stack);
-        switch (prec_table[a][b.type]){
-            // =
+    t_IStack s = i_stackInit();
+    i_push(&s, PT_END_INDEX);
+
+
+    t_Token b_token = getNextToken(&error);
+    if (error == ERROR_LEX) return ERROR_LEX;
+
+
+    do {
+        int a = i_termTop(&s);
+        b = b_token.type;
+
+        fprintf(stderr, "[%d, %d]\n", a, b);
+        switch (prec_table[a][b])
+        {
             case PT_E:
-                fprintf(stderr, "DEBUG: PT_E\n");
-                i_push(&stack, b.type);
-                b = getNextToken(&error);
+            fprintf(stderr, "PT_E\n");
+                i_push(&s, b);
+                b_token = getNextToken(&error);
                 if (error == ERROR_LEX) return ERROR_LEX;
                 break;
-            // <
-            case PT_L:
-                fprintf(stderr, "DEBUG: PT_L\n");
-                i_push(&stack, PT_L);
-                i_push(&stack, b.type);
-                i_display(&stack);
-                b = getNextToken(&error);
-                if (error == ERROR_LEX) return ERROR_LEX;
-            break;
-            case PT_R:
-            {
-                int rule = checkRule(stack);
-                printf(" DEBUG: RULE: %d\n", rule);
-                if (rule == ERROR_SYNTAX || i_topPop(&stack) != PT_L) return ERROR_SYNTAX;
-                i_push(&stack, PT_E_RULE);
-            }
-            break;
-            case PT_X:
-                fprintf(stderr, "Error precedencni analyzy\n");
-                return ERROR_SYNTAX;
-            break;
-        }
 
-        i_display(&stack);
-        printf("B: %d\n", isEnd(b.type));
-    }while(!(isEnd(i_termTop(&stack)) && isEnd(b.type)));
-    i_stackDestroy(&stack);
+            case PT_L:
+                fprintf(stderr, "PT_L\n");
+                // int a = i_topPop(&s);
+                // i_push(&s, PT_L);
+                // i_push(&s, a);
+
+                fprintf(stderr, "b: "); i_display(&s);
+                i_termTopPush(&s, PT_L);
+                fprintf(stderr, "a: "); i_display(&s);
+
+
+                i_push(&s, b);
+                b_token = getNextToken(&error);
+                if (error == ERROR_LEX) return ERROR_LEX;
+                break;
+
+            case PT_R:
+                fprintf(stderr, "PT_R\n");
+                r = checkRule(&s);
+                if (r)
+                {
+                    if (i_topPop(&s) == PT_L)
+                    {
+                        i_push(&s, PT_E_RULE);
+                        fprintf(stderr, "------- R: %d\n", r);
+                    }
+                }
+                else
+                {
+                    fprintf(stderr, "SYN1 ERROR\n");
+                    return ERROR_SYNTAX;
+                }
+                break;
+            default:
+                fprintf(stderr, "SYN2 ERROR\n");
+                return ERROR_SYNTAX;
+        }
+        i_display(&s);
+        printf("i_termTop: %d\n", i_termTop(&s));
+    } while(!isEnd(b) || !isEnd(i_termTop(&s)));
+
+
+    i_stackDestroy(&s);
 }
 int main(){
 

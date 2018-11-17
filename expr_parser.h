@@ -22,7 +22,7 @@
 #define PT_E_RULE 103
 
 
-int checkRule(t_IStack stack);
+int checkRule(t_IStack *stack);
 int isEnd(int val);
 int exprParse();
 

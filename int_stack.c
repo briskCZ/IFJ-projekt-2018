@@ -74,10 +74,42 @@ int i_termTop(t_IStack *s){
 	t_INode *node = s->top;
 	while(!(node->data >= 0 && node->data <= 13)){
 		node = node->next;
-		if (node != NULL) return STACK_ERROR;
+		if (node == NULL) return STACK_ERROR;
 	}
 	return node->data;
 }
+
+int i_termTopPush(t_IStack *s, int val){
+	if (i_isEmpty(s))
+		return STACK_ERROR;
+
+	t_INode *new = malloc(sizeof(t_INode));
+	//TODO
+	new->data = val;
+
+	t_INode *node = s->top;
+	t_INode *prev = NULL;
+	while(!(node->data >= 0 && node->data <= 13)){
+		printf("sf");
+		prev = node;
+		node = node->next;
+		if (node == NULL) return STACK_ERROR;
+	}
+
+	if (prev == NULL)
+	{
+		new->next = s->top;
+		s->top = new;
+	}
+	else
+	{
+		new->next = node;
+		prev->next = new;
+	}
+
+	return node->data;
+}
+
 /* test jestli zasobnik je prazdny
 - pokud ano vraci 1 - true
 - pokud ne  vraci 0 - false*/
@@ -91,7 +123,7 @@ void i_display(t_IStack *s)
 {
     t_IStack temp;
     temp = *s;
-    fprintf(stderr, "TOP");
+    fprintf(stderr, "TOP: ");
     while (!i_isEmpty(&temp))
     {
         fprintf(stderr, "%d |", temp.top->data);
