@@ -11,7 +11,7 @@
 #include "expr_parser.h"
 
 int isEnd(int val){
-    return (val == DO || val == THEN || val == T_EOL || val == T_EOF) ? PT_END_INDEX : 0;
+    return (val == T_DO || val == T_THEN || val == T_EOL || val == PT_END) ? 1 : 0;
 }
 
 
@@ -19,38 +19,38 @@ int checkRule(t_IStack *s){
     int elem1, elem2, elem3;
 
     elem1 = i_topPop(s);
-    if (elem1 == ID)
+    if (elem1 == T_ID)
         return R_ID;
 
     elem2 = i_topPop(s);
     elem3 = i_topPop(s);
-    if (elem1 == RIGHT_PAR && elem2 == PT_E_RULE && elem3 == LEFT_PAR)
+    if (elem1 == T_RIGHT_PAR && elem2 == PT_E_RULE && elem3 == T_LEFT_PAR)
         return R_PAR;
     else if (elem1 == PT_E_RULE && elem3 == PT_E_RULE)
     {
         switch (elem2)
         {
-            case PLUS:
+            case T_PLUS:
                 return R_PLUS;
-            case MINUS:
+            case T_MINUS:
                 return R_MINUS;
-            case MUL:
+            case T_MUL:
                 return R_MUL;
-            case DIV:
+            case T_DIV:
                 return R_DIV;
-            case ID:
+            case T_ID:
                 return R_ID;
-            case LESS:
+            case T_LESS:
                 return R_LESS;
-            case MORE:
+            case T_MORE:
                 return R_MORE;
-            case LESS_EQ:
+            case T_LESS_EQ:
                 return R_LESSEQ;
-            case MORE_EQ:
+            case T_MORE_EQ:
                 return R_MOREEQ;
-            case EQ_REL:
+            case T_EQ_REL:
                 return R_EQ;
-            case NOT_EQ:
+            case T_NOT_EQ:
                 return R_NEQ;
             default:
                 fprintf(stderr, "ERROR1: checkRule\n");
@@ -65,28 +65,69 @@ int checkRule(t_IStack *s){
     }
 }
 
-
+int tokenToIndex(int type){
+    switch (type){
+        case T_PLUS:
+        case T_MINUS:
+            return 0;
+        case T_MUL:
+        case T_DIV:
+            return 1;
+        case T_LESS:
+        case T_LESS_EQ:
+        case T_MORE:
+        case T_MORE_EQ:
+        case T_EQ_REL:
+        case T_NOT_EQ:
+            return 2;
+        case T_LEFT_PAR:
+            return 3;
+        case T_RIGHT_PAR:
+            return 4;
+        case T_STRING:
+        case T_DOUBLE:
+        case T_INT:
+        case T_ID:
+            return 5;
+        case T_EOL:
+        case PT_END:
+        case T_DO:
+        case T_THEN:
+            return 6;
+        default:
+            return -1;
+    }
+}
 int exprParse(){
+    // int prec_table[PT_SIZE][PT_SIZE] = {
+    //     {PT_R, PT_R, PT_L, PT_L, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_R, PT_R, PT_L, PT_L, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
+    //     {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_E, PT_L, PT_X},
+    //     {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
+    //     {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
+    //     {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
+    // };
     int prec_table[PT_SIZE][PT_SIZE] = {
-        {PT_R, PT_R, PT_L, PT_L, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
-        {PT_R, PT_R, PT_L, PT_L, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
-        {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
-        {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_E, PT_L, PT_X},
-        {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
-        {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
-        {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
+        {PT_R, PT_L, PT_R, PT_L, PT_R, PT_L, PT_R},
+        {PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
+        {PT_L, PT_L, PT_X, PT_L, PT_R, PT_L, PT_R},
+        {PT_L, PT_L, PT_L, PT_L, PT_E, PT_L, PT_X},
+        {PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
+        {PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
+        {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
     };
     int error, r, b;
 
     t_IStack s = i_stackInit();
-    i_push(&s, PT_END_INDEX);
+    i_push(&s, PT_END);
 
 
     t_Token b_token = getNextToken(&error);
@@ -97,8 +138,8 @@ int exprParse(){
         int a = i_termTop(&s);
         b = b_token.type;
 
-        fprintf(stderr, "[%d, %d]\n", a, b);
-        switch (prec_table[a][b])
+        fprintf(stderr, "[%d, %d] || [%d, %d]\n", a, b, tokenToIndex(a), tokenToIndex(b));
+        switch (prec_table[tokenToIndex(a)][tokenToIndex(b)])
         {
             case PT_E:
             fprintf(stderr, "PT_E\n");
@@ -145,7 +186,8 @@ int exprParse(){
                 return ERROR_SYNTAX;
         }
         i_display(&s);
-        printf("i_termTop: %d\n", i_termTop(&s));
+        fprintf(stderr,"i_termTop: %d\n", i_termTop(&s));
+        fprintf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s)));
     } while(!isEnd(b) || !isEnd(i_termTop(&s)));
 
 

@@ -72,6 +72,7 @@ int i_termTop(t_IStack *s){
 		return STACK_ERROR;
 
 	t_INode *node = s->top;
+	//tokeny 0 az 13
 	while(!(node->data >= 0 && node->data <= 13)){
 		node = node->next;
 		if (node == NULL) return STACK_ERROR;
@@ -89,8 +90,8 @@ int i_termTopPush(t_IStack *s, int val){
 
 	t_INode *node = s->top;
 	t_INode *prev = NULL;
+	//tokeny 0 az 13
 	while(!(node->data >= 0 && node->data <= 13)){
-		printf("sf");
 		prev = node;
 		node = node->next;
 		if (node == NULL) return STACK_ERROR;

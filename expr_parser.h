@@ -7,18 +7,20 @@
  *  Popis souboru:
  *  Hlavickovy soubor k precedencni analyze vyrazu
 */
+#ifndef EXPR_H
+#define EXPR_H
 
 #include "string.h"
 #include "ret_vals.h"
 #include "int_stack.h"
 #include "scanner.h"
 
-#define PT_SIZE 14
+#define PT_SIZE 7
 #define PT_X 102
 #define PT_R 101
 #define PT_E 100
 #define PT_L -100
-#define PT_END_INDEX 13
+#define PT_END 13 //musi byt vetsi nez 12 moznych tokenu co muzou prijit
 #define PT_E_RULE 103
 
 
@@ -40,3 +42,5 @@ typedef enum{
     R_EQ,
     R_NEQ
 } expr_rules;
+
+#endif

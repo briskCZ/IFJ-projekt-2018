@@ -75,25 +75,25 @@ t_Token getNextToken(int *error){
                 }else if (symbol == '"'){
                     state = S_STRING;
                 }else if (symbol == '*'){
-                    sc_token.type = MUL; stringClear(&sc_token.attr);
+                    sc_token.type = T_MUL; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == '/'){
-                    sc_token.type = DIV; stringClear(&sc_token.attr);
+                    sc_token.type = T_DIV; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == '+'){
-                    sc_token.type = PLUS; stringClear(&sc_token.attr);
+                    sc_token.type = T_PLUS; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == '-'){
-                    sc_token.type = MINUS; stringClear(&sc_token.attr);
+                    sc_token.type = T_MINUS; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == '('){
-                    sc_token.type = LEFT_PAR; stringClear(&sc_token.attr);
+                    sc_token.type = T_LEFT_PAR; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == ')'){
-                    sc_token.type = RIGHT_PAR; stringClear(&sc_token.attr);
+                    sc_token.type = T_RIGHT_PAR; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == ','){
-                    sc_token.type = COMMA; stringClear(&sc_token.attr);
+                    sc_token.type = T_COMMA; stringClear(&sc_token.attr);
                     return sc_token;
                 }else{
                     *error = ERROR_LEX;
@@ -112,7 +112,7 @@ t_Token getNextToken(int *error){
 
             case S_EQUALS: // =, ==
                 if (symbol == '='){
-                    sc_token.type = EQ_REL;
+                    sc_token.type = T_EQ_REL;
                     return sc_token;
                 }else{
                      if (sc_uab){
@@ -120,7 +120,7 @@ t_Token getNextToken(int *error){
                      }else{
                          ungetc(symbol, stdin);
                      }
-                    sc_token.type = ASSIGNMENT;
+                    sc_token.type = T_ASSIGNMENT;
                     return sc_token;
                 }
                 break;
@@ -155,22 +155,22 @@ t_Token getNextToken(int *error){
                     strAdc(&sc_buffer, symbol);
                     //DEBUGstringPrint(&sc_buffer);
                     state = S_ID_KW;
-                    if (stringCompareConst(&sc_buffer, "def") == 0){ sc_token.type = DEF; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "do") == 0){ sc_token.type = DO; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "else") == 0){ sc_token.type = ELSE; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "end") == 0){ sc_token.type = END; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "if") == 0){ sc_token.type = IF; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "not") == 0){ sc_token.type = NOT; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "nil") == 0){ sc_token.type = NIL; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "then") == 0){ sc_token.type = THEN; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "while") == 0){ sc_token.type = WHILE; return sc_token;}
+                    if (stringCompareConst(&sc_buffer, "def") == 0){ sc_token.type = T_DEF; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "do") == 0){ sc_token.type = T_DO; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "else") == 0){ sc_token.type = T_ELSE; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "end") == 0){ sc_token.type = T_END; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "if") == 0){ sc_token.type = T_IF; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "not") == 0){ sc_token.type = T_NOT; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "nil") == 0){ sc_token.type = T_NIL; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "then") == 0){ sc_token.type = T_THEN; return sc_token;}
+                    else if (stringCompareConst(&sc_buffer, "while") == 0){ sc_token.type = T_WHILE; return sc_token;}
                 }else if (symbol == '?' || symbol == '!'){
                     strAdc(&sc_buffer, symbol);
-                    sc_token.type = ID; strCopy(&sc_token.attr, &sc_buffer);
+                    sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else{
                     ungetc(symbol, stdin);
-                    sc_token.type = ID; strCopy(&sc_token.attr, &sc_buffer);
+                    sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }
                 break;
@@ -178,10 +178,10 @@ t_Token getNextToken(int *error){
             case S_LESS:    // <, <=
                 stringClear(&sc_token.attr);
                 if (symbol == '='){
-                    sc_token.type = LESS_EQ;
+                    sc_token.type = T_LESS_EQ;
                     return sc_token;
                 }else{
-                    sc_token.type = LESS;
+                    sc_token.type = T_LESS;
                     ungetc(symbol, stdin);
                     return sc_token;
                 }
@@ -190,10 +190,10 @@ t_Token getNextToken(int *error){
             case S_MORE:    // >, >=
                 stringClear(&sc_token.attr);
                 if (symbol == '='){
-                    sc_token.type = MORE_EQ;
+                    sc_token.type = T_MORE_EQ;
                     return sc_token;
                 }else{
-                    sc_token.type = MORE;
+                    sc_token.type = T_MORE;
                     ungetc(symbol, stdin);
                     return sc_token;
                 }
@@ -201,7 +201,7 @@ t_Token getNextToken(int *error){
 
             case S_NOT_EQ: //!=
                 if (symbol == '='){
-                    sc_token.type = NOT_EQ;
+                    sc_token.type = T_NOT_EQ;
                     stringClear(&sc_token.attr);
                     return sc_token;
                 }else{
@@ -214,7 +214,7 @@ t_Token getNextToken(int *error){
 
             case S_STRING: //"string"
                 if (symbol == '"'){
-                    sc_token.type = STR; strCopy(&sc_token.attr, &sc_buffer);
+                    sc_token.type = T_STRING; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else if (symbol > 31 && symbol != '\\'){ //znaky vetsi nez ascii 31
                     strAdc(&sc_buffer, symbol);
@@ -281,7 +281,7 @@ t_Token getNextToken(int *error){
                     strAdc(&sc_buffer, symbol);
                     state = S_INT;
                 }else if (isNumberEnding(symbol) && digit_zc <= 1){
-                    sc_token.type = INT; strCopy(&sc_token.attr, &sc_buffer);
+                    sc_token.type = T_INT; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else if (isNumberEnding(symbol) && digit_zc > 1){  //maximum nul pred cislem
                     fprintf(stderr, "ERROR_LEX: Too many 0s in whole number part, line: %d.\n", sc_line_cnt);
@@ -312,7 +312,7 @@ t_Token getNextToken(int *error){
                     double_sad = 0;
                 }else if (isNumberEnding(symbol)){
                     if(strtol(stringGet(&sc_buffer), NULL, 10) <= INT_MAX){
-                        sc_token.type = INT; strCopy(&sc_token.attr, &sc_buffer);
+                        sc_token.type = T_INT; strCopy(&sc_token.attr, &sc_buffer);
                         return sc_token;
                     }else{
                         fprintf(stderr, "ERROR_LEX: Number limit!, line: %d.\n", sc_line_cnt);
@@ -360,7 +360,7 @@ t_Token getNextToken(int *error){
                     strAdc(&sc_buffer, symbol);
                     state = S_EXPONENT;
                 }else if (isNumberEnding(symbol) && digits_ae >= 1  ){
-                    sc_token.type = DOUBLE;
+                    sc_token.type = T_DOUBLE;
                     strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else{
@@ -383,7 +383,7 @@ t_Token getNextToken(int *error){
                     strAdc(&sc_buffer, symbol);
                     state = S_EXPONENT;
                 }else if (isNumberEnding(symbol) && double_sad >= 1){
-                    sc_token.type = DOUBLE; strCopy(&sc_token.attr, &sc_buffer);
+                    sc_token.type = T_DOUBLE; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else{
                     fprintf(stderr, "ERROR_LEX: Wrong double format!, line: %d.\n", sc_line_cnt);
@@ -486,35 +486,34 @@ int isCmntBegin(){
 void printToken(t_Token t, int error){
     char * type;
     switch (t.type){
-        case NIL: type="NIL"; break;
-        case EQ_REL: type="EQ_REL"; break;
-        case ASSIGNMENT: type = "ASSIGNMENT"; break;
-        case MUL: type = "MUL"; break;
-        case DIV: type = "DIV"; break;
-        case PLUS: type = "PLUS"; break;
-        case MINUS: type = "MINUS"; break;
-        case LEFT_PAR: type = "LEFT_PAR"; break;
-        case RIGHT_PAR: type = "RIGHT_PAR"; break;
-        case LESS: type = "LESS"; break;
-        case MORE: type = "MORE"; break;
-        case LESS_EQ: type = "LESS_EQ"; break;
-        case MORE_EQ: type = "MORE_EQ"; break;
-        case NOT_EQ: type = "NOT_EQ"; break;
-        case STR: type = "STR"; break;
-        case COMMA: type = "COMMA"; break;
-        case DEF: type = "DEF"; break;
-        case DO: type = "DO"; break;
-        case ELSE: type = "ELSE"; break;
-        case END: type = "END"; break;
-        case IF: type = "IF"; break;
-        case NOT: type = "NOT"; break;
-        case THEN: type = "THEN"; break;
-        case WHILE: type = "WHILE"; break;
+        case T_NIL: type="NIL"; break;
+        case T_EQ_REL: type="EQ_REL"; break;
+        case T_ASSIGNMENT: type = "ASSIGNMENT"; break;
+        case T_MUL: type = "MUL"; break;
+        case T_DIV: type = "DIV"; break;
+        case T_PLUS: type = "PLUS"; break;
+        case T_MINUS: type = "MINUS"; break;
+        case T_LEFT_PAR: type = "LEFT_PAR"; break;
+        case T_RIGHT_PAR: type = "RIGHT_PAR"; break;
+        case T_LESS: type = "LESS"; break;
+        case T_MORE: type = "MORE"; break;
+        case T_LESS_EQ: type = "LESS_EQ"; break;
+        case T_MORE_EQ: type = "MORE_EQ"; break;
+        case T_NOT_EQ: type = "NOT_EQ"; break;
+        case T_COMMA: type = "COMMA"; break;
+        case T_DEF: type = "DEF"; break;
+        case T_DO: type = "DO"; break;
+        case T_ELSE: type = "ELSE"; break;
+        case T_END: type = "END"; break;
+        case T_IF: type = "IF"; break;
+        case T_NOT: type = "NOT"; break;
+        case T_THEN: type = "THEN"; break;
+        case T_WHILE: type = "WHILE"; break;
         case T_EOF: type = "EOF"; break;
-        case ID: type = "ID"; break;
-        case INT: type = "INT"; break;
-        case DOUBLE: type = "DOUBLE"; break;
-        case STRING: type = "STRING"; break;
+        case T_ID: type = "ID"; break;
+        case T_INT: type = "INT"; break;
+        case T_DOUBLE: type = "DOUBLE"; break;
+        case T_STRING: type = "STRING"; break;
         case T_EOL: type = "EOL"; break;
     }
     fprintf(stderr,"TOKEN: %s | Attr: %s | Error: %d \n", type, stringGet(&t.attr), error);

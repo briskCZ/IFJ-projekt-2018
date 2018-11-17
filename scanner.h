@@ -20,41 +20,40 @@
 
 /* Definice navratovych hodnot */
 /*BEGIN Pouzivane jako indexy u exprParse*/
-#define PLUS 0      // +
-#define MINUS 1     // -
-#define MUL 2       // *
-#define DIV 3       // /
-#define LESS 4      // <
-#define LESS_EQ 5   // <=
-#define MORE 6      // >
-#define MORE_EQ  7  // >=
-#define EQ_REL 8    // ==
-#define NOT_EQ 9    // !=
-#define LEFT_PAR 10  // (
-#define RIGHT_PAR 11 // )
+#define T_PLUS 0      // +
+#define T_MINUS 1     // -
+#define T_MUL 2       // *
+#define T_DIV 3       // /
+#define T_LESS 4      // <
+#define T_LESS_EQ 5   // <=
+#define T_MORE 6      // >
+#define T_MORE_EQ  7  // >=
+#define T_EQ_REL 8    // ==
+#define T_NOT_EQ 9    // !=
+#define T_LEFT_PAR 10  // (
+#define T_RIGHT_PAR 11 // )
 /* Identifikator */
-#define ID 12
+#define T_ID 12
 /* END */
-#define ASSIGNMENT 24// =
-#define STR 14      // ""
-#define COMMA 15    // ,
+#define T_ASSIGNMENT 13// =
+#define T_COMMA 14    // ,
 /* Klicova slova */
-#define NIL 29
-#define DEF 16
-#define DO 17
-#define ELSE 18
-#define END 19
-#define IF 20
-#define NOT 21
-#define THEN 22
-#define WHILE 23
+#define T_DEF 15
+#define T_DO 16
+#define T_ELSE 17
+#define T_END 18
+#define T_IF 19
+#define T_NOT 20
+#define T_THEN 21
+#define T_WHILE 22
+#define T_NIL 23
 
 #define T_EOF -1
-#define T_EOL 28
+#define T_EOL 27
 /* Typy */
-#define INT 25
-#define DOUBLE 26
-#define STRING 27
+#define T_INT 24
+#define T_DOUBLE 25
+#define T_STRING 26
 
 
 /* Stavy pro konecny automat */
@@ -135,7 +134,7 @@ int isCmntBegin();
 int isCmntEnd(char *sym);
 /*
 Zadost o dalsi token
-@param error - hodnotou predavany error
+@param error - hodnotou predavany error ERROR_INTERNAL / ERROR_LEX
 
 */
 t_Token getNextToken(int *error);

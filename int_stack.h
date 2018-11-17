@@ -17,12 +17,7 @@
 #include "ret_vals.h"
 #include "scanner.h"
 
-// /* data v elementu*/
-// typedef struct
-// {
-// 	t_Token token;
-//
-// } t_Data;
+
 
 /* element v zasobniku */
 typedef struct inode
@@ -105,7 +100,7 @@ vypise obsah zasobniku
 
 @param s ukazatel na vrchol zasobniku
 */
-void display(t_IStack *s);
+void i_display(t_IStack *s);
 
 /*
 vypocita hloubku zasobniku
@@ -113,6 +108,6 @@ vypocita hloubku zasobniku
 @param s ukazatel na vrchol zasobniku
 @return int hloubka zasobniku
 */
-int depth(t_IStack *s);
+int i_depth(t_IStack *s);
 
 #endif //STACK_H
