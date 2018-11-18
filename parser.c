@@ -6,7 +6,7 @@
 int error;
 
 void sec1();
-int sec2();
+void sec2();
 int term(t_Token token);
 int param1();
 
@@ -15,13 +15,16 @@ int param22();
 
 
 int expr(t_Token token){
-		//tady se bude volat vyhodnocování výrazů. vrací OK nebo ERROR;
+	//tady se bude volat vyhodnocování výrazů. vrací OK nebo ERROR;
 	printf("-expr\n");
+	printToken(token, error); //debug
+	//printToken(token, error); //debug
 	if(token.type == NIL){
 		return OK;
 	}else{
 		printf("EXPR error expr expected on line: %d\n", sc_line_cnt);
-		return(ERROR);
+		//return(ERROR);
+		exit(1);
 	}
 }
 
@@ -65,6 +68,7 @@ void id_eval(){
 
 void code(t_Token token){
     printf("-code\n");
+	//printToken(token, error); //debug
 	if(token.type == ID){
 		printf("-prirazeni \n");
 		id_eval();
@@ -77,17 +81,24 @@ void code(t_Token token){
 			if (token.type == THEN){
 				printf("-if THEN\n");
 				token = getNextToken(&error);
+				printToken(token, error); //debug
 				if(token.type == T_EOL){
-					if (sec2()==T_EOL){
+					sec2();
+					token = getNextToken(&error);
+					if (token.type == T_EOL){
+						printToken(token, error); //debug
 						sec1();
 						printf("IF succesfull on line: %d\n", sc_line_cnt);
 						return;
-					}else{
-						printf("IF error EOL expected on line: %d\n", sc_line_cnt);
+					}
+					else if (token.type == ELSE){
+						printf("-if ELSE\n");
 						return;
 					}
+					
 				}else{
-					printf("IF error EOL expected on line: %d\n", sc_line_cnt);
+					printToken(token, error); //debug
+					printf("IF error1 EOL expected on line: %d\n", sc_line_cnt);
 					return;
 				}
 			}else{
@@ -104,6 +115,7 @@ void code(t_Token token){
 		if(expr(getNextToken(&error))==OK){
 			token = getNextToken(&error);
 			if(token.type == DO){
+				printf("-while DO\n");
 				token = getNextToken(&error);
 				if(token.type == T_EOL){
 					sec1();
@@ -117,7 +129,6 @@ void code(t_Token token){
 				printf("WHILE error DO expected on line: %d\n", sc_line_cnt);
 				return;
 			}
-			
 		}else{
 			printf("WHILE error expr expected on line: %d\n", sc_line_cnt);
 			return;
@@ -126,33 +137,42 @@ void code(t_Token token){
 		return;
 	}
 	else{
-		expr(token);//FIX ME
-		return;
+		if (expr(token)==OK){
+			return;
+		}else{
+			printf("EXPR error expr on line: %d\n", sc_line_cnt);
+		}
+		
 	}
 }
 
 void sec1(){
 	printf("-sec1\n");
     t_Token token = getNextToken(&error);
+	printToken(token, error); //debug
 	if(token.type == END){
 		printf("-sec1 END\n");
         return;
 	}else{
-		code(getNextToken(&error));
+		code(token);
+		printf("-sec1 return z code\n");
+		printToken(token, error); //debug
 		return;
 	}
 }
 
-int sec2(){
+void sec2(){
 	printf("-sec2\n");
     t_Token token = getNextToken(&error);
+	printToken(token, error); //debug
 	if(token.type == ELSE){
 		printf("-sec2 ELSE\n");
-        token = getNextToken(&error); 
-        return token.type; // mel by vratit EOL
+        return;
 	}else{
-		code(getNextToken(&error));
-		return 0; //FIX ME
+		code(token);
+		printf("-sec2 return z code\n");
+		printToken(token, error); //debug
+		return;
 	}
 }
 
@@ -168,7 +188,7 @@ int term(t_Token token){
 int param11(){
     printf("-param11\n");
     t_Token token = getNextToken(&error);
-    //printToken(token, error);
+    //printToken(token, error); //debug
     if (token.type == RIGHT_PAR){
         //vrat dalsi, mozna eol
         token = getNextToken(&error);
