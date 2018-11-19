@@ -12,6 +12,10 @@
 #include "scanner.h"
 
 t_Token getNextToken(int *error){
+    if (sc_usingMemToken == 1){
+        sc_usingMemToken = 0;
+        return sc_mem_token;
+    }
     *error = SUCCESS;
     stringClear(&sc_buffer);
     stringClear(&sc_token.attr);
@@ -517,4 +521,16 @@ void printToken(t_Token t, int error){
         case T_EOL: type = "EOL"; break;
     }
     fprintf(stderr,"TOKEN: %s | Attr: %s | Error: %d \n", type, stringGet(&t.attr), error);
+}
+
+int returnToken(t_Token token){
+    if (sc_usingMemToken == 1) return MEMORY_ERROR;
+    sc_usingMemToken = 1;
+    sc_mem_token = token;
+    return SUCCESS;
+}
+t_Token getPrintNextToken(int *error){
+    t_Token token = getNextToken(error);
+    printToken(token, *error);
+    return token;
 }

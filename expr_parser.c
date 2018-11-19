@@ -19,7 +19,7 @@ int checkRule(t_IStack *s){
     int elem1, elem2, elem3;
 
     elem1 = i_topPop(s);
-    if (elem1 == T_ID)
+    if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING)
         return R_ID;
 
     elem2 = i_topPop(s);
@@ -98,23 +98,8 @@ int tokenToIndex(int type){
             return -1;
     }
 }
-int exprParse(){
-    // int prec_table[PT_SIZE][PT_SIZE] = {
-    //     {PT_R, PT_R, PT_L, PT_L, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_R, PT_R, PT_L, PT_L, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_L, PT_L, PT_L, PT_L, PT_X, PT_X, PT_X, PT_X, PT_X, PT_X, PT_L, PT_R, PT_L, PT_R},
-    //     {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_E, PT_L, PT_X},
-    //     {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
-    //     {PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
-    //     {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
-    // };
+void exprParse(t_Token *t, t_Token *tb){
+    /* Precedencni tabulka */
     int prec_table[PT_SIZE][PT_SIZE] = {
         {PT_R, PT_L, PT_R, PT_L, PT_R, PT_L, PT_R},
         {PT_R, PT_R, PT_R, PT_L, PT_R, PT_L, PT_R},
@@ -125,99 +110,82 @@ int exprParse(){
         {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
     };
     int error, r, b;
-
     t_IStack s = i_stackInit();
+    //vlozeni koncoveho symbolu na zasobnik
     i_push(&s, PT_END);
-
-
-    t_Token b_token = getNextToken(&error);
-    if (error == ERROR_LEX) return ERROR_LEX;
-
-
+    //aktualni token na vstupu
+    t_Token b_token = *t;
+    if (error == ERROR_LEX) exit(ERROR_LEX);
+    /* Algoritmus z prednasky*/
     do {
+        //terminal z vrcholu
         int a = i_termTop(&s);
         b = b_token.type;
-
-        fprintf(stderr, "[%d, %d] || [%d, %d]\n", a, b, tokenToIndex(a), tokenToIndex(b));
+        //fprintf(stderr, "[%d, %d] || [%d, %d]\n", a, b, tokenToIndex(a), tokenToIndex(b));
         switch (prec_table[tokenToIndex(a)][tokenToIndex(b)])
         {
             case PT_E:
-            fprintf(stderr, "PT_E\n");
+            //fprintf(stderr, "PT_E\n");
                 i_push(&s, b);
-                b_token = getNextToken(&error);
-                if (error == ERROR_LEX) return ERROR_LEX;
+                if (tb == NULL){
+                    b_token = getNextToken(&error);
+                }else{
+                    b_token = *tb;
+                    tb = NULL;
+                }
+                if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
 
             case PT_L:
-                fprintf(stderr, "PT_L\n");
-                // int a = i_topPop(&s);
-                // i_push(&s, PT_L);
-                // i_push(&s, a);
-
-                fprintf(stderr, "b: "); i_display(&s);
+                //fprintf(stderr, "PT_L\n");
+                //fprintf(stderr, "b: "); i_display(&s);
                 i_termTopPush(&s, PT_L);
-                fprintf(stderr, "a: "); i_display(&s);
-
-
+                //fprintf(stderr, "a: "); i_display(&s);
                 i_push(&s, b);
-                b_token = getNextToken(&error);
-                if (error == ERROR_LEX) return ERROR_LEX;
+                if (tb == NULL){
+                    b_token = getNextToken(&error);
+                }else{
+                    b_token = *tb;
+                    tb = NULL;
+                }
+                if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
 
             case PT_R:
-                fprintf(stderr, "PT_R\n");
+                //fprintf(stderr, "PT_R\n");
                 r = checkRule(&s);
                 if (r)
                 {
                     if (i_topPop(&s) == PT_L)
                     {
                         i_push(&s, PT_E_RULE);
-                        fprintf(stderr, "------- R: %d\n", r);
+                        fprintf(stderr, "expr_parser: RULE: %d\n", r);
                     }
                 }
                 else
                 {
-                    fprintf(stderr, "SYN1 ERROR\n");
-                    return ERROR_SYNTAX;
+                    fprintf(stderr, "EXPR: SYN1 ERROR\n");
+                    exit(ERROR_SYNTAX);
                 }
                 break;
             default:
-                fprintf(stderr, "SYN2 ERROR\n");
-                return ERROR_SYNTAX;
+                fprintf(stderr, "EXPR: SYN2 ERROR\n");
+                exit(ERROR_SYNTAX);
         }
-        i_display(&s);
-        fprintf(stderr,"i_termTop: %d\n", i_termTop(&s));
-        fprintf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s)));
+        //i_display(&s);
+        //fprintf(stderr,"i_termTop: %d\n", i_termTop(&s));
+        //printf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s)));
     } while(!isEnd(b) || !isEnd(i_termTop(&s)));
-
-
+    *t = b_token;
     i_stackDestroy(&s);
 }
-int main(){
+/*int main(){
 
-    /*scannerInit();
-    t_IStack s = i_stackInit();
-    t_Token token;
-    do {
-        int error;
-        token = getNextToken(&error);
-        i_push(&s, token.type);
-        printToken(token, error);
-    } while (token.type != T_EOF);
-
-    i_display(&s);
-    scannerClean();
-    i_stackDestroy(&s);
-    */
+    int error;
     scannerInit();
-    exprParse();
+    t_Token t = getPrintNextToken(&error);
+    t_Token b = getPrintNextToken(&error);
+    exprParse(&t, &b);
     scannerClean();
-    /*
-    t_IStack s = i_stackInit();
-    for (int i = 0; i < 100; i++){
-        i_push(&s, i);
-    }
-    i_display(&s);
-    i_stackDestroy(&s);
-    */
-}
+
+}*/
