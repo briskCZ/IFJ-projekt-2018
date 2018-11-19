@@ -42,6 +42,10 @@ t_Token getNextToken(int *error){
                 sc_abi = 0;
                 stringClear(&sc_aux_buffer);    }
         }
+        if (symbol == '\n'){
+            sc_line_cnt++;
+        }
+        //fprintf(stderr, "Symbol: %d line: %d\n", symbol, sc_line_cnt);
         //printf("DEBUG: S: %d |SYM: %d | UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
         if (symbol == EOF){
             sc_token.type = T_EOF;
@@ -53,7 +57,6 @@ t_Token getNextToken(int *error){
                     if ((symbol == '\n' || sc_line_cnt == 0) && isCmntBegin()){
                         state = S_BLOCK_COMMENT;
                     }else if (symbol == '\n'){
-                        sc_line_cnt++;
                         sc_token.type = T_EOL;
                         return sc_token;
                     }else{
@@ -130,6 +133,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
+                fprintf(stderr, "#comment\n");
                 if (symbol == '=' && isCmntEnd(&symbol)){
                     //pokud symbol po end byl \n
                     if (symbol == '\n'){
@@ -469,7 +473,7 @@ int isCmntBegin(){
     for (int i = 0; i < cmnt_start_length; i++){
         c = getc(stdin);
         stringAddChar(&sc_aux_buffer, c);
-        //printf("DEBUG: C: %c | i: %d\n", c, i);
+        //printf("DEBUG: C: %d | i: %d\n", c, i);
         if (c != cmnt_start[i]){
 
             sc_uab = 1;

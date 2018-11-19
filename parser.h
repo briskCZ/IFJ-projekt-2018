@@ -19,7 +19,7 @@ void param1();
 void param11();
 void param2();
 void param22();
-void assign();
+void assign(t_Token left, t_Token assign);
 void f_call(t_Token ta, t_Token tb);
 void term(t_Token token);
 int isNextEol();

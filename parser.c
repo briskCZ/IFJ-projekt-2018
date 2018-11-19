@@ -20,7 +20,7 @@
 
 //int ERROR = 0;
 
-void assign(){
+void assign(t_Token left, t_Token assign){
     P("--assign");
     t_Token ta, tb;
     int error;
@@ -69,6 +69,7 @@ void assign(){
 void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
     P("--fcall");
+    //printf("--fcall funkce: %s\n", stringGet(&ta.attr));
     switch (tb.type){
         case T_LEFT_PAR:
             param1();
@@ -166,7 +167,7 @@ void sec1(){
     if (token.type != T_END){
         code(token);
         sec1();
-        // token = getPrintNextToken(&error);
+        // token = getNextToken(&error);
         // CHECK_ERROR(error);
     }
     else if (token.type == T_END){
@@ -257,12 +258,13 @@ void code(t_Token token){
         case T_ID:
             /* TODO dalsi prace s tabulkou symbolu*/
             {
+            P("--potrebuju dalsi token");
             t_Token tb = getNextToken(&error);
             CHECK_ERROR(error);
             switch (tb.type){
                 case T_ASSIGNMENT:
                 /* ID = */
-                assign();
+                assign(token, tb);
                     break;
                 /* ID -> volani funkce */
                 case T_ID:
@@ -272,6 +274,7 @@ void code(t_Token token){
                 case T_STRING:
                 case T_EOL:
                     // volani funkce
+                    printToken(token, 0);
                     f_call(token, tb);
                     break;
                 /* random vyraz */
@@ -343,9 +346,15 @@ void program(){
 }
 
 int main(){
+    ungetc('\n', stdin);
     scannerInit();
     //inicializace globalni tabulky symbolu
-    program();
+    //program();
+    t_Token token;
+    do{
+        int error;
+        token = getPrintNextToken(&error);
+    }while(token.type != T_EOF);
     scannerClean();
     return SUCCESS;
 }
