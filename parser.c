@@ -23,10 +23,11 @@
 void assign(t_Token left, t_Token assign){
     P("--assign");
     t_Token ta, tb;
-    int error;
+    int error = 0;
     ta = getNextToken(&error);
     CHECK_ERROR(error);
     /* ID = ID */
+    fprintf(stderr, "!!!assign: %s =\n", ta.attr.val);
     if (ta.type == T_ID){
         tb = getNextToken(&error);
         CHECK_ERROR(error);
@@ -55,8 +56,7 @@ void assign(t_Token left, t_Token assign){
             case T_EQ_REL:
             case T_NOT_EQ:
                 /* expr */
-                exprParse(&ta, &tb);
-                returnToken(ta);
+                returnToken(exprParse(ta, tb, 1));
                 break;
             default:
             PRINT_SYNTAX_ERROR("Function call or expression");
@@ -69,7 +69,7 @@ void assign(t_Token left, t_Token assign){
 void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
     P("--fcall");
-    //printf("--fcall funkce: %s\n", stringGet(&ta.attr));
+    fprintf(stderr, "!!!f_call: %s =\n", ta.attr.val);
     switch (tb.type){
         case T_LEFT_PAR:
             param1();
@@ -90,7 +90,7 @@ void f_call(t_Token ta, t_Token tb){
 }
 void param1(){
     P("--param1");
-    int error;
+    int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     if (token.type == T_RIGHT_PAR){
@@ -103,7 +103,7 @@ void param1(){
 }
 void param11(){
     P("--param11");
-    int error;
+    int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     if (token.type == T_COMMA){
@@ -121,7 +121,7 @@ void param11(){
 
 void param2(){
     P("--param2");
-    int error;
+    int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     if (token.type == T_EOL){
@@ -133,7 +133,7 @@ void param2(){
 }
 void param22(){
     P("--param22");
-    int error;
+    int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     if (token.type == T_COMMA){
@@ -161,7 +161,7 @@ void term(t_Token token){
 }
 void sec1(){
     P("--sec1");
-    int error;
+    int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     if (token.type != T_END){
@@ -180,7 +180,7 @@ void sec1(){
 }
 void sec2(){
     P("--sec2");
-    int error;
+    int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     if (token.type != T_ELSE){
@@ -203,22 +203,23 @@ void sec2(){
     }
 }
 int isNextEol(){
-    int error;
+    int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     return (token.type == T_EOL) ? 1 : 0;
 }
 void code(t_Token token){
     P("--code");
-    int error;
+    int error = 0;
     switch (token.type){
         case T_IF:
             /* IF */
             P("--IF");
             token = getNextToken(&error);
             CHECK_ERROR(error);
-            exprParse(&token, NULL);
+            token = exprParse(token, token, 0);
             if (token.type == T_THEN){
+                P("--then");
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
                 if (token.type == T_EOL){
@@ -235,7 +236,7 @@ void code(t_Token token){
             P("--WHILE");
             token = getNextToken(&error);
             CHECK_ERROR(error);
-            exprParse(&token, NULL);
+            token = exprParse(token, token, 0);
             if (token.type == T_DO){
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
@@ -252,8 +253,7 @@ void code(t_Token token){
         case T_INT:
         case T_DOUBLE:
         case T_STRING:
-            exprParse(&token, NULL);
-            returnToken(token);
+            returnToken(exprParse(token, token, 0));
             break;
         case T_ID:
             /* TODO dalsi prace s tabulkou symbolu*/
@@ -272,9 +272,8 @@ void code(t_Token token){
                 case T_DOUBLE:
                 case T_INT:
                 case T_STRING:
-                case T_EOL:
+                //case T_EOL:
                     // volani funkce
-                    printToken(token, 0);
                     f_call(token, tb);
                     break;
                 /* random vyraz */
@@ -289,8 +288,7 @@ void code(t_Token token){
                 case T_EQ_REL:
                 case T_NOT_EQ:
                     /* expr */
-                    exprParse(&token, &tb);
-                    returnToken(token);
+                    returnToken(exprParse(token, tb, 1));
                     break;
                 default:
                     PRINT_SYNTAX_ERROR("Function call, assignment or expression");
@@ -302,7 +300,7 @@ void code(t_Token token){
 
 void program(){
     P("--program");
-    int error;
+    int error = 0;
     t_Token token = getNextToken(&error);
     //printToken(token, 0);
     CHECK_ERROR(error);
@@ -349,12 +347,12 @@ int main(){
     ungetc('\n', stdin);
     scannerInit();
     //inicializace globalni tabulky symbolu
-    //program();
-    t_Token token;
-    do{
-        int error;
-        token = getPrintNextToken(&error);
-    }while(token.type != T_EOF);
+    program();
+    // t_Token token;
+    // do{
+    //     int error;
+    //     token = getPrintNextToken(&error);
+    // }while(token.type != T_EOF);
     scannerClean();
     return SUCCESS;
 }

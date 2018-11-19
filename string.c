@@ -73,7 +73,7 @@ int stringInsert(string *s, char *str){
 }
 
 int stringCopy(string *sa, string *sb){
-    if (sb->allocated_size > sa->allocated_size){
+    if (sb->allocated_size > sa->allocated_size + 1){
         sa->val = realloc(sa->val, sb->allocated_size * sizeof(char));
         if (sa->val == NULL){
             return MEMORY_ERROR;

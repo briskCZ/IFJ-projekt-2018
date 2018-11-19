@@ -13,6 +13,8 @@
 
 t_Token getNextToken(int *error){
     if (sc_usingMemToken == 1){
+        fprintf(stderr, "token\n");
+        printToken(sc_mem_token, 0);
         sc_usingMemToken = 0;
         return sc_mem_token;
     }
@@ -531,6 +533,7 @@ int returnToken(t_Token token){
     if (sc_usingMemToken == 1) return MEMORY_ERROR;
     sc_usingMemToken = 1;
     sc_mem_token = token;
+    fprintf(stderr, "tusu\n");
     return SUCCESS;
 }
 t_Token getPrintNextToken(int *error){

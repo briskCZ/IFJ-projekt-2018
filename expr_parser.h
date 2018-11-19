@@ -26,7 +26,7 @@
 
 int checkRule(t_IStack *stack);
 int isEnd(int val);
-void exprParse(t_Token *t, t_Token *tb);
+t_Token exprParse(t_Token t, t_Token tb, int usingTb);
 
 typedef enum{
     R_PLUS = 200,

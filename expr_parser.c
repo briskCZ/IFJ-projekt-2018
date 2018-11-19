@@ -98,7 +98,7 @@ int tokenToIndex(int type){
             return -1;
     }
 }
-void exprParse(t_Token *t, t_Token *tb){
+t_Token exprParse(t_Token t, t_Token tb, int usingTb){
     /* Precedencni tabulka */
     int prec_table[PT_SIZE][PT_SIZE] = {
         {PT_R, PT_L, PT_R, PT_L, PT_R, PT_L, PT_R},
@@ -109,12 +109,12 @@ void exprParse(t_Token *t, t_Token *tb){
         {PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
         {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
     };
-    int error, r, b;
+    int error = 0, r, b;
     t_IStack s = i_stackInit();
     //vlozeni koncoveho symbolu na zasobnik
     i_push(&s, PT_END);
     //aktualni token na vstupu
-    t_Token b_token = *t;
+    t_Token b_token = t;
     if (error == ERROR_LEX) exit(ERROR_LEX);
     /* Algoritmus z prednasky*/
     do {
@@ -127,11 +127,12 @@ void exprParse(t_Token *t, t_Token *tb){
             case PT_E:
             //fprintf(stderr, "PT_E\n");
                 i_push(&s, b);
-                if (tb == NULL){
-                    b_token = getNextToken(&error);
+                if (usingTb == 1){
+                    b_token = tb;
+                    usingTb = 0;
                 }else{
-                    b_token = *tb;
-                    tb = NULL;
+                    b_token = getNextToken(&error);
+                    //CHECK_ERROR(error);
                 }
                 if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
@@ -142,11 +143,12 @@ void exprParse(t_Token *t, t_Token *tb){
                 i_termTopPush(&s, PT_L);
                 //fprintf(stderr, "a: "); i_display(&s);
                 i_push(&s, b);
-                if (tb == NULL){
-                    b_token = getNextToken(&error);
+                if (usingTb == 1){
+                    b_token = tb;
+                    usingTb = 0;
                 }else{
-                    b_token = *tb;
-                    tb = NULL;
+                    b_token = getNextToken(&error);
+                    //CHECK_ERROR(error);
                 }
                 if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
@@ -176,8 +178,8 @@ void exprParse(t_Token *t, t_Token *tb){
         //fprintf(stderr,"i_termTop: %d\n", i_termTop(&s));
         //printf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s)));
     } while(!isEnd(b) || !isEnd(i_termTop(&s)));
-    *t = b_token;
     i_stackDestroy(&s);
+    return b_token;
 }
 /*int main(){
 
