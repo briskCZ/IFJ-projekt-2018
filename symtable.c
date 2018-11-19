@@ -13,13 +13,6 @@
 //hlavicky lokalnich funkcich
 
 /*
-Prevede string na ciselnou hodnotu
-@param str - vstupni string
-@return unsigned long ciselna hodnota, ktera reprezentuje vstupni string
-*/
-unsigned hash(string *s);
-
-/*
 Vytvori uzel z dat tokenu
 @param t - token
 @return tNode inicializovany ukazatel
@@ -63,17 +56,16 @@ void tableDestroy(t_symTable *t)
  - pokud nalezne vrati ukazatel na danou polozku v tabulce, pokud ne tak NULL  */
 t_Node* tableSearchToken(t_symTable *table, t_Token token)
 {
-	int key = hash(&token.attr);	
 	t_Node *temp = table->root;	
-
 	while (temp != NULL)
 	{
-		if (temp->data->key >= key)
+		if (stringCompare(temp->data->name, &token.attr) == 0)
 		{
-			if (stringCompare(temp->data->s, &token.attr)) //muze nastat kolize
-				return temp; //pokud se rovna i ve stringu tak jsem ho nalezli
-			else
-				temp = temp->right;
+			return temp;
+		}
+		else if ( stringCompare(temp->data->name, &token.attr) > 0)
+		{
+			temp = temp->right;
 		}
 		else
 		{
@@ -87,14 +79,15 @@ t_Node* tableSearchToken(t_symTable *table, t_Token token)
 - pokud token neni nalezen tak se vytvori 
 - v opacnem pripade se hodnoty prepisi(aktualizuji)
 */
-void tableInsertToken(t_symTable *table, t_Token token)
+int tableInsertToken(t_symTable *table, t_Token token)
 {
+	printf("t: %s\n", token.attr.val);
 	t_Node *find;
 	if ((find = tableSearchToken(table, token)) == NULL)
 	{
 		t_Node *new;
 		if ((new = createNode(token)) == NULL)
-			return ; // TODO
+			return MEMORY_ERROR;
 
 		if (table->root == NULL) //first
 			table->root = new;
@@ -103,7 +96,7 @@ void tableInsertToken(t_symTable *table, t_Token token)
 			t_Node *temp = table->root;
 			while (temp!= NULL)
 			{
-				if (temp->data->key < new->data->key)
+				if (stringCompare(temp->data->name, new->data->name) < 0)
 				{
 					if (temp->right == NULL)
 					{
@@ -129,32 +122,20 @@ void tableInsertToken(t_symTable *table, t_Token token)
 		//prepsani hodnot
 		;//stringInsert(find->data->s, token.attr.val); 
 	}
+
+	return MEMORY_OK;
 }
 
 
 
 /* ---- lokalnich funkce ---- */
 
-unsigned hash(string *str)
-{
-	unsigned key = 0;
-	int len = stringGetLength(str);
-	char *chr = stringGet(str);
-		
-	for(int i = 0; i < len; i++)
-	{
-		key += (i+1) * (int)chr[i];
-	}
-		
-	return key;
-}
-
 //Vytvori uzel z dat tokenu
 t_Node* createNode(t_Token token)
 {
 	t_Node *new = malloc(sizeof(t_Node));
 	if (new == NULL)
-		return  NULL;
+		return NULL;
 	
 	new->left = new->right = NULL;
 	
@@ -164,18 +145,25 @@ t_Node* createNode(t_Token token)
 		free(new);
 		return NULL;
 	}
+	new->data->local_symTable = malloc(sizeof(t_symTable));
+	if (new->data->local_symTable == NULL)
+	{
+		free(new->data);
+		free(new);
+		return NULL;
+	}
+	new->data->local_symTable->root = NULL;
 
-	new->data->s = malloc(sizeof(string));
-	if (new->data->s == NULL)
+	new->data->name = malloc(sizeof(string));
+	if (new->data->name == NULL)
 	{
 		free(new->data);
 		free(new);
 		return NULL;
 	}
 
-	new->data->key = hash(&token.attr);
-	stringInit(new->data->s);
-	stringInsert(new->data->s, token.attr.val); //TEST 
+	stringInit(new->data->name);
+	stringInsert(new->data->name, token.attr.val); //TEST 
 
 	return new;
 }
@@ -183,8 +171,8 @@ t_Node* createNode(t_Token token)
 //Uvolni uzel (zrusi)
 void deleteNode(t_Node *n)
 {
-	stringFree(n->data->s);
-	free(n->data->s);
+	stringFree(n->data->name);
+	free(n->data->name);
 	free(n->data);
 	free(n);
 }

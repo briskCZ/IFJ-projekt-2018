@@ -17,13 +17,17 @@
 #include "string.h"
 #include "scanner.h"
 
+typedef struct table t_symTable;
+
 /* data uzlu*/
 typedef struct
 {
-	int key; // klic
-	string *s; // retezec
-	//???
-	//??? TODO
+	int is_var; //0 - funkce, jinak promenna
+	string *name; // identifikator promenne
+	int data_type; // datovy typ
+	int defined;
+	int global; // 0 lokalni, jinak globalni
+	t_symTable *local_symTable; //lokalni tabulka symbolu
 
 } t_Data;
 
@@ -37,11 +41,11 @@ typedef struct node
 } t_Node;
 
 /* tabulka */
-typedef struct 
+struct table 
 {
 	t_Node *root; //pocatek tabulky
 
-} t_symTable;
+};
 
 /*
 
@@ -56,7 +60,7 @@ void tableDestroy(t_symTable *t);
 /*
 
 */
-void tableInsertToken(t_symTable *table, t_Token token);
+int tableInsertToken(t_symTable *table, t_Token token);
 
 /*
 
