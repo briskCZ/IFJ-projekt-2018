@@ -200,7 +200,7 @@ void exprParse(t_Token *t, t_Token *tb){
 }
 
 
-int main(){
+/*int main(){
 
     int error;
     scannerInit();
@@ -209,4 +209,4 @@ int main(){
     exprParse(&t, &b);
     scannerClean();
 
-}
+}*/
