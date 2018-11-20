@@ -10,6 +10,7 @@
 
 #include "expr_parser.h"
 #include "scanner.h"
+#include "trash.h"
 
 void code(t_Token token);
 void sec1();

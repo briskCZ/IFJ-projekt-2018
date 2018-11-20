@@ -13,15 +13,18 @@
 
 t_Token getNextToken(int *error){
     if (sc_usingMemToken == 1){
-        fprintf(stderr, "token\n");
         printToken(sc_mem_token, 0);
         sc_usingMemToken = 0;
         return sc_mem_token;
     }
+    t_Token sc_token;
+    stringInit(&sc_token.attr);
+    trashStoreMem(sc_token.attr.val);
+
+
     *error = SUCCESS;
     stringClear(&sc_buffer);
     stringClear(&sc_token.attr);
-
     char symbol = 0;
     //int sc_abi = 0;
     int double_sad = 0;         //symbolu zateckou v double
@@ -439,15 +442,17 @@ int scannerInit(){
     sc_abi = 0;
     sc_line_cnt = 0;
     int ret_val = stringInit(&sc_buffer);
-    ret_val += stringInit(&sc_token.attr);
     ret_val += stringInit(&sc_aux_buffer);
+    ret_val += stringInit(&sc_mem_token.attr);
+    // ret_val += stringInit(&sc_token.attr);
     return (ret_val == 0) ? SUCCESS : ERROR_INTERNAL;
 }
 
 void scannerClean(){
-    stringFree(&sc_token.attr);
+    //stringFree(&sc_token.attr);
     stringFree(&sc_buffer);
     stringFree(&sc_aux_buffer);
+    stringFree(&sc_mem_token.attr);
 }
 
 int isCmntEnd(char *sym){
@@ -533,7 +538,6 @@ int returnToken(t_Token token){
     if (sc_usingMemToken == 1) return MEMORY_ERROR;
     sc_usingMemToken = 1;
     sc_mem_token = token;
-    fprintf(stderr, "tusu\n");
     return SUCCESS;
 }
 t_Token getPrintNextToken(int *error){

@@ -23,7 +23,9 @@ int stringInit(string *s){
 
 //Frees dynamic memory used by string
 void stringFree(string *s){
-    free(s->val);
+    if (s != NULL){
+        free(s->val);
+    }
 }
 
 //vrati znak na zacatek stringu s
@@ -73,7 +75,7 @@ int stringInsert(string *s, char *str){
 }
 
 int stringCopy(string *sa, string *sb){
-    if (sb->allocated_size > sa->allocated_size + 1){
+    if (sb->allocated_size > sa->allocated_size){
         sa->val = realloc(sa->val, sb->allocated_size * sizeof(char));
         if (sa->val == NULL){
             return MEMORY_ERROR;

@@ -20,14 +20,13 @@
 
 //int ERROR = 0;
 
-void assign(t_Token left, t_Token assign){
+void assign(t_Token left, t_Token ass){
     P("--assign");
     t_Token ta, tb;
     int error = 0;
     ta = getNextToken(&error);
     CHECK_ERROR(error);
     /* ID = ID */
-    fprintf(stderr, "!!!assign: %s =\n", ta.attr.val);
     if (ta.type == T_ID){
         tb = getNextToken(&error);
         CHECK_ERROR(error);
@@ -43,6 +42,7 @@ void assign(t_Token left, t_Token assign){
             case T_INT:
             case T_STRING:
                 // volani funkce
+                //fprintf(stderr, "L: %s, ASS: %s, R: %s, P1: %s\n", left.attr.val, ass.type, ta.attr.val, tb.attr);
                 f_call(ta, tb);
                 break;
             case T_PLUS:
@@ -264,6 +264,10 @@ void code(t_Token token){
             switch (tb.type){
                 case T_ASSIGNMENT:
                 /* ID = */
+                P("--predprdel");
+                printToken(token, 99);
+                printToken(token, 99);
+
                 assign(token, tb);
                     break;
                 /* ID -> volani funkce */
@@ -272,8 +276,10 @@ void code(t_Token token){
                 case T_DOUBLE:
                 case T_INT:
                 case T_STRING:
-                //case T_EOL:
+                case T_EOL:
                     // volani funkce
+                    P("TOKEN U VOLANI FCE CODe");
+                    printToken(token, error);
                     f_call(token, tb);
                     break;
                 /* random vyraz */
@@ -351,8 +357,9 @@ int main(){
     // t_Token token;
     // do{
     //     int error;
-    //     token = getPrintNextToken(&error);
+    //     token = getNextToken(&error);
     // }while(token.type != T_EOF);
     scannerClean();
+    trashFreeAll();
     return SUCCESS;
 }

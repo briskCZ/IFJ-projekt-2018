@@ -14,6 +14,7 @@
 #include <limits.h>
 #include "string.h"
 #include "ret_vals.h"
+#include "trash.h"
 
 #ifndef SCANNER_H
 #define SCANNER_H
@@ -86,13 +87,11 @@ typedef struct {
 
 /* Globalni promenne */
 
-t_Token sc_token;  //token, ktery bude vracen
 string sc_buffer;  //buffer pro identifikatory a kw
 string sc_aux_buffer; //pomocny buffer pro blokove komentare a hexa cisla
 int sc_uab;   //zda pouzivat pomocny buffer
 int sc_abi; //index v pomocnem bufferu
 int sc_line_cnt; //radek v souboru
-
 t_Token sc_mem_token; //vraceny token
 int sc_usingMemToken;
 
