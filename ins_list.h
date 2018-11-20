@@ -5,6 +5,83 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+//define instrukci pro generovani kodu
+#define INS_MOVE 0
+#define INS_CREATEFRAME 1
+#define INS_PUSHFRAME 2
+#define INS_POPFRAME 3
+#define INS_DEFVAR 4
+#define INS_CALL 5
+#define INS_RETURN 6
+
+#define INS_PUSHS 7
+#define INS_POPS 8
+#define INS_CLEARS 9
+
+#define INS_ADD 10
+#define INS_SUB 11
+#define INS_MUL 12
+#define INS_DIV 13
+#define INS_IDIV 14
+
+#define INS_ADDS 15
+#define INS_SUBS 16
+#define INS_MULS 17
+#define INS_DIVS 18
+#define INS_IDIVS 19
+
+#define INS_LT 20
+#define INS_GT 21
+#define INS_EQ 22
+
+#define INS_LTS 23
+#define INS_GTS 24
+#define INS_EQS 25
+
+#define INS_AND 26
+#define INS_OR 27
+#define INS_NOT 28
+
+#define INS_ANDS 29
+#define INS_ORS 30
+#define INS_NOTS 31
+
+#define INS_INT2FLOAT 32
+#define INS_FLOAT2INT 33
+#define INS_INT2CHAR 34
+#define INS_STRI2INT 35
+
+#define INS_INT2FLOATS 36
+#define INS_FLOAT2INTS 37
+#define INS_INT2CHARS 38
+#define INS_STRI2INTS 39
+
+#define INS_READ 40
+#define INS_WRITE 41
+
+#define INS_CONCAT 42
+#define INS_STRLEN 43
+#define INS_GETCHAR 44
+#define INS_SETCHAR 45
+
+#define INS_TYPE 46
+
+#define INS_LABEL 47
+#define INS_JUMP 48
+#define INS_JUMPIFEQ 49
+#define INS_JUMPIFNEQ 50
+#define INS_JUMPIFEQS 51
+#define INS_JUMPIFNEQS 52
+
+#define INS_EXIT 53
+
+#define INS_BREAK 54
+#define INS_DPRINT 55
+
+
+
+
+
 typedef struct{
 	int ins_type;
 	void *adr1;
