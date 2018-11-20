@@ -122,6 +122,7 @@ void param11(){
         token = getNextToken(&error);
         CHECK_ERROR(error);
         if (token.type == T_EOL){
+            returnToken(token);
             return;
         }else{
             PRINT_SYNTAX_ERROR("EOL after PARAM");
@@ -178,6 +179,8 @@ void sec1(){
     CHECK_ERROR(error);
     if (token.type == T_EOF){
         PRINT_SYNTAX_ERROR("END");
+    }else if (token.type == T_DEF){
+        PRINT_SYNTAX_ERROR("DEF not");
     }else if (token.type == T_END){
         return;
     }else if (token.type != T_EOL){
@@ -201,7 +204,8 @@ void sec2(){
         }else{
             PRINT_SYNTAX_ERROR("EOL after ELSE");
         }
-    //pokud token neni else
+    }else if (token.type == T_DEF){
+        PRINT_SYNTAX_ERROR("DEF not");
     }else if (token.type != T_EOF){
         code(token);
         sec2();
@@ -301,8 +305,7 @@ void code(t_Token token){
             }
             break;
         }
-        //case T_EOL: P("--EOL") break;
-        //default: PRINT_SYNTAX_ERROR("SPECIAL");
+        case T_EOL:break;
     }
 }
 
@@ -327,6 +330,11 @@ void program(){
                 CHECK_ERROR(error);
                 if (token.type == T_LEFT_PAR){
                     param1();
+                    token = getNextToken(&error);
+                    CHECK_ERROR(error);
+                    if (token.type != T_EOL){
+                        PRINT_SYNTAX_ERROR("EOL")
+                    }
                     sec1();
                     program();
                 }else{
