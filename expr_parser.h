@@ -24,23 +24,23 @@
 #define PT_E_RULE 103
 #define NON_TYPE -104
 
-int checkRule(t_IStack *stack);
+int checkRule(t_IStack *stack, int *type);
 int isEnd(int val);
 void exprParse(t_Token *t, t_Token *tb);
 
 typedef enum{
     R_PLUS = 200,
-    R_MINUS,
-    R_MUL,
-    R_DIV,
-    R_PAR,
-    R_ID,
-    R_LESS,
-    R_MORE,
-    R_LESSEQ,
-    R_MOREEQ,
-    R_EQ,
-    R_NEQ
+    R_MINUS = 201,
+    R_MUL = 202,
+    R_DIV = 203,
+    R_PAR = 204,
+    R_ID = 205,
+    R_LESS = 206,
+    R_MORE = 207,
+    R_LESSEQ = 208,
+    R_MOREEQ = 209,
+    R_EQ = 210,
+    R_NEQ = 211
 } expr_rules;
 
 #endif

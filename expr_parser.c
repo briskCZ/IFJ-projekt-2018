@@ -14,29 +14,40 @@ int isEnd(int val){
     return (val == T_DO || val == T_THEN || val == T_EOL || val == PT_END) ? 1 : 0;
 }
 
+int resultType(int t1, int t2)
+{
+	if (t1 == t2)
+		return t1;
+	else if ((t1 == T_INT || t1 == T_DOUBLE) && (t2 == T_INT || t2 == T_DOUBLE))
+		return T_DOUBLE;
+	else 
+		return ERROR_SEM_COMPATIBILITY;
 
-int checkRule(t_IStack *s, int *type;){
-    t_IData *elem1, *elem2, *elem3;
+}
 
-    elem1 = i_topPop(s);
-    if (elem1->sym == T_ID || elem1->sym == T_DOUBLE || elem1->sym == T_INT || elem1->sym == T_STRING)
-    {
-		*type = elem1->type;
+int checkRule(t_IStack *s, int *type){
+    int elem1, elem2, elem3;
+	int type1, type2, type3;
+	
+    elem1 = i_topPop(s, &type1);
+    if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING)
+	{
+		*type = type1;
 		return R_ID;
 	}
 	
-    elem2 = i_topPop(s);
-    elem3 = i_topPop(s);
-    if (elem1->sym == T_RIGHT_PAR && elem2->sym == PT_E_RULE && elem3->sym == T_LEFT_PAR)
-    {    
-		*type = elem2->type;
+    elem2 = i_topPop(s, &type2);
+    elem3 = i_topPop(s, &type3);
+    if (elem1 == T_RIGHT_PAR && elem2 == PT_E_RULE && elem3 == T_LEFT_PAR)
+	{
+		*type = type2;
 		return R_PAR;
 	}
-	else if (elem1->sym == PT_E_RULE && elem3->sym == PT_E_RULE)
+    else if (elem1 == PT_E_RULE && elem3 == PT_E_RULE)
     {
-		//kontrola typu
-		*type = elem1->type; //TODO
-        switch (elem2->sym)
+		//konverze typu
+		*type = resultType(type1, type3); //TODO
+        switch (elem2)
         {
             case T_PLUS:
                 return R_PLUS;
@@ -117,7 +128,7 @@ void exprParse(t_Token *t, t_Token *tb){
         {PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
         {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
     };
-    int error, r, b;
+    int error, r, b, type, temp;
     t_IStack s = i_stackInit();
     //vlozeni koncoveho symbolu na zasobnik
     i_push(&s, PT_END, NON_TYPE);
@@ -127,15 +138,14 @@ void exprParse(t_Token *t, t_Token *tb){
     /* Algoritmus z prednasky*/
     do {
         //terminal z vrcholu
-		t_IData *data = i_termTop(&s);
-        int a = data->sym;
+        int a = i_termTop(&s, &type);
         b = b_token.type;
-        //fprintf(stderr, "[%d, %d] || [%d, %d]\n", a, b, tokenToIndex(a), tokenToIndex(b));
+        fprintf(stderr, "[%d, %d] || [%d, %d]\n", a, b, tokenToIndex(a), tokenToIndex(b));
         switch (prec_table[tokenToIndex(a)][tokenToIndex(b)])
         {
             case PT_E:
-            //fprintf(stderr, "PT_E\n");
-                i_push(&s, b, b); //TODO malloc
+            fprintf(stderr, "PT_E\n");
+                i_push(&s, b, b); //u T_ID nezname typ, musime se podivat do tabulky symbolu
                 if (tb == NULL){
                     b_token = getNextToken(&error);
                 }else{
@@ -146,11 +156,11 @@ void exprParse(t_Token *t, t_Token *tb){
                 break;
 
             case PT_L:
-                //fprintf(stderr, "PT_L\n");
-                //fprintf(stderr, "b: "); i_display(&s);
-                i_termTopPush(&s, PT_L); //TODO malloc
-                //fprintf(stderr, "a: "); i_display(&s);
-                i_push(&s, b, b); //TODO malloc
+                fprintf(stderr, "PT_L\n");
+                fprintf(stderr, "b: "); i_display(&s);
+                i_termTopPush(&s, PT_L, NON_TYPE);
+                fprintf(stderr, "a: "); i_display(&s);
+                i_push(&s, b, b); //TODO
                 if (tb == NULL){
                     b_token = getNextToken(&error);
                 }else{
@@ -161,16 +171,14 @@ void exprParse(t_Token *t, t_Token *tb){
                 break;
 
             case PT_R:
-                //fprintf(stderr, "PT_R\n");
-				int type;
+                fprintf(stderr, "PT_R\n");
                 r = checkRule(&s, &type);
-                if (r)
+                if (r != ERROR_SYNTAX)
                 {
-					t_IData *temp = i_topPop(&s); 
-                    if (temp->sym == PT_L)
+                    if (i_topPop(&s, &temp) == PT_L)
                     {
-                        i_push(&s, PT_E_RULE, type); //TODO malloc
-                        fprintf(stderr, "expr_parser: RULE: %d\n", r);
+                        i_push(&s, PT_E_RULE, type);
+                        fprintf(stderr, "expr_parser: RULE: %d | %d\n", r, type);
                     }
                 }
                 else
@@ -183,14 +191,16 @@ void exprParse(t_Token *t, t_Token *tb){
                 fprintf(stderr, "EXPR: SYN2 ERROR\n");
                 exit(ERROR_SYNTAX);
         }
-        //i_display(&s);
-        //fprintf(stderr,"i_termTop: %d\n", i_termTop(&s));
-        //printf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s)));
-    } while(!isEnd(b) || !isEnd(i_termTop(&s)));
+        i_display(&s);
+        fprintf(stderr,"i_termTop: %d\n", i_termTop(&s, &temp));
+        fprintf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s, &temp)));
+    } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));
     *t = b_token;
     i_stackDestroy(&s);
 }
-/*int main(){
+
+
+int main(){
 
     int error;
     scannerInit();
@@ -199,4 +209,4 @@ void exprParse(t_Token *t, t_Token *tb){
     exprParse(&t, &b);
     scannerClean();
 
-}*/
+}
