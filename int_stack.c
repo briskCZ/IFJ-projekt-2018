@@ -33,16 +33,9 @@ int i_push(t_IStack *s, int sym, int type)
     if (node == NULL)
        return MEMORY_ERROR;
 
-	t_IData *data = malloc(sizeof(t_IData));
-	if (data == NULL)
-	{
-		free(node);
-		return MEMORY_ERROR;
-	}
 
-    node->data->sym = sym;
-	node->data->type = type;
-	
+    node->sym = sym;
+	node->type = type;
 	node->next = s->top;
     s->top = node;
 
@@ -57,64 +50,63 @@ void i_pop(t_IStack *s)
 
 	t_INode *node = s->top;
 	s->top = s->top->next;
-	
-	free(node->data);
 	free(node);
 }
 //vrati a odstrani hodnotu z vrcholu zasobniku
-t_IData *i_topPop(t_IStack *s)
+int i_topPop(t_IStack *s, int *type)
 {
-    t_IData *data = i_top(s);
+    int sym = i_top(s, type);
     i_pop(s);
-    return data;
+    return sym;
 }
 
 // vrati data z vrcholu zasobniku
-t_IData *i_top(t_IStack *s)
+int i_top(t_IStack *s, int *type)
 {
 	if (i_isEmpty(s))
 		return STACK_ERROR;
 
-	return s->top->data;
+	*type = s->top->type;
+	return s->top->sym;
 }
-
-// vrati data termu
-t_IData *i_termTop(t_IStack *s){
-	if (i_isEmpty(s))
-		return NULL;
-
-	t_INode *node = s->top;
-	//tokeny 0 az 13
-	while(!(node->data >= 0 && node->data <= 13)){
-		node = node->next;
-		if (node == NULL) return NULL;
-	}
-	return node->data;
-}
-
-//vlozi data pred term
- int i_termTopPush(t_IStack *s, int sym, int type){
+int i_termTop(t_IStack *s, int *type){
 	if (i_isEmpty(s))
 		return STACK_ERROR;
 
-	t_INode *node = malloc(sizeof(t_INode));
-    if (node == NULL)
-       return MEMORY_ERROR;
-
-	t_IData *data = malloc(sizeof(t_IData));
-	if (data == NULL)
+	t_INode *node = s->top;
+	//tokeny 0 az 13
+	//while(!(node->sym >= 0 && node->sym <= 13)  || node->sym != T_INT){
+	while(node->sym < 0 || node->sym > 13)
 	{
-		free(node);
-		return MEMORY_ERROR;
+		if (node->sym == T_INT) //TODO pro double a string
+			break;
+		node = node->next;
+		if (node == NULL) return STACK_ERROR;
 	}
 	
-	new->data->sym = sym;
-	new->data->type = type;
+	*type = node->type;
+	return node->sym;
+}
+
+int i_termTopPush(t_IStack *s, int sym, int type){
+	if (i_isEmpty(s))
+		return STACK_ERROR;
+
+	t_INode *new = malloc(sizeof(t_INode));
+	if (new == NULL) 
+		return MEMORY_ERROR;
+	new->sym = sym;
+	new->type = type;
 
 	t_INode *node = s->top;
 	t_INode *prev = NULL;
+	
+	
 	//tokeny 0 az 13
-	while(!(node->data >= 0 && node->data <= 13)){
+	while(node->sym < 0 || node->sym > 13)
+	{
+		if (node->sym == T_INT) //TODO pro double a string
+			break;
 		prev = node;
 		node = node->next;
 		if (node == NULL) return STACK_ERROR;
@@ -150,7 +142,7 @@ void i_display(t_IStack *s)
     fprintf(stderr, "TOP: ");
     while (!i_isEmpty(&temp))
     {
-        fprintf(stderr, "%d, %d |", temp.top->data->sys, temp.top->data->type);
+        fprintf(stderr, "[%d %d] |", temp.top->sym, temp.top->type);
         temp.top = temp.top->next;
     }
 
