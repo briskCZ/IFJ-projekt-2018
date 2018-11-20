@@ -18,14 +18,23 @@ int resultType(int t1, int t2)
 {
 	if (t1 == t2)
 		return t1;
-	else if ((t1 == T_INT || t1 == T_DOUBLE) && (t2 == T_INT || t2 == T_DOUBLE))
+	else if (t1 == T_INT || t2 == T_DOUBLE)
 	{
 		/*
 		DEFVAR v1
 		INT2FLOAT v1, 
 		
 		*/
+		addInst(INS_DEFVAR, NULL, NULL, NULL); //TODO
+		addInst(INS_INT2FLOAT, NULL, , NULL);
 
+		return T_DOUBLE;
+	}
+	else if (t2 == T_INT || t1 == T_DOUBLE)
+	{
+		addInst(INS_DEFVAR, NULL, NULL, NULL); //TODO
+		addInst(INS_INT2FLOAT, NULL, , NULL);
+		
 		return T_DOUBLE;
 	}
 	else 
@@ -83,14 +92,14 @@ int checkRule(t_IStack *s, int *type){
             case T_NOT_EQ:
                 return R_NEQ;
             default:
-                fprintf(stderr, "ERROR1: checkRule\n");
+                fprintf(stderr, "ERROR1: Syntax error, unexpected symbol\n");
                 return ERROR_SYNTAX;
 
         }
     }
     else
     {
-        fprintf(stderr, "ERROR2: checkRule\n");
+        fprintf(stderr, "ERROR2: Syntax error, unexpected symbol\n"); 
         return ERROR_SYNTAX;
     }
 }
