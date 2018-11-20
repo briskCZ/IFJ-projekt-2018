@@ -14,15 +14,27 @@ int isEnd(int val){
     return (val == T_DO || val == T_THEN || val == T_EOL || val == PT_END) ? 1 : 0;
 }
 
+
+
 int resultType(int t1, int t2)
 {
 	if (t1 == t2)
 		return t1;
 	else if ((t1 == T_INT || t1 == T_DOUBLE) && (t2 == T_INT || t2 == T_DOUBLE))
-		return T_DOUBLE;
-	else 
-		return ERROR_SEM_COMPATIBILITY;
+	{
+		/*
+		DEFVAR v1
+		INT2FLOAT v1, 
+		
+		*/
 
+		return T_DOUBLE;
+	}
+	else 
+	{
+			fprintf(stderr, "ERROR_SEM_COMPATIBILITY\n");
+			exit(ERROR_SEM_COMPATIBILITY);
+	}
 }
 
 int checkRule(t_IStack *s, int *type){
@@ -46,7 +58,7 @@ int checkRule(t_IStack *s, int *type){
     else if (elem1 == PT_E_RULE && elem3 == PT_E_RULE)
     {
 		//konverze typu
-		*type = resultType(type1, type3); //TODO
+		*type = resultType(type1, type3);
         switch (elem2)
         {
             case T_PLUS:
@@ -140,11 +152,11 @@ void exprParse(t_Token *t, t_Token *tb){
         //terminal z vrcholu
         int a = i_termTop(&s, &type);
         b = b_token.type;
-        fprintf(stderr, "[%d, %d] || [%d, %d]\n", a, b, tokenToIndex(a), tokenToIndex(b));
+        //fprintf(stderr, "[%d, %d] || [%d, %d]\n", a, b, tokenToIndex(a), tokenToIndex(b));
         switch (prec_table[tokenToIndex(a)][tokenToIndex(b)])
         {
             case PT_E:
-            fprintf(stderr, "PT_E\n");
+            //fprintf(stderr, "PT_E\n");
                 i_push(&s, b, b); //u T_ID nezname typ, musime se podivat do tabulky symbolu
                 if (tb == NULL){
                     b_token = getNextToken(&error);
@@ -156,10 +168,10 @@ void exprParse(t_Token *t, t_Token *tb){
                 break;
 
             case PT_L:
-                fprintf(stderr, "PT_L\n");
-                fprintf(stderr, "b: "); i_display(&s);
+                //fprintf(stderr, "PT_L\n");
+                //fprintf(stderr, "b: "); i_display(&s);
                 i_termTopPush(&s, PT_L, NON_TYPE);
-                fprintf(stderr, "a: "); i_display(&s);
+                //fprintf(stderr, "a: "); i_display(&s);
                 i_push(&s, b, b); //TODO
                 if (tb == NULL){
                     b_token = getNextToken(&error);
@@ -171,7 +183,7 @@ void exprParse(t_Token *t, t_Token *tb){
                 break;
 
             case PT_R:
-                fprintf(stderr, "PT_R\n");
+                //fprintf(stderr, "PT_R\n");
                 r = checkRule(&s, &type);
                 if (r != ERROR_SYNTAX)
                 {
@@ -183,24 +195,24 @@ void exprParse(t_Token *t, t_Token *tb){
                 }
                 else
                 {
-                    fprintf(stderr, "EXPR: SYN1 ERROR\n");
+                    //fprintf(stderr, "EXPR: SYN1 ERROR\n");
                     exit(ERROR_SYNTAX);
                 }
                 break;
             default:
-                fprintf(stderr, "EXPR: SYN2 ERROR\n");
+                //fprintf(stderr, "EXPR: SYN2 ERROR\n");
                 exit(ERROR_SYNTAX);
         }
-        i_display(&s);
-        fprintf(stderr,"i_termTop: %d\n", i_termTop(&s, &temp));
-        fprintf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s, &temp)));
+        //i_display(&s);
+        //fprintf(stderr,"i_termTop: %d\n", i_termTop(&s, &temp));
+        //fprintf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s, &temp)));
     } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));
     *t = b_token;
     i_stackDestroy(&s);
 }
 
 
-/*int main(){
+int main(){
 
     int error;
     scannerInit();
@@ -209,4 +221,4 @@ void exprParse(t_Token *t, t_Token *tb){
     exprParse(&t, &b);
     scannerClean();
 
-}*/
+}
