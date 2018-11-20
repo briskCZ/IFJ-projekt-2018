@@ -1,16 +1,24 @@
 #include "ins_list.h"
 
 
-int insertLast(t_Ins ins);
-int insertBeforeActive(t_Ins ins);
+int insertLast(t_Ins *ins);
+int insertBeforeActive(t_Ins *ins);
+
+
+//extern t_InsList *list;
 
 // vytvori list pro instrukce
 // @return t_InsList
-void listInit(){
-	
+int listInit(){
+
+	list = malloc(sizeof(t_InsList));
+	if (list == NULL)
+		return MEMORY_ERROR;
+
 	list->first = NULL;
 	list->act = NULL;
 	list->last = NULL;
+	return MEMORY_OK;
 }
 
 void setActive(t_Elem *elem)
@@ -36,11 +44,11 @@ int addInst(int ins_type, void *adr1, void *adr2, void *adr3, int act)
 	return MEMORY_OK;
 }
 
-int insertLast(t_Ins ins)
+int insertLast(t_Ins *ins)
 {
 	if (list == NULL)
 	{
-		fprintf(stderr, "ERROR: istlist neexistuje\n");
+		fprintf(stderr, "ERROR: inslist neexistuje\n");
 		exit(1);
 	}
 	
@@ -54,7 +62,7 @@ int insertLast(t_Ins ins)
 	
 	if (list->first == NULL || list->last == NULL)
 	{
-		list->first = list->last = list->first ins;
+		list->first = list->last = new;
 	}
 	else //pokud neni list prazdny
 	{
@@ -66,7 +74,7 @@ int insertLast(t_Ins ins)
 }
 
 
-int insertBeforeActive(t_Ins ins)
+int insertBeforeActive(t_Ins *ins)
 {
 	if (list->act == NULL)
 	{
@@ -86,20 +94,41 @@ int insertBeforeActive(t_Ins ins)
 	{
 		list->act->prev->next = new;
 	}
+	else
+	{
+		list->first = new;
+	}
 	list->act->prev = new;
+
+	return MEMORY_OK;
 }
 
-void rewriteActive(t_Ins *ins)
+void rewriteActive(int ins_type, void *adr1, void *adr2, void *adr3)
 {
 	if (list->act == NULL)
 	{
 		fprintf(stderr, "ERROR: list neni aktivni\n");
 		exit(1);
 	}
-	list->act->ins_type = ins->ins_type;
-	list->act->adr1 = ins->adr1;
-	list->act->adr2 = ins->adr2;
-	list->act->adr3 = ins->adr3;
+
+	list->act->data->ins_type = ins_type;
+	list->act->data->adr1 = adr1;
+	list->act->data->adr2 = adr2;
+	list->act->data->adr3 = adr3;
+}
+
+void deleteFirst()
+{
+	if (list->first == list->act)
+	{
+		list->act = NULL;
+	}
+	t_Elem *temp = list->first;
+	list->first = list->first->next;
+	list->first->prev = NULL;
+
+	free(temp->data);
+	free(temp);
 }
 
 void freeList()
@@ -108,7 +137,22 @@ void freeList()
 	{
 		t_Elem *temp = list->first;
 		list->first = list->first->next;
+		free(temp->data);
 		free(temp);
+		//fprintf(stderr, "a\n");
 	}	
 	list->act = list->last = NULL;
+	free(list);
+}
+
+void printList()
+{
+	t_Elem *temp = list->first;
+	
+	while (temp != NULL)
+	{
+		fprintf(stderr, "%d\n", temp->data->ins_type);
+		
+		temp = temp->next;
+	}
 }
