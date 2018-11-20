@@ -1,7 +1,8 @@
 #include "trash.h"
 #define MAX 100
-char* trashArr[MAX];
+char* trashArr[MAX] = {NULL};
 int t_index = 0;
+t_trashItem *first;
 
 void trashStoreMem(void *val){
     trashArr[t_index] = val;
@@ -9,13 +10,14 @@ void trashStoreMem(void *val){
 }
 void trashFreeAll(){
     for (int i = 0; i <= t_index; i++){
-        free(trashArr[i]);
+        if(trashArr[i] != NULL){
+            free(trashArr[i]);
+        }
     }
 }
-// t_trashItem *first;
-//
-// void trashPrint(){
-// }
+
+void trashPrint(){
+}
 // void trashStoreMem(void * val){
 //     t_trashItem *new = malloc(sizeof(t_trashItem));
 //     if (new == NULL) exit(ERROR_INTERNAL);

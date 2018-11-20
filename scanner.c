@@ -13,7 +13,9 @@
 
 t_Token getNextToken(int *error){
     if (sc_usingMemToken == 1){
-        printToken(sc_mem_token, 0);
+        // printf("TOKEN!!!! POZOR\n");
+        // printToken(sc_mem_token, 0);
+        // printf("KONECTOKEN\n");
         sc_usingMemToken = 0;
         return sc_mem_token;
     }
@@ -47,9 +49,6 @@ t_Token getNextToken(int *error){
                 sc_abi = 0;
                 stringClear(&sc_aux_buffer);    }
         }
-        if (symbol == '\n'){
-            sc_line_cnt++;
-        }
         //fprintf(stderr, "Symbol: %d line: %d\n", symbol, sc_line_cnt);
         //printf("DEBUG: S: %d |SYM: %d | UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
         if (symbol == EOF){
@@ -60,8 +59,11 @@ t_Token getNextToken(int *error){
             case S_START: //vychozi stav, pokud nacte lexem s delkou jedna, vrati hoe
                 if (isspace(symbol)){
                     if ((symbol == '\n' || sc_line_cnt == 0) && isCmntBegin()){
+                        sc_line_cnt++;
                         state = S_BLOCK_COMMENT;
                     }else if (symbol == '\n'){
+                        sc_line_cnt++;
+                        fprintf(stderr,"Line: %d\n", sc_line_cnt);
                         sc_token.type = T_EOL;
                         return sc_token;
                     }else{
@@ -116,6 +118,7 @@ t_Token getNextToken(int *error){
             case S_LINE_COMMENT: // #radkovy komentar
                 //////printf("DEBUG: komentar | znak: %c\n", symbol);
                 if (symbol == '\n'){
+                    sc_line_cnt++;
                     state = S_START;
                 }else{
                     state = S_LINE_COMMENT;
@@ -138,7 +141,6 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
-                fprintf(stderr, "#comment\n");
                 if (symbol == '=' && isCmntEnd(&symbol)){
                     //pokud symbol po end byl \n
                     if (symbol == '\n'){
@@ -441,6 +443,7 @@ int scannerInit(){
     sc_uab = 0;
     sc_abi = 0;
     sc_line_cnt = 0;
+    sc_usingMemToken = 0;
     int ret_val = stringInit(&sc_buffer);
     ret_val += stringInit(&sc_aux_buffer);
     ret_val += stringInit(&sc_mem_token.attr);
@@ -535,7 +538,10 @@ void printToken(t_Token t, int error){
 }
 
 int returnToken(t_Token token){
-    if (sc_usingMemToken == 1) return MEMORY_ERROR;
+    if (sc_usingMemToken == 1){
+        printf("reterr_memory_err\n");
+        return MEMORY_ERROR;
+    }
     sc_usingMemToken = 1;
     sc_mem_token = token;
     return SUCCESS;

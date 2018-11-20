@@ -18,7 +18,7 @@ void sec2();
 void program();
 void param1();
 void param11();
-void param2();
+void param2(t_Token token);
 void param22();
 void assign(t_Token left, t_Token assign);
 void f_call(t_Token ta, t_Token tb);
