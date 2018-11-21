@@ -25,15 +25,15 @@ int resultType(int t1, int t2)
 		INT2FLOAT v1, 
 		
 		*/
-		addInst(INS_DEFVAR, NULL, NULL, NULL); //TODO
-		addInst(INS_INT2FLOAT, NULL, , NULL);
+		//addInst(INS_DEFVAR, NULL, NULL, NULL); //TODO
+		//addInst(INS_INT2FLOAT, NULL, , NULL);
 
 		return T_DOUBLE;
 	}
 	else if (t2 == T_INT || t1 == T_DOUBLE)
 	{
-		addInst(INS_DEFVAR, NULL, NULL, NULL); //TODO
-		addInst(INS_INT2FLOAT, NULL, , NULL);
+		//addInst(INS_DEFVAR, NULL, NULL, NULL); //TODO
+		//addInst(INS_INT2FLOAT, NULL, , NULL);
 		
 		return T_DOUBLE;
 	}
@@ -232,8 +232,8 @@ t_Token exprParse(t_Token t, t_Token tb, int usingTb){
 }
 
 
-
+/*
 int main(){
 
 }
-
+*/
