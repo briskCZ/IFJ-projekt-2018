@@ -71,7 +71,7 @@ t_Token getNextToken(int *error){
                 }else if (symbol == '#'){ //
                     state = S_LINE_COMMENT;
                 }else if (symbol == '='){
-                    if ((sc_line_cnt == 0 || sc_was_eol == 1) && isCmntBegin(symbol)){
+                    if ((sc_line_cnt == 1 || sc_was_eol == 1) && isCmntBegin(symbol)){
                         sc_line_cnt++;
                         state = S_BLOCK_COMMENT;
                     }else{
@@ -484,7 +484,7 @@ int isNumberEnding(char c){
 
 int isKwEnd(){
     char symbol = getc(stdin);
-    if (isspace(symbol)){
+    if (isspace(symbol) || symbol == '#'){
         //pokud bude eol, tak ho musime taky vratit
         if (symbol == '\n'){
             sc_line_cnt++;
@@ -495,6 +495,9 @@ int isKwEnd(){
             trashStoreMem(ret.attr.val);
             returnToken(ret);
 
+        }
+        if (symbol == '#'){
+            ungetc(symbol, stdin);
         }
         return 1;
     }else{
