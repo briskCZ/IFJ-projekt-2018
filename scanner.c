@@ -489,7 +489,6 @@ int isKwEnd(){
             t_Token ret;
             ret.type = T_EOL;
             stringInit(&ret.attr);
-            trashStoreMem(ret.attr.val);
             returnToken(ret);
 
         }

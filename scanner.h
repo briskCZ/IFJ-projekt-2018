@@ -14,7 +14,6 @@
 #include <limits.h>
 #include "string.h"
 #include "ret_vals.h"
-#include "trash.h"
 
 #ifndef SCANNER_H
 #define SCANNER_H
