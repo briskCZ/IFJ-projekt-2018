@@ -18,7 +18,6 @@
 
 #define STR_ALLOC_INC 16    //blok po kterem se ma alokovat pamet pro s->val
 
-
 /* Struktura string */
 typedef struct {
     char *val;              //hodnota stringu

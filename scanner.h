@@ -35,7 +35,7 @@
 #define T_RIGHT_PAR 11 // )
 /* Identifikator */
 #define T_ID 12
-/* END */
+/* END indexy u exprParse */
 #define T_ASSIGNMENT 13// =
 #define T_COMMA 14    // ,
 /* Klicova slova */
@@ -86,12 +86,12 @@ typedef struct {
 } t_Token;
 
 /* Globalni promenne */
+t_Token sc_mem_token; //vraceny token
 string sc_buffer;  //buffer pro identifikatory a kw
 string sc_aux_buffer; //pomocny buffer pro blokove komentare a hexa cisla
 int sc_uab;   //zda pouzivat pomocny buffer
 int sc_abi; //index v pomocnem bufferu
 int sc_line_cnt; //radek v souboru
-t_Token sc_mem_token; //vraceny token
 int sc_using_mem_token; //zda pouzivame vraceny token
 int sc_was_eol; //pokud byl eol
 

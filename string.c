@@ -8,7 +8,6 @@
  *  Implementace funkci pro string
 */
 #include "string.h"
-
 //Inicialization of string structure
 int stringInit(string *s){
     s->val = malloc(STR_ALLOC_INC*sizeof(char));
@@ -23,9 +22,7 @@ int stringInit(string *s){
 
 //Frees dynamic memory used by string
 void stringFree(string *s){
-    if (s != NULL){
-        free(s->val);
-    }
+    free(s->val);
 }
 
 //vrati znak na zacatek stringu s

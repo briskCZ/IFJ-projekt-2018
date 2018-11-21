@@ -21,9 +21,6 @@ t_Token getNextToken(int *error){
     }
     t_Token sc_token;
     stringInit(&sc_token.attr);
-    trashStoreMem(sc_token.attr.val);
-    fprintf(stderr, "StoringCD  token to trash: %p \n", sc_token.attr.val);
-
 
     *error = SUCCESS;
     stringClear(&sc_buffer);
@@ -610,7 +607,6 @@ void printToken(t_Token t, int error){
 
 int returnToken(t_Token token){
     if (sc_using_mem_token == 1){
-        printf("reterr_memory_err\n");
         return MEMORY_ERROR;
     }
     sc_using_mem_token = 1;
