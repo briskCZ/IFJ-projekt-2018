@@ -12,11 +12,11 @@
 #include "scanner.h"
 
 t_Token getNextToken(int *error){
-    if (sc_usingMemToken == 1){
+    if (sc_using_mem_token == 1){
         // printf("TOKEN!!!! POZOR\n");
         // printToken(sc_mem_token, 0);
         // printf("KONECTOKEN\n");
-        sc_usingMemToken = 0;
+        sc_using_mem_token = 0;
         return sc_mem_token;
     }
     t_Token sc_token;
@@ -59,12 +59,10 @@ t_Token getNextToken(int *error){
         switch (state) {
             case S_START: //vychozi stav, pokud nacte lexem s delkou jedna, vrati hoe
                 if (isspace(symbol)){
-                    if ((symbol == '\n' || sc_line_cnt == 0) && isCmntBegin()){
-                        sc_line_cnt++;
-                        state = S_BLOCK_COMMENT;
-                    }else if (symbol == '\n'){
+                    if (symbol == '\n'){
                         sc_line_cnt++;
                         fprintf(stderr,"Line: %d\n", sc_line_cnt);
+                        sc_was_eol = 1;
                         sc_token.type = T_EOL;
                         return sc_token;
                     }else{
@@ -73,7 +71,12 @@ t_Token getNextToken(int *error){
                 }else if (symbol == '#'){ //
                     state = S_LINE_COMMENT;
                 }else if (symbol == '='){
-                    state = S_EQUALS;
+                    if ((sc_line_cnt == 0 || sc_was_eol == 1) && isCmntBegin(symbol)){
+                        sc_line_cnt++;
+                        state = S_BLOCK_COMMENT;
+                    }else{
+                        state = S_EQUALS;
+                    }
                 }else if (symbol == '_' || islower(symbol)){
                     strAdc(&sc_buffer, symbol);
                     state = S_ID_KW;
@@ -90,25 +93,25 @@ t_Token getNextToken(int *error){
                 }else if (symbol == '"'){
                     state = S_STRING;
                 }else if (symbol == '*'){
-                    sc_token.type = T_MUL; stringClear(&sc_token.attr);
+                    sc_token.type = T_MUL; sc_was_eol = 0; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == '/'){
-                    sc_token.type = T_DIV; stringClear(&sc_token.attr);
+                    sc_token.type = T_DIV; sc_was_eol = 0; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == '+'){
-                    sc_token.type = T_PLUS; stringClear(&sc_token.attr);
+                    sc_token.type = T_PLUS; sc_was_eol = 0; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == '-'){
-                    sc_token.type = T_MINUS; stringClear(&sc_token.attr);
+                    sc_token.type = T_MINUS; sc_was_eol = 0; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == '('){
-                    sc_token.type = T_LEFT_PAR; stringClear(&sc_token.attr);
+                    sc_token.type = T_LEFT_PAR; sc_was_eol = 0; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == ')'){
-                    sc_token.type = T_RIGHT_PAR; stringClear(&sc_token.attr);
+                    sc_token.type = T_RIGHT_PAR; sc_was_eol = 0; stringClear(&sc_token.attr);
                     return sc_token;
                 }else if (symbol == ','){
-                    sc_token.type = T_COMMA; stringClear(&sc_token.attr);
+                    sc_token.type = T_COMMA; sc_was_eol = 0; stringClear(&sc_token.attr);
                     return sc_token;
                 }else{
                     *error = ERROR_LEX;
@@ -122,6 +125,7 @@ t_Token getNextToken(int *error){
                     state = S_START;
                     sc_line_cnt++;
                     sc_token.type = T_EOL;
+                    sc_was_eol = 1;
                     return sc_token;
                 }else{
                     state = S_LINE_COMMENT;
@@ -130,14 +134,16 @@ t_Token getNextToken(int *error){
 
             case S_EQUALS: // =, ==
                 if (symbol == '='){
+                    sc_was_eol = 0;
                     sc_token.type = T_EQ_REL;
                     return sc_token;
                 }else{
-                     if (sc_uab){
-                         stringUngetChar(symbol, &sc_aux_buffer);
-                     }else{
-                         ungetc(symbol, stdin);
-                     }
+                    if (sc_uab){
+                        stringUngetChar(symbol, &sc_aux_buffer);
+                    }else{
+                        ungetc(symbol, stdin);
+                    }
+                    sc_was_eol = 0;
                     sc_token.type = T_ASSIGNMENT;
                     return sc_token;
                 }
@@ -147,6 +153,8 @@ t_Token getNextToken(int *error){
                 if (symbol == '=' && isCmntEnd(&symbol)){
                     //pokud symbol po end byl \n
                     if (symbol == '\n'){
+                        sc_line_cnt++;
+                        sc_was_eol = 0;
                         sc_token.type = T_EOL;
                         return sc_token;
                     //pokud byl jiny whitespace znak, dokonci radek
@@ -161,6 +169,8 @@ t_Token getNextToken(int *error){
             case S_BC_END:  //do konce radku za =end
                 if (symbol == '\n'){
                     //Vraceni EOL, ktery byl pred komentarem
+                    sc_was_eol = 1;
+                    sc_line_cnt++;
                     sc_token.type = T_EOL;
                     return sc_token;
                 }else{
@@ -172,6 +182,7 @@ t_Token getNextToken(int *error){
                 if (isalnum(symbol) || symbol == '_'){
                     strAdc(&sc_buffer, symbol);
                     //DEBUGstringPrint(&sc_buffer);
+                    sc_was_eol = 0;
                     state = S_ID_KW;
                     if (stringCompareConst(&sc_buffer, "def") == 0  && isKwEnd()){
                         sc_token.type = T_DEF;
@@ -214,6 +225,7 @@ t_Token getNextToken(int *error){
 
             case S_LESS:    // <, <=
                 stringClear(&sc_token.attr);
+                sc_was_eol = 0;
                 if (symbol == '='){
                     sc_token.type = T_LESS_EQ;
                     return sc_token;
@@ -225,6 +237,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_MORE:    // >, >=
+                sc_was_eol = 0;
                 stringClear(&sc_token.attr);
                 if (symbol == '='){
                     sc_token.type = T_MORE_EQ;
@@ -237,6 +250,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_NOT_EQ: //!=
+                sc_was_eol = 0;
                 if (symbol == '='){
                     sc_token.type = T_NOT_EQ;
                     stringClear(&sc_token.attr);
@@ -250,6 +264,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_STRING: //"string"
+                sc_was_eol = 0;
                 if (symbol == '"'){
                     sc_token.type = T_STRING; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
@@ -270,6 +285,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_SPECIAL_SYMBOL: //
+                sc_was_eol = 0;
                 if (symbol == '"' || symbol == 'n' || symbol == 't' || symbol == 's' || symbol == '\\'){
                     strAdc(&sc_buffer, symbol);
                     state = S_STRING;
@@ -285,6 +301,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_SPECIAL_HEX: //\xhh
+                sc_was_eol = 0;
                 if (isValidHex(symbol) && string_hex_count <= 2){ //max hex
                     string_hex_count++;
                     strAdc(&sc_aux_buffer, symbol);
@@ -312,6 +329,7 @@ t_Token getNextToken(int *error){
 
             case S_DIGIT: //vychozi stav pro cisla (kvuli poctu nul)
                 ////printf("DEBUG: WNZ %d | DZC %d | SYM %d \n", was_nonzero, digit_zc, symbol);
+                sc_was_eol = 0;
                 if (symbol == '0')
                     digit_zc++;
                 if ((isdigit(symbol) && symbol != '0' && digit_zc == 0) || (isdigit(symbol) && sc_buffer.val[0] != '0')){
@@ -337,6 +355,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_INT:
+                sc_was_eol = 0;
                 if (isdigit(symbol)){
                     strAdc(&sc_buffer, symbol);
                     state = S_INT;
@@ -371,6 +390,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_EXPONENT:
+                sc_was_eol = 0;
                 if ((symbol == '+' || symbol == '-') && exponent_sign == 0){
                     exponent_sign = 1;
                     strAdc(&sc_buffer, symbol);
@@ -413,6 +433,7 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_DOUBLE:
+                sc_was_eol = 0;
                 if (isdigit(symbol)){
                     strAdc(&sc_buffer, symbol);
                     double_sad++;
@@ -467,13 +488,13 @@ int isKwEnd(){
         //pokud bude eol, tak ho musime taky vratit
         if (symbol == '\n'){
             sc_line_cnt++;
+            sc_was_eol = 1;
             t_Token ret;
             ret.type = T_EOL;
             stringInit(&ret.attr);
             trashStoreMem(ret.attr.val);
-            if (returnToken(ret) == MEMORY_ERROR){
-                fprintf(stderr, "%s\n", "--rip");
-            }
+            returnToken(ret);
+
         }
         return 1;
     }else{
@@ -485,8 +506,9 @@ int isKwEnd(){
 int scannerInit(){
     sc_uab = 0;
     sc_abi = 0;
-    sc_line_cnt = 0;
-    sc_usingMemToken = 0;
+    sc_was_eol = 0;
+    sc_line_cnt = 1;
+    sc_using_mem_token = 0;
     int ret_val = stringInit(&sc_buffer);
     ret_val += stringInit(&sc_aux_buffer);
     ret_val += stringInit(&sc_mem_token.attr);
@@ -517,13 +539,15 @@ int isCmntEnd(char *sym){
     return (isspace(*sym)) ? 1 : 0;
 }
 
-int isCmntBegin(){
+int isCmntBegin(char symbol){
+    if (symbol != '=') return 0;
     char *cmnt_start = "=begin";
     int cmnt_start_length = 6;
     char c;
+
     //sc_uab = 1;
     //kontrola posloupnosti znaku =begin
-    for (int i = 0; i < cmnt_start_length; i++){
+    for (int i = 1; i < cmnt_start_length; i++){
         c = getc(stdin);
         stringAddChar(&sc_aux_buffer, c);
         //printf("DEBUG: C: %d | i: %d\n", c, i);
@@ -535,6 +559,7 @@ int isCmntBegin(){
     }
     c = getc(stdin);
     if (isspace(c)){
+        if (c == '\n') sc_line_cnt++;
         sc_uab = 0;
         stringClear(&sc_aux_buffer);
         return 1;
@@ -581,11 +606,11 @@ void printToken(t_Token t, int error){
 }
 
 int returnToken(t_Token token){
-    if (sc_usingMemToken == 1){
+    if (sc_using_mem_token == 1){
         printf("reterr_memory_err\n");
         return MEMORY_ERROR;
     }
-    sc_usingMemToken = 1;
+    sc_using_mem_token = 1;
     sc_mem_token = token;
     return SUCCESS;
 }

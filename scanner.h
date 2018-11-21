@@ -86,14 +86,14 @@ typedef struct {
 } t_Token;
 
 /* Globalni promenne */
-
 string sc_buffer;  //buffer pro identifikatory a kw
 string sc_aux_buffer; //pomocny buffer pro blokove komentare a hexa cisla
 int sc_uab;   //zda pouzivat pomocny buffer
 int sc_abi; //index v pomocnem bufferu
 int sc_line_cnt; //radek v souboru
 t_Token sc_mem_token; //vraceny token
-int sc_usingMemToken;
+int sc_using_mem_token; //zda pouzivame vraceny token
+int sc_was_eol; //pokud byl eol
 
 /* Vyprintuje token */
 void printToken(t_Token t, int error);
@@ -128,7 +128,6 @@ int isNumberEnding(char c);
 
 /*
 Testuje dalsi znak ze stdin, zda je to mozny ukoncujici znak KW
-
 @return - vraci 1 pokud je konec kw, jinak 0
 */
 int isKwEnd();
@@ -140,7 +139,7 @@ Funkce testujici, jestli je zacatek/konec komentare
             a nastavi sc_uab na 1, ay dale byly znaky z tohoto bufferu nacitany (/begin)
 
 */
-int isCmntBegin();
+int isCmntBegin(char symbol);
 int isCmntEnd(char *sym);
 /*
 Zadost o dalsi token
