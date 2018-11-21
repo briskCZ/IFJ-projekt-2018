@@ -18,6 +18,7 @@
 t_symTable table; //globalni tabulka symbolu
 t_Node *node; //pomocny ukazatel na data do tabulky symbolu
 */
+
 void code(t_Token token);
 void sec1();
 void sec2();

@@ -13,22 +13,21 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
 #include "string.h"
 #include "scanner.h"
 #include "parser.h"
-//#include "param_array.h"
 
-#define MAX_SIZE 8 //
+#define MAX_SIZE 8 //pocet alokovanych prvku pro parametry funkce
 
 typedef struct table t_symTable;
 typedef struct node t_Node;
 typedef struct arrParam t_ArrParams;
 
+
 t_symTable table; //globalni tabulka symbolu
 t_Node *node; //pomocny ukazatel na data do tabulky symbolu
 
-/* data uzlu*/
+/* data v uzlu*/
 typedef struct
 {
 	int is_var; //0 - funkce, jinak promenna
@@ -36,22 +35,22 @@ typedef struct
 	int data_type; // datovy typ
 	int defined; //  0 - neni definovana, jinak je definovana
 	int global; // 0 lokalni, jinak globalni
-	int params_cnt;
-	t_ArrParams *arr_params; //TODO
+	int params_cnt; // pocet parametru funkce
+	t_ArrParams *arr_params; //identifikatory parametru funkce
 	t_symTable *local_symTable; //lokalni tabulka symbolu
 
 } t_Data;
 
-/* uzel */
-typedef struct node
+/* uzel v tabulce symbolu */
+struct node
 {
 	t_Data *data; //data uzlu
 	struct node *left; //levy syn
 	struct node *right; //pravy syn
 
-} t_Node;
+};
 
-/* tabulka */
+/* tabulka symbol */
 struct table 
 {
 	t_Node *root; //pocatek tabulky
@@ -68,10 +67,6 @@ typedef struct arrParam
 
 } t_ArrParams;
 
-int arrParamInit(t_Data *data);
-int arrParamAdd(t_Data *data, string s);
-void arrParamFree(t_Data *data);
-
 /*
 
 */
@@ -85,11 +80,41 @@ void tableDestroy();
 /*
 
 */
-int tableInsertToken(t_Token token);
+t_Node* tableInsertToken(t_Token token);
 
 /*
 
 */
 t_Node* tableSearchItem(string s);
+
+void tableChangeItemByNode(t_Node *node, int is_var, int data_type, int defined, int global);
+void tableChangeItemByString(string *s, int is_var, int data_type, int defined, int global);
+/*
+
+*/
+int arrParamInit(t_Data *data);
+
+/*
+
+*/
+int arrParamAdd(t_Data *data, string s);
+
+/*
+
+*/
+void arrParamFree(t_Data *data);
+
+/*
+
+*/
+void arrPrintParam(t_Data *data);
+
+/* debugovaci funkce */
+
+//vypise tabulku symbolu
+void tablePrint(t_symTable *table);
+
+//vytvori token a vlozi to tabulky symbolu
+void sInsert(t_symTable *table, int itype, char *is);
 
 #endif //SYMTABLE_H

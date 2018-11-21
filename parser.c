@@ -101,14 +101,17 @@ void param1(){
     }else{
         //term se postara aby se program ukoncil s chybou
         term(token);
+		//
+		if (node != NULL)
+		{	
+			printToken(token, 0);
+			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
+		}
+		//###########################################
         param11();
     }
 }
 void param11(){
-	//
-	if (node != NULL)
-		node->data->params_cnt++;
-	//###########################################
 	
     P("--param11");
     int error = 0;
@@ -121,6 +124,13 @@ void param11(){
         CHECK_ERROR(error);
         term(token);
         //dalsi mozny parametr funkce, check v tabulce symbolu
+		//
+		if (node != NULL)
+		{	
+			printToken(token, 0);
+			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
+		}
+		//###########################################
         param11();
     }else if (token.type == T_RIGHT_PAR){
         P("--token v param11 right par");
@@ -215,6 +225,7 @@ void sec2(){
     }
 }
 void code(t_Token token){
+	t_Node *temp;
     P("--code");
     int error = 0;
     P("--potencionalni problem");
@@ -265,7 +276,8 @@ void code(t_Token token){
             break;
         case T_ID:
             /* TODO dalsi prace s tabulkou symbolu*/
-			tableInsertToken(token);
+			temp = tableInsertToken(token);
+			tableChangeItemByNode(temp, 1, 0, 0, 1);
 			//##################################
             {
             t_Token tb = getNextToken(&error);
@@ -317,7 +329,6 @@ void program(){
     P("--program");
     int error = 0;
     t_Token token = getNextToken(&error);
-    //printToken(token, 0);
     CHECK_ERROR(error);
     //TODO????
     switch (token.type){
@@ -331,18 +342,12 @@ void program(){
             CHECK_ERROR(error);
             if (token.type == T_ID){
                 //TODO pridat do tabulky symbolu zaznam o definici funkce
-				
-				
-				tableInsertToken(token);
-				//printf("TOKEN: %s\n", token.attr.val);
-				node = tableSearchItem(token.attr);
-				if (node != NULL){
-				
-				node->data->is_var = 0;
-				node->data->defined = 1;
-				node->data->global = 1;
-				node->data->params_cnt = 0;
-				}
+								
+				node = tableInsertToken(token);
+				if (node != NULL)
+					tableChangeItemByNode(node, 0, 0, 1, 1);
+				else
+					exit(ERROR_INTERNAL); //todo
 			
 				//#################################################
                 token = getNextToken(&error);
@@ -367,75 +372,21 @@ void program(){
     }
 }
 
-// DEBUG --------------------- TODO presun do symtable.h ????
-void sInsert(t_symTable *table, int itype, char *is)
-{
-	string s;
-	stringInit(&s);
-	stringInsert(&s, is);
-
-	t_Token t = { .type = itype, .attr = s};
-	
-	tableInsertToken(t);
-
-	stringFree(&s);
-}
-
-void tablePrint()
-{
-    if (table.root != NULL)
-    {
-        tablePrint(table.root->left);
-        printf("%s\n", table.root->data->name->val);
-        tablePrint(table.root->right);
-    }
-}
-#define p(x) printf("%s\n", x);
-
 int main(){
     ungetc('\n', stdin);
-    scannerInit();
-    //inicializace globalni tabulky symbolu
+ 
+	//inicializace potrebnych veci
+	scannerInit();
 	table = tableInit();
-	//############################################
+
 	
     program();
 	
-	string s;
-	stringInit(&s);
-	stringInsert(&s, "kapur");
-	printf("1:\n");
-	node = tableSearchItem(s);
-	if (node != NULL){
-	printf("%d\n", node->data->is_var);
-	printf("%d\n", node->data->data_type);
-	printf("%d\n", node->data->defined);
-	printf("%d\n", node->data->global);
-	printf("cnt:%d\n\n", node->data->params_cnt);}
-	stringFree(&s);
+	P("=========== TABLE PRINT ===============");
+	tablePrint(&table);
 	
-	stringInit(&s);
-	stringInsert(&s, "brisk");
-	printf("2:\n");
-	node = tableSearchItem(s);
-	if (node != NULL){
-	printf("%d\n", node->data->is_var);
-	printf("%d\n", node->data->data_type);
-	printf("%d\n", node->data->defined);
-	printf("%d\n", node->data->global);
-	printf("cnt:%d\n", node->data->params_cnt);}
-	stringFree(&s);
-	
-    // t_Token token;
-    // do{
-    //     int error;
-    //     token = getNextToken(&error);
-    // }while(token.type != T_EOF);
-	tablePrint();
-	
-	
+	//uvolneni zdroju
     scannerClean();
-	tableDestroy();
-    //trashFreeAll();
+	tableDestroy(&table);
     return SUCCESS;
 }

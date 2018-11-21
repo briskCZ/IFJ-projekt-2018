@@ -66,6 +66,9 @@ Uvolni pole parametru funkce
 */
 void arrParamFree(t_Data *data)
 {
+	if (data->arr_params == NULL)
+		return ;
+	
 	for (int i = 0; i < data->params_cnt; i++)
 	{
 		stringFree(&(data->arr_params->string[i]));
@@ -76,21 +79,11 @@ void arrParamFree(t_Data *data)
 	data->arr_params = NULL;
 }
 
-/*
-int main()
+/* DEBUG function */
+void arrPrintParam(t_Data *data)
 {
-	t_Data data;
-	
-	arrParamInit(&data);
-	
-	string s;
-	stringInit(&s);
-	stringCopy(&s, "brisk");
-	
-	arrParamAdd(&data, s);
-	
-	stringFree(&s)
-	arrParamFree(&data);
-	
-	return 0;
-}*/
+	for (int i = 0; i < data->params_cnt; i++)
+	{
+		fprintf(stderr, "p%d: %s", i, data->arr_params->string[i].val);
+	}
+}
