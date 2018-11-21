@@ -16,7 +16,7 @@
                                    exit(ERROR_SYNTAX);}
 
 #define SAVE_ERROR(error){if (ERROR == 0) ERROR = error;}
-#define P(a) fprintf(stderr, "%s\n", a);
+
 
 //int ERROR = 0;
 
@@ -177,17 +177,29 @@ void sec1(){
     int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
+    while(token.type == T_EOL){
+        token = getNextToken(&error);
+        CHECK_ERROR(error);
+        P("--token sec1");
+        //printToken(token, error);
+    }
     if (token.type == T_EOF){
         PRINT_SYNTAX_ERROR("END");
     }else if (token.type == T_DEF){
         PRINT_SYNTAX_ERROR("DEF not");
     }else if (token.type == T_END){
-        return;
+        token = getNextToken(&error);
+        CHECK_ERROR(error);
+        if (token.type == T_EOL){
+            return;
+        }else{
+            PRINT_SYNTAX_ERROR("EOL after end");
+        }
     }else if (token.type != T_EOL){
-        P("--nechapu");
-        //printToken(token, error);
         code(token);
         sec1();
+        P("--vratil sem se z sec1");
+        return;
     }
 
 }
@@ -196,17 +208,23 @@ void sec2(){
     int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
+    while(token.type == T_EOL){
+        token = getNextToken(&error);
+        CHECK_ERROR(error);
+    }
     if(token.type == T_ELSE){
+        P("--ifelse");
         t_Token token = getNextToken(&error);
         CHECK_ERROR(error);
         if (token.type == T_EOL){
-            sec1();
+            return;
         }else{
             PRINT_SYNTAX_ERROR("EOL after ELSE");
         }
     }else if (token.type == T_DEF){
         PRINT_SYNTAX_ERROR("DEF not");
-    }else if (token.type != T_EOF){
+    }else if (token.type != T_EOF && token.type != T_END){
+        P("--dostal jsem se sem");
         code(token);
         sec2();
     }else{
@@ -217,7 +235,7 @@ void code(t_Token token){
     P("--code");
     int error = 0;
     P("--potencionalni problem");
-    printToken(token, error);
+    //printToken(token, error);
     switch (token.type){
         case T_IF:
             /* IF */
@@ -305,7 +323,8 @@ void code(t_Token token){
             }
             break;
         }
-        case T_EOL:break;
+        case T_EOL: P("EEEEOL"); break;
+        default: PRINT_SYNTAX_ERROR("SYMBOL not"); break;
     }
 }
 

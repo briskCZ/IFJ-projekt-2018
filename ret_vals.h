@@ -8,6 +8,12 @@
  *  Navratove hodnoty prekladace
 */
 
+#ifdef debug
+    #define P(a) fprintf(stderr, "%s\n", a);
+#else
+    #define P(a) ;
+#endif
+
 #define SUCCESS 0
 #define ERROR_LEX 1
 #define ERROR_SYNTAX 2
