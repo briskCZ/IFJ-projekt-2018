@@ -22,6 +22,7 @@ t_Token getNextToken(int *error){
     t_Token sc_token;
     stringInit(&sc_token.attr);
     trashStoreMem(sc_token.attr.val);
+    fprintf(stderr, "StoringCD  token to trash: %p \n", sc_token.attr.val);
 
 
     *error = SUCCESS;
@@ -118,8 +119,10 @@ t_Token getNextToken(int *error){
             case S_LINE_COMMENT: // #radkovy komentar
                 //////printf("DEBUG: komentar | znak: %c\n", symbol);
                 if (symbol == '\n'){
-                    sc_line_cnt++;
                     state = S_START;
+                    sc_line_cnt++;
+                    sc_token.type = T_EOL;
+                    return sc_token;
                 }else{
                     state = S_LINE_COMMENT;
                 }
@@ -170,15 +173,34 @@ t_Token getNextToken(int *error){
                     strAdc(&sc_buffer, symbol);
                     //DEBUGstringPrint(&sc_buffer);
                     state = S_ID_KW;
-                    if (stringCompareConst(&sc_buffer, "def") == 0){ sc_token.type = T_DEF; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "do") == 0){ sc_token.type = T_DO; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "else") == 0){ sc_token.type = T_ELSE; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "end") == 0){ sc_token.type = T_END; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "if") == 0){ sc_token.type = T_IF; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "not") == 0){ sc_token.type = T_NOT; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "nil") == 0){ sc_token.type = T_NIL; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "then") == 0){ sc_token.type = T_THEN; return sc_token;}
-                    else if (stringCompareConst(&sc_buffer, "while") == 0){ sc_token.type = T_WHILE; return sc_token;}
+                    if (stringCompareConst(&sc_buffer, "def") == 0  && isKwEnd()){
+                        sc_token.type = T_DEF;
+                        return sc_token;
+                    }else if (stringCompareConst(&sc_buffer, "do") == 0  && isKwEnd()){
+                        sc_token.type = T_DO;
+                        return sc_token;
+                    }else if (stringCompareConst(&sc_buffer, "else") == 0  && isKwEnd()){
+                        sc_token.type = T_ELSE;
+                        return sc_token;
+                    }else if (stringCompareConst(&sc_buffer, "end") == 0 && isKwEnd()){
+                        sc_token.type = T_END;
+                        return sc_token;
+                    }else if (stringCompareConst(&sc_buffer, "if") == 0 && isKwEnd()){
+                        sc_token.type = T_IF;
+                        return sc_token;
+                    }else if (stringCompareConst(&sc_buffer, "not") == 0 && isKwEnd()){
+                        sc_token.type = T_NOT;
+                        return sc_token;
+                    }else if (stringCompareConst(&sc_buffer, "nil") == 0 && isKwEnd()){
+                        sc_token.type = T_NIL;
+                        return sc_token;
+                    }else if (stringCompareConst(&sc_buffer, "then") == 0 && isKwEnd()){
+                        sc_token.type = T_THEN;
+                        return sc_token;
+                    }else if (stringCompareConst(&sc_buffer, "while") == 0 && isKwEnd()){
+                        sc_token.type = T_WHILE;
+                        return sc_token;
+                    }
                 }else if (symbol == '?' || symbol == '!'){
                     strAdc(&sc_buffer, symbol);
                     sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
@@ -435,6 +457,27 @@ int isNumberEnding(char c){
         ungetc(c, stdin);
         return 1;
     }else{
+        return 0;
+    }
+}
+
+int isKwEnd(){
+    char symbol = getc(stdin);
+    if (isspace(symbol)){
+        //pokud bude eol, tak ho musime taky vratit
+        if (symbol == '\n'){
+            sc_line_cnt++;
+            t_Token ret;
+            ret.type = T_EOL;
+            stringInit(&ret.attr);
+            trashStoreMem(ret.attr.val);
+            if (returnToken(ret) == MEMORY_ERROR){
+                fprintf(stderr, "%s\n", "--rip");
+            }
+        }
+        return 1;
+    }else{
+        ungetc(symbol, stdin);
         return 0;
     }
 }

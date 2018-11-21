@@ -127,6 +127,13 @@ Test zda znak, muze byt validni konec cisla
 int isNumberEnding(char c);
 
 /*
+Testuje dalsi znak ze stdin, zda je to mozny ukoncujici znak KW
+
+@return - vraci 1 pokud je konec kw, jinak 0
+*/
+int isKwEnd();
+
+/*
 Funkce testujici, jestli je zacatek/konec komentare
 
 @return -   pri uspechu nenulova hodnota, jinak 0 a (begin)zapise prectene znaky do sc_aux_buffer
@@ -139,6 +146,7 @@ int isCmntEnd(char *sym);
 Zadost o dalsi token
 @param error - hodnotou predavany error ERROR_INTERNAL / ERROR_LEX
 
+@return vraci vyhodnoceny token
 */
 t_Token getNextToken(int *error);
 
@@ -147,8 +155,11 @@ Funkce pro ladeni
 vytiskne a vrati dalsi token
 */
 t_Token getPrintNextToken(int *error);
+
 /*
 Vrati token scanneru
+@param - vraceny token
+@return - uspesnost operace MEMORY_ERROR, pokud vracime vic nez 1 token
 */
 int returnToken(t_Token t);
 #endif
