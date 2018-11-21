@@ -54,9 +54,9 @@ void tableDestroy(t_symTable *table)
 
 /* hleda ve stromu idenditu s tokenem
  - pokud nalezne vrati ukazatel na danou polozku v tabulce, pokud ne tak NULL  */
-t_Node* tableSearchItem(string s)
+t_Node* tableSearchItem(t_symTable *table, string s)
 {
-	t_Node *temp = table.root;	
+	t_Node *temp = table->root;	
 	while (temp != NULL)
 	{
 		//printf("%s | %s\n", s.val, table->root->data->name->val);
@@ -80,19 +80,19 @@ t_Node* tableSearchItem(string s)
 - pokud token neni nalezen tak se vytvori 
 - v opacnem pripade se hodnoty prepisi(aktualizuji)
 */
-t_Node *tableInsertToken(t_Token token)
+t_Node *tableInsertToken(t_symTable *table, t_Token token)
 {
 	//printf("t: %s\n", token.attr.val);
 	t_Node *find, *new;
-	if ((find = tableSearchItem(token.attr)) == NULL)
+	if ((find = tableSearchItem(table, token.attr)) == NULL)
 	{
 		if ((new = createNode(token)) == NULL)
 			return NULL;
-		if (table.root == NULL) //first
-			table.root = new;
+		if (table->root == NULL) //first
+			table->root = new;
 		else
 		{
-			t_Node *temp = table.root;
+			t_Node *temp = table->root;
 			while (temp!= NULL)
 			{
 				if (stringCompare(temp->data->name, new->data->name) < 0)
@@ -125,12 +125,6 @@ t_Node *tableInsertToken(t_Token token)
 	return new;
 }
 
-void tableAddParam(string *s)
-{
-	
-	;
-}
-
 void tableChangeItemByNode(t_Node *node, int is_var, int data_type, int defined, int global)
 {
 	if (node->data != NULL)
@@ -147,9 +141,9 @@ void tableChangeItemByNode(t_Node *node, int is_var, int data_type, int defined,
 }
 
 /*kdyz -1 tak neupravuji*/
-void tableChangeItemByString(string *s, int is_var, int data_type, int defined, int global)
+void tableChangeItemByString(t_symTable *table, string *s, int is_var, int data_type, int defined, int global)
 {
-	t_Node *data = tableSearchItem(*s);
+	t_Node *data = tableSearchItem(table, *s);
 	if (data != NULL)
 	{
 		if (is_var != -1) data->data->is_var = is_var;
@@ -237,20 +231,20 @@ void sInsert(t_symTable *table, int itype, char *is)
 
 	t_Token t = { .type = itype, .attr = s};
 	
-	tableInsertToken(t);
+	tableInsertToken(table, t);
 
 	stringFree(&s);
 }
 
-void tablePrint(t_symTable *table)
+void tablePrint(t_symTable *table, int local)
 {
 	if (table->root != NULL)
-	{
+	{	
 		t_symTable left, right;
 		left.root = table->root->left;
 		right.root = table->root->right;
 		
-		tablePrint(&left);
+		tablePrint(&left, local);
 		
 		if (table->root->data->is_var == 0)
 		{
@@ -261,12 +255,17 @@ void tablePrint(t_symTable *table)
 				fprintf(stderr, "p%d: %s\n", i, table->root->data->arr_params->string[i].val);
 			}
 			//volej lokalni tabulku symbolu
-			tablePrint(table->root->data->local_symTable);
+			fprintf(stderr, "OBSAH LOKALNI TABULKY SYMBOLU\n");
+			tablePrint(table->root->data->local_symTable, 1);
 		}
 		else
 		{
 			fprintf(stderr, "VAR: %s\n", table->root->data->name->val);
 		}
-		tablePrint(&right);
+		
+		if (local == 0)
+			fprintf(stderr, "---------------------------\n");
+		
+		tablePrint(&right, local);
 	}
 }

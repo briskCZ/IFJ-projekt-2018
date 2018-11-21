@@ -75,20 +75,20 @@ t_symTable tableInit();
 /*
 
 */
-void tableDestroy();
+void tableDestroy(t_symTable *table);
 
 /*
 
 */
-t_Node* tableInsertToken(t_Token token);
+t_Node* tableInsertToken(t_symTable *table, t_Token token);
 
 /*
 
 */
-t_Node* tableSearchItem(string s);
+t_Node* tableSearchItem(t_symTable *table, string s);
 
 void tableChangeItemByNode(t_Node *node, int is_var, int data_type, int defined, int global);
-void tableChangeItemByString(string *s, int is_var, int data_type, int defined, int global);
+void tableChangeItemByString(t_symTable *table, string *s, int is_var, int data_type, int defined, int global);
 /*
 
 */
@@ -112,7 +112,7 @@ void arrPrintParam(t_Data *data);
 /* debugovaci funkce */
 
 //vypise tabulku symbolu
-void tablePrint(t_symTable *table);
+void tablePrint(t_symTable *table, int local);
 
 //vytvori token a vlozi to tabulky symbolu
 void sInsert(t_symTable *table, int itype, char *is);

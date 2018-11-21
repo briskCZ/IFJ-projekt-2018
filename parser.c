@@ -106,6 +106,9 @@ void param1(){
 		{	
 			printToken(token, 0);
 			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
+			
+			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
+			tableChangeItemByNode(temp, 1, 0, 0, 0);
 		}
 		//###########################################
         param11();
@@ -129,7 +132,10 @@ void param11(){
 		{	
 			printToken(token, 0);
 			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
-		}
+
+			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
+			tableChangeItemByNode(temp, 1, 0, 0, 0);
+			}
 		//###########################################
         param11();
     }else if (token.type == T_RIGHT_PAR){
@@ -276,8 +282,8 @@ void code(t_Token token){
             break;
         case T_ID:
             /* TODO dalsi prace s tabulkou symbolu*/
-			temp = tableInsertToken(token);
-			tableChangeItemByNode(temp, 1, 0, 0, 1);
+			temp = tableInsertToken(&table, token);
+			
 			//##################################
             {
             t_Token tb = getNextToken(&error);
@@ -289,6 +295,8 @@ void code(t_Token token){
                 //printToken(token, 99);
                 //printToken(token, 99);
 
+				tableChangeItemByNode(temp, 1, 0, 0, 1); //TODO
+				
                 assign(token, tb);
                     break;
                 /* ID -> volani funkce */
@@ -299,6 +307,9 @@ void code(t_Token token){
                 case T_STRING:
                 case T_EOL:
                     // volani funkce
+					
+					tableChangeItemByNode(temp, 0, 0, 0, 1); //TODO
+					
                     f_call(token, tb);
                     break;
                 /* random vyraz */
@@ -343,7 +354,7 @@ void program(){
             if (token.type == T_ID){
                 //TODO pridat do tabulky symbolu zaznam o definici funkce
 								
-				node = tableInsertToken(token);
+				node = tableInsertToken(&table, token);
 				if (node != NULL)
 					tableChangeItemByNode(node, 0, 0, 1, 1);
 				else
@@ -383,7 +394,7 @@ int main(){
     program();
 	
 	P("=========== TABLE PRINT ===============");
-	tablePrint(&table);
+	tablePrint(&table, 0);
 	
 	//uvolneni zdroju
     scannerClean();
