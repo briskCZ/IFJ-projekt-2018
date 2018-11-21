@@ -78,8 +78,9 @@
 #define INS_BREAK 54
 #define INS_DPRINT 55
 
-
-
+//definovani vlastnich instrukci
+#define INS_BEGINFUNC 60
+#define INS_ENDFUNC 61
 
 
 typedef struct{
