@@ -373,16 +373,15 @@ void program(){
 }
 
 int main(){
-    ungetc('\n', stdin);
+    //ungetc('\n', stdin);
     scannerInit();
     //inicializace globalni tabulky symbolu
     program();
     // t_Token token;
     // do{
     //     int error;
-    //     token = getNextToken(&error);
+    //     token = getPrintNextToken(&error);
     // }while(token.type != T_EOF);
     scannerClean();
-    //trashFreeAll();
     return SUCCESS;
 }

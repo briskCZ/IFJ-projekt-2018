@@ -8,9 +8,16 @@
  *  Hlavickovy soubor pro parser;=
 */
 
+#ifndef PARSER_H
+#define PARSER_H
+
 #include "expr_parser.h"
 #include "scanner.h"
-#include "trash.h"
+#include "symtable.h"
+/*
+t_symTable table; //globalni tabulka symbolu
+t_Node *node; //pomocny ukazatel na data do tabulky symbolu
+*/
 
 void code(t_Token token);
 void sec1();
@@ -24,3 +31,6 @@ void assign(t_Token left, t_Token assign);
 void f_call(t_Token ta, t_Token tb);
 void term(t_Token token);
 int isNextEol();
+
+
+#endif //PARSER_H
