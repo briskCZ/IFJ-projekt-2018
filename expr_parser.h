@@ -14,6 +14,9 @@
 #include "ret_vals.h"
 #include "int_stack.h"
 #include "scanner.h"
+#include "generator.h"
+#include "symtable.h"
+#include "ins_list.h"
 
 #define PT_SIZE 7
 #define PT_X 102
@@ -27,6 +30,7 @@
 int checkRule(t_IStack *stack, int *type);
 int isEnd(int val);
 t_Token exprParse(t_Token t, t_Token tb,int usingTb);
+void addInitInstruction(t_IStack *s, t_Token b_token);
 
 typedef enum{
     R_PLUS = 200,
