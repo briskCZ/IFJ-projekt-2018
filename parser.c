@@ -389,6 +389,7 @@ int main(){
 	//inicializace potrebnych veci
 	scannerInit();
 	table = tableInit();
+	listInit();
 
 	
     program();
@@ -396,8 +397,11 @@ int main(){
 	P("=========== TABLE PRINT ===============");
 	tablePrint(&table, 0);
 	
+	printList();
+	
 	//uvolneni zdroju
     scannerClean();
 	tableDestroy(&table);
+	freeList();
     return SUCCESS;
 }
