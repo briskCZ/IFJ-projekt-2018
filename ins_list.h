@@ -1,3 +1,13 @@
+/*  IFJ Projekt 2018 "Implementace prekladace imperativniho jazyka IFJ18"
+ *  Autori:
+ *      Zdenek Dolezal (xdolez82)
+ *      Marek Nesvadba (xnesva06)
+ *      David Miksanik (xmiksa05)
+ *  Fakulta informacnich technologii VUT v Brne
+ *  Popis souboru:
+ *  					TODO
+*/
+
 #ifndef INSLIST_H
 #define INSLIST_H 
 
@@ -79,9 +89,13 @@
 #define INS_DPRINT 55
 
 //definovani vlastnich instrukci
-#define INS_BEGINFUNC 60
-#define INS_ENDFUNC 61
+#define PI_BEGINFUNC 60
+#define PI_ENDFUNC 61
 
+#define PI_INIT 62
+/* addInst(INS_DEFVAR, NULL, NULL, NULL);
+	addInst(INS_MOVE, NULL, tabulka, NULL);
+*/
 
 typedef struct{
 	int ins_type;

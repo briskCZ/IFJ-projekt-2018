@@ -1,11 +1,17 @@
-#include "ins_list.h"
+/*  IFJ Projekt 2018 "Implementace prekladace imperativniho jazyka IFJ18"
+ *  Autori:
+ *      Zdenek Dolezal (xdolez82)
+ *      Marek Nesvadba (xnesva06)
+ *      David Miksanik (xmiksa05)
+ *  Fakulta informacnich technologii VUT v Brne
+ *  Popis souboru:
+ *  					TODO
+*/
 
+#include "ins_list.h"
 
 int insertLast(t_Ins *ins);
 int insertBeforeActive(t_Ins *ins);
-
-
-//extern t_InsList *list;
 
 // vytvori list pro instrukce
 // @return t_InsList
