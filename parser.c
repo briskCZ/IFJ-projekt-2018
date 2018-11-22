@@ -25,6 +25,28 @@ int isGlobal(){
 void assign(t_Token left, t_Token ass){
     //otestovat levou stranu v tabulce symbolu, dale pokud je funkce
     P("--assign");
+    t_symTable *scopeTable;
+    t_Node *leftVar;
+    if (isGlobal()){
+        scopeTable = &table;
+    }else{
+        scopeTable = pa_funcLocalTable;
+    }
+    //vyhledani leve strany v tabulce symbolu
+    t_Node *n = tableSearchItem(scopeTable, left.attr);
+    if (n == NULL){
+        //polozka nebyla nalezena, definuje se nova promena
+        leftVar = tableInsertToken(scopeTable, left);
+        tableChangeItemByNode(leftVar, 1, 0, 0, isGlobal());
+    }else{
+        //pokud byla polozka nalezena
+        if(n->data->is_var == 0){
+            fprintf(stderr, "ERROR_SEMANTIC: Cannot assign to function %s, on_line: %d\n", stringGet(&left.attr), sc_line_cnt);
+            exit(ERROR_SEMANTIC);
+        }else{
+            leftVar = n;
+        }
+    }
     t_Token ta, tb;
     int error = 0;
     ta = getNextToken(&error);
@@ -68,6 +90,9 @@ void assign(t_Token left, t_Token ass){
 
         }
     }else if (ta.type == T_INT || ta.type == T_DOUBLE || ta.type == T_STRING){
+        tableChangeItemByNode(leftVar, 1, ta.type, 1, isGlobal());
+        //vygeneruj piass (a, ta.attr, typ, 0);
+        addInst(PI_ASS, (void*)leftVar, (void*)ta.attr.val, (void*)ta.type, 0);
         return;
     }
 }
@@ -77,7 +102,6 @@ void f_call(t_Token ta, t_Token tb){
     P("--fcall");
     // fprintf(stderr, "--s: %s =\n", ta.attr.val);
     t_Node *temp = tableSearchItem(&table, ta.attr);
-    //funkce byla zavolana, ale jeste nevime jestli je definovana
     if (temp == NULL){
         temp = tableInsertToken(&table, ta);
         temp->data->was_called = 1;
@@ -107,6 +131,9 @@ void f_call(t_Token ta, t_Token tb){
                 stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt);
         exit(ERROR_SEM_PARAM);
     }
+    //////////////////////
+    //JESTE NEBYLA DEFINOVANA, ale byla zavolana
+    //GENERACE FCALL INSTRUKCI
     //fprintf(stderr, "%s called with: %d params\n", stringGet(node->data->name) ,node->data->params_cnt);
 }
 void param1(int *param_cnt){
@@ -338,7 +365,6 @@ void code(t_Token token){
                     /* ID = */
                     t_Node *temp = tableInsertToken(&table, token);
     				tableChangeItemByNode(temp, 1, 0, 1, isGlobal()); //TODO nevime jestli global
-
                     assign(token, tb);
                     break;
                     }

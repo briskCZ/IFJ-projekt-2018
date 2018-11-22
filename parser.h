@@ -14,6 +14,7 @@
 #include "expr_parser.h"
 #include "scanner.h"
 #include "symtable.h"
+#include "ins_list.h"
 
 struct table *pa_funcLocalTable;
 /*

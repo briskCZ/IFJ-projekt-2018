@@ -9,9 +9,9 @@
 */
 
 #ifndef INSLIST_H
-#define INSLIST_H 
+#define INSLIST_H
 
-#include "ret_vals.h" 
+#include "ret_vals.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -91,8 +91,8 @@
 //definovani vlastnich instrukci
 #define PI_BEGINFUNC 60
 #define PI_ENDFUNC 61
-
 #define PI_INIT 62
+#define PI_ASS 63
 /* addInst(INS_DEFVAR, NULL, NULL, NULL);
 	addInst(INS_MOVE, NULL, tabulka, NULL);
 */
@@ -127,4 +127,4 @@ void deleteFirst();
 void freeList();
 void printList();
 
-#endif //INSLIST_H 
+#endif //INSLIST_H
