@@ -37,7 +37,7 @@ int addInst(int ins_type, void *adr1, void *adr2, void *adr3, int act)
 	t_Ins *new = malloc(sizeof(t_Ins));
 	if (new == NULL)
 		return MEMORY_ERROR;
-	
+
 	new->ins_type = ins_type;
 	new->adr1 = adr1;
 	new->adr2 = adr2;
@@ -45,7 +45,7 @@ int addInst(int ins_type, void *adr1, void *adr2, void *adr3, int act)
 
 	if (act == 0)
 		insertLast(new);
-	else 
+	else
 		insertBeforeActive(new);
 	return MEMORY_OK;
 }
@@ -57,7 +57,7 @@ int insertLast(t_Ins *ins)
 		fprintf(stderr, "ERROR: inslist neexistuje\n");
 		exit(1);
 	}
-	
+
 	t_Elem *new = malloc(sizeof(t_Elem));
 	if (new == NULL)
 		return MEMORY_ERROR;
@@ -65,7 +65,7 @@ int insertLast(t_Ins *ins)
 	new->data = ins;
 	new->next = NULL;
 	new->prev = list->last;
-	
+
 	if (list->first == NULL || list->last == NULL)
 	{
 		list->first = list->last = new;
@@ -75,7 +75,7 @@ int insertLast(t_Ins *ins)
 		list->last->next = new;
 		list->last = new;
 	}
-	
+
 	return MEMORY_OK;
 }
 
@@ -87,7 +87,7 @@ int insertBeforeActive(t_Ins *ins)
 		fprintf(stderr, "ERROR: list neni aktivni\n");
 		exit(1);
 	}
-	
+
 	t_Elem *new = malloc(sizeof(t_Elem));
 	if (new == NULL)
 		return MEMORY_ERROR;
@@ -95,7 +95,7 @@ int insertBeforeActive(t_Ins *ins)
 	new->data = ins;
 	new->next = list->act;
 	new->prev = list->act->prev;
-	
+
 	if (list->act->prev != NULL)
 	{
 		list->act->prev->next = new;
@@ -130,8 +130,8 @@ void deleteFirst()
 		list->act = NULL;
 	}
 	t_Elem *temp = list->first;
-	list->first = list->first->next;
 	list->first->prev = NULL;
+	list->first = list->first->next;
 
 	free(temp->data);
 	free(temp);
@@ -146,7 +146,7 @@ void freeList()
 		free(temp->data);
 		free(temp);
 		//fprintf(stderr, "a\n");
-	}	
+	}
 	list->act = list->last = NULL;
 	free(list);
 }
@@ -154,11 +154,11 @@ void freeList()
 void printList()
 {
 	t_Elem *temp = list->first;
-	
+
 	while (temp != NULL)
 	{
 		fprintf(stderr, "%d\n", temp->data->ins_type);
-		
+
 		temp = temp->next;
 	}
 }
