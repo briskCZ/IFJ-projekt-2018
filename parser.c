@@ -368,6 +368,7 @@ void code(t_Token token){
         case T_INT:
         case T_DOUBLE:
         case T_STRING:
+        case T_NIL:
             returnToken(exprParse(token, token, pa_funcLocalTable, 0));
             break;
         case T_ID:
@@ -406,6 +407,7 @@ void code(t_Token token){
                 case T_MORE_EQ:
                 case T_EQ_REL:
                 case T_NOT_EQ:
+                case T_NIL:
                     /* expr */
                     returnToken(exprParse(token, tb, pa_funcLocalTable, 1));
                     break;
