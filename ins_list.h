@@ -9,9 +9,9 @@
 */
 
 #ifndef INSLIST_H
-#define INSLIST_H 
+#define INSLIST_H
 
-#include "ret_vals.h" 
+#include "ret_vals.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -97,6 +97,10 @@
 #define PI_GTE 64
 #define PI_NEQ 65
 
+#define PI_ASS 80 //assign terminal int string or double
+#define PI_ASSBEG 81 //assign zacatek, vygenerovat promennou...
+#define PI_ASSEND 82 //expression je hotovy, ulozit promennou
+
 typedef struct{
 	int ins_type;
 	void *adr1;
@@ -127,4 +131,4 @@ void deleteFirst();
 void freeList();
 void printList();
 
-#endif //INSLIST_H 
+#endif //INSLIST_H

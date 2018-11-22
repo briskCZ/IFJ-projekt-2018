@@ -71,13 +71,13 @@ int checkRule(t_IStack *s, int *type){
 				addInst(PI_NEQ, NULL, NULL, NULL, 0);
                 return R_NEQ;
             default:
-                fprintf(stderr, "ERROR1: Syntax error, unexpected symbol\n");
+                fprintf(stderr, "ERROR SYNTAX\n");
                 return ERROR_SYNTAX;
         }
     }
     else
     {
-        fprintf(stderr, "ERROR2: Syntax error, unexpected symbol\n");
+        fprintf(stderr, "ERROR SYNTAX\n");
         return ERROR_SYNTAX;
     }
 }
@@ -105,6 +105,7 @@ int tokenToIndex(int type){
         case T_DOUBLE:
         case T_INT:
         case T_ID:
+		case T_NIL: //TODO
             return 5;
         case T_EOL:
         case PT_END:
@@ -161,6 +162,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb)
 				else
 				{
                     b_token = getNextToken(&error);
+					printToken(b_token, 0);
                 }
                 if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
@@ -177,8 +179,11 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb)
                     usingTb = 0;
                 }
 				else
+				{
                     b_token = getNextToken(&error);
-                
+					printToken(b_token, 0);
+                }
+
 				if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
 
@@ -196,10 +201,12 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb)
                 }
                 else
                 {
+					fprintf(stderr, "EXPR ERROR: spatny symbol na zasobniku");
                     exit(ERROR_SYNTAX);
                 }
                 break;
             default:
+				fprintf(stderr, "EXPR ERROR: prazdne misto v tabulce");
                 exit(ERROR_SYNTAX);
         }
     } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));
@@ -252,7 +259,17 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 		{	
 			aux = tableSearchItem(&table, b_token.attr);
 			if (aux == NULL) 			//nenasli jsme ani v globalni tabulce symbolu
+			{
+				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
 				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+			}
+		}
+
+		//funkce ve vyrazu nesmi byt
+		if (aux->data->is_var == 0)
+		{
+			fprintf(stderr, "EXPR ERROR: funkce ve vyrazu\n");
+			exit(ERROR_SEM_COMPATIBILITY);
 		}
 
 		i_push(s, b, b);
@@ -272,6 +289,11 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 	{
 		i_push(s, b, b);
 		addInst(PI_INIT, NULL, (void*)b_token.attr.val, (void*)T_STRING, 0);
+	}
+	else if (b == T_NIL) //TODO
+	{
+		i_push(s, b, b);
+		addInst(PI_INIT, NULL, (void*)b_token.attr.val, (void*)T_NIL, 0);
 	}
 	else
 		i_push(s, b, NON_TYPE);
