@@ -16,6 +16,7 @@
                                    exit(ERROR_SYNTAX);}
 
 #define SAVE_ERROR(error){if (ERROR == 0) ERROR = error;}
+
 #define P(a) fprintf(stderr, "%s\n", a);
 
 //int ERROR = 0;
@@ -101,6 +102,7 @@ void param1(){
     }else{
         //term se postara aby se program ukoncil s chybou
         term(token);
+
 		//
 		if (node != NULL)
 		{	
@@ -115,7 +117,6 @@ void param1(){
     }
 }
 void param11(){
-	
     P("--param11");
     int error = 0;
     P("--token v param11 na zacatku");
@@ -127,6 +128,7 @@ void param11(){
         CHECK_ERROR(error);
         term(token);
         //dalsi mozny parametr funkce, check v tabulce symbolu
+
 		//
 		if (node != NULL)
 		{	
@@ -137,12 +139,16 @@ void param11(){
 			tableChangeItemByNode(temp, 1, 0, 0, 0);
 			}
 		//###########################################
+
         param11();
     }else if (token.type == T_RIGHT_PAR){
         P("--token v param11 right par");
         token = getNextToken(&error);
         CHECK_ERROR(error);
         if (token.type == T_EOL){
+
+            returnToken(token);
+
             return;
         }else{
             PRINT_SYNTAX_ERROR("EOL after PARAM");
@@ -197,15 +203,29 @@ void sec1(){
     int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
+    while(token.type == T_EOL){
+        token = getNextToken(&error);
+        CHECK_ERROR(error);
+        P("--token sec1");
+        //printToken(token, error);
+    }
     if (token.type == T_EOF){
         PRINT_SYNTAX_ERROR("END");
+    }else if (token.type == T_DEF){
+        PRINT_SYNTAX_ERROR("DEF not");
     }else if (token.type == T_END){
-        return;
+        token = getNextToken(&error);
+        CHECK_ERROR(error);
+        if (token.type == T_EOL){
+            return;
+        }else{
+            PRINT_SYNTAX_ERROR("EOL after end");
+        }
     }else if (token.type != T_EOL){
-        P("--nechapu");
-        //printToken(token, error);
         code(token);
         sec1();
+        P("--vratil sem se z sec1");
+        return;
     }
 
 }
@@ -214,16 +234,23 @@ void sec2(){
     int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
+    while(token.type == T_EOL){
+        token = getNextToken(&error);
+        CHECK_ERROR(error);
+    }
     if(token.type == T_ELSE){
+        P("--ifelse");
         t_Token token = getNextToken(&error);
         CHECK_ERROR(error);
         if (token.type == T_EOL){
-            sec1();
+            return;
         }else{
             PRINT_SYNTAX_ERROR("EOL after ELSE");
         }
-    //pokud token neni else
-    }else if (token.type != T_EOF){
+    }else if (token.type == T_DEF){
+        PRINT_SYNTAX_ERROR("DEF not");
+    }else if (token.type != T_EOF && token.type != T_END){
+        P("--dostal jsem se sem");
         code(token);
         sec2();
     }else{
@@ -231,11 +258,11 @@ void sec2(){
     }
 }
 void code(t_Token token){
-	t_Node *temp;
     P("--code");
     int error = 0;
     P("--potencionalni problem");
-    printToken(token, error);
+	t_Node *temp;
+    //printToken(token, error);
     switch (token.type){
         case T_IF:
             /* IF */
@@ -282,6 +309,7 @@ void code(t_Token token){
             break;
         case T_ID:
             /* TODO dalsi prace s tabulkou symbolu*/
+
 			temp = tableInsertToken(&table, token);
 			
 			//##################################
@@ -295,8 +323,9 @@ void code(t_Token token){
                 //printToken(token, 99);
                 //printToken(token, 99);
 
+
 				tableChangeItemByNode(temp, 1, 0, 0, 1); //TODO
-				
+
                 assign(token, tb);
                     break;
                 /* ID -> volani funkce */
@@ -307,9 +336,10 @@ void code(t_Token token){
                 case T_STRING:
                 case T_EOL:
                     // volani funkce
-					
+
 					tableChangeItemByNode(temp, 0, 0, 0, 1); //TODO
 					
+
                     f_call(token, tb);
                     break;
                 /* random vyraz */
@@ -331,8 +361,11 @@ void code(t_Token token){
             }
             break;
         }
-        //case T_EOL: P("--EOL") break;
-        //default: PRINT_SYNTAX_ERROR("SPECIAL");
+
+        case T_EOL: P("--EOL") break;
+        default: PRINT_SYNTAX_ERROR("SYMBOL not"); break;
+
+
     }
 }
 
@@ -347,13 +380,12 @@ void program(){
             return;
         case T_DEF:
             /* Definice funkce */
-			
             P("--def");
             token = getNextToken(&error);
             CHECK_ERROR(error);
             if (token.type == T_ID){
                 //TODO pridat do tabulky symbolu zaznam o definici funkce
-								
+		
 				node = tableInsertToken(&table, token);
 				if (node != NULL)
 					tableChangeItemByNode(node, 0, 0, 1, 1);
@@ -361,10 +393,17 @@ void program(){
 					exit(ERROR_INTERNAL); //todo
 			
 				//#################################################
+
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
                 if (token.type == T_LEFT_PAR){
                     param1();
+                    token = getNextToken(&error);
+                    CHECK_ERROR(error);
+                    if (token.type != T_EOL){
+                        PRINT_SYNTAX_ERROR("EOL")
+                    }
+
                     sec1();
                     program();
                 }else{
@@ -384,7 +423,20 @@ void program(){
 }
 
 int main(){
-    ungetc('\n', stdin);
+
+/*
+    //ungetc('\n', stdin);
+    scannerInit();
+    //inicializace globalni tabulky symbolu
+    program();
+    // t_Token token;
+    // do{
+    //     int error;
+    //     token = getPrintNextToken(&error);
+    // }while(token.type != T_EOF);
+    scannerClean();*/
+
+    //ungetc('\n', stdin);
  
 	//inicializace potrebnych veci
 	scannerInit();
@@ -403,5 +455,6 @@ int main(){
     scannerClean();
 	tableDestroy(&table);
 	freeList();
+
     return SUCCESS;
 }
