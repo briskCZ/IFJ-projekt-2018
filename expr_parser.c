@@ -37,13 +37,14 @@ int checkRule(t_IStack *s, int *type){
     {
 		//konverze typu
 		*type = resultType(type1, type3);
-	
+		int res;
+
         switch (elem2)
         {
             case T_PLUS:
 				if (*type == T_STRING)
 					addInst(PI_ADDSTR, NULL, NULL, NULL, 0);
-                else if (*type == T_INT || *type == T_DOUBLE);
+                else if (*type == T_INT || *type == T_DOUBLE)
 					addInst(PI_ADD, NULL, NULL, NULL, 0);
 				else
 				{	
@@ -93,17 +94,18 @@ int checkRule(t_IStack *s, int *type){
 			
 			if(elem2 == T_MINUS || elem2 == T_MUL || elem2 == T_DIV)
 			{
-				if (*type = T_STRING)
+				if (*type == T_STRING)
 				{
 					fprintf(stderr, "EXPR ERROR: - * / S T_STRING\n");
 					exit(ERROR_SEM_COMPATIBILITY);
 				}
-				else if (*type = T_STRING)
+				else if (*type == T_STRING)
 				{
-					fprintf(stderr, "EXPR ERROR: - * / s T_NIL"
+					fprintf(stderr, "EXPR ERROR: - * / s T_NIL\n");
 					exit(ERROR_SEM_COMPATIBILITY);
 				}
-			} 
+			}
+			return res; 
        }
     }
     else
@@ -233,12 +235,12 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
                 }
                 else
                 {
-					fprintf(stderr, "EXPR ERROR: spatny symbol na zasobniku");
+					fprintf(stderr, "EXPR ERROR: spatny symbol na zasobniku\n");
                     exit(ERROR_SYNTAX);
                 }
                 break;
             default:
-				fprintf(stderr, "EXPR ERROR: prazdne misto v tabulce");
+				fprintf(stderr, "EXPR ERROR: prazdne misto v tabulce\n");
                 exit(ERROR_SYNTAX);
         }
     } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));

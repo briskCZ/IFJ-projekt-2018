@@ -36,7 +36,7 @@ void assign(t_Token left, t_Token ass){
     P("--assign");
     t_symTable *scopeTable;
     t_Node *leftVar;
-    int isNew = 0;
+    int isNew = 0, ret_type = 0;
     if (isGlobal()){
         scopeTable = &table;
     }else{
@@ -91,8 +91,8 @@ void assign(t_Token left, t_Token ass){
                 /* expr */
                 P("--expr v assign");
                 assNew(isNew, leftVar, stringGet(&left.attr));
-                addInst(PI_ASSBEG, (void*)leftVar, NULL, NULL, 0);
-                returnToken(exprParse(ta, tb, pa_funcLocalTable, 1));
+                returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type));
+                tableChangeItemByNode(leftVar, 1, &ret_type, 1, isGlobal());
                 //pokud je novy zaznam v tabulce symbolu
                 addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
 
@@ -105,9 +105,8 @@ void assign(t_Token left, t_Token ass){
 
         P("--assign term");
         assNew(isNew, leftVar, stringGet(&left.attr));
-        addInst(PI_ASSBEG, (void*)leftVar, NULL, NULL, 0);
-        returnToken(exprParse(ta, ta, 0, scopeTable));
-        tableChangeItemByNode(leftVar, 1, ta.type, 1, isGlobal());
+        returnToken(exprParse(ta, ta, 0, scopeTable, &ret_type));
+        tableChangeItemByNode(leftVar, 1, &ret_type, 1, isGlobal());
         addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
 
         //vygeneruj piass (a, ta.attr, typ, 0);
@@ -169,14 +168,17 @@ void param1(int *param_cnt){
         if(param_cnt != NULL) (*param_cnt)++;
 		if (pa_funcLocalTable != NULL && node != NULL)
 		{
-            P("--jenom v def");
+            P("__def param11");
 			printToken(token, 0);
 			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
 
 			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
 			tableChangeItemByNode(temp, 1, 0, 0, 0);
-		}
-		//###########################################
+		}else{
+            P("__def param11");
+
+        }
+        //###########################################
         param11(param_cnt);
     }
 }
@@ -195,21 +197,24 @@ void param11(int *param_cnt){
         if(param_cnt != NULL) (*param_cnt)++;
 		if (pa_funcLocalTable != NULL && node != NULL)
 		{
+            P("__def param11");
 			printToken(token, 0);
 			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
 
 			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
-			tableChangeItemByNode(temp, 1, 0, 0, 0);
-			}
+			tableChangeItemByNode(temp, 1, 0, 1, 0);
+            addInst(PI_DEFPARAM, (void*) temp, NULL, NULL , 0);
 		//###########################################
+        }else{
+            P("__fcall param11");
 
+        }
         param11(param_cnt);
     }else if (token.type == T_RIGHT_PAR){
         P("--token v param11 right par");
         token = getNextToken(&error);
         CHECK_ERROR(error);
         if (token.type == T_EOL){
-
             returnToken(token);
 
             return;
@@ -230,6 +235,9 @@ void param2(t_Token token, int *param_cnt){
         return;
     }else{
         term(token);
+        if(pa_funcLocalTable == NULL){
+            P("__fcall param2");
+        }
         if(param_cnt != NULL) (*param_cnt)++;
         param22(param_cnt);
     }
@@ -243,6 +251,9 @@ void param22(int *param_cnt){
         token = getNextToken(&error);
         CHECK_ERROR(error);
         term(token);
+        if(pa_funcLocalTable == NULL){
+            P("__fcall param22");
+        }
         if(param_cnt != NULL) (*param_cnt)++;
         param22(param_cnt);
     }else if (token.type == T_EOL){
@@ -325,6 +336,7 @@ void sec2(){
 }
 void code(t_Token token){
     P("--code");
+    int ret_type = 0;
     int error = 0;
     switch (token.type){
         case T_IF:
@@ -332,7 +344,7 @@ void code(t_Token token){
             P("--IF");
             token = getNextToken(&error);
             CHECK_ERROR(error);
-            token = exprParse(token, token, pa_funcLocalTable, 0); //TODO
+            token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type); //TODO
             if (token.type == T_THEN){
                 P("--then");
                 token = getNextToken(&error);
@@ -351,7 +363,7 @@ void code(t_Token token){
             P("--WHILE");
             token = getNextToken(&error);
             CHECK_ERROR(error);
-            token = exprParse(token, token, pa_funcLocalTable, 0);
+            token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
             if (token.type == T_DO){
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
@@ -368,13 +380,10 @@ void code(t_Token token){
         case T_INT:
         case T_DOUBLE:
         case T_STRING:
-            returnToken(exprParse(token, token, pa_funcLocalTable, 0));
+        case T_NIL:
+            returnToken(exprParse(token, token, pa_funcLocalTable, 0, &ret_type));
             break;
         case T_ID:
-            /* TODO dalsi prace s tabulkou symbolu*/
-
-
-			//##################################
             {
             t_Token tb = getNextToken(&error);
             CHECK_ERROR(error);
@@ -406,8 +415,9 @@ void code(t_Token token){
                 case T_MORE_EQ:
                 case T_EQ_REL:
                 case T_NOT_EQ:
+                case T_NIL:
                     /* expr */
-                    returnToken(exprParse(token, tb, pa_funcLocalTable, 1));
+                    returnToken(exprParse(token, tb, pa_funcLocalTable, 1, &ret_type));
                     break;
                 default:
                     PRINT_SYNTAX_ERROR("Function call, assignment or expression");
@@ -453,7 +463,7 @@ void program(){
                     }
                 }
 				//#################################################
-
+                addInst(PI_BEGINFUNC, (void*)node, NULL, NULL, 0);
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
                 if (token.type == T_LEFT_PAR){
@@ -465,6 +475,7 @@ void program(){
                     }
 
                     sec1();
+                    addInst(PI_ENDFUNC, NULL, NULL, NULL, 0);
                     pa_funcLocalTable = NULL;
                     program();
                 }else{

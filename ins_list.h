@@ -96,10 +96,11 @@
 #define PI_LTE 63
 #define PI_GTE 64
 #define PI_NEQ 65
-
-#define PI_ASS 80 //assign terminal int string or double
-#define PI_ASSBEG 81 //assign zacatek, vygenerovat promennou...
-#define PI_ASSEND 82 //expression je hotovy, ulozit promennou
+#define PI_ADDSTR 66 //secte dva strinky
+#define PI_ADD 67	//secte dve cisla
+#define PI_ASS 80 //assign terminal int string or double.
+#define PI_ASSEND 81 //expression je hotovy, ulozit promennou
+#define PI_DEFPARAM 82
 
 typedef struct{
 	int ins_type;
