@@ -10,7 +10,9 @@
 
 #include "expr_parser.h"
 
-void debug_print(struct table *local_table);
+//definice lokalni funkci
+void debug_print(struct table *local_table, t_Token t, t_Token tb);
+int resultType(int t1, int t2);
 
 int checkRule(t_IStack *s, int *type){
     int elem1, elem2, elem3;
@@ -118,7 +120,7 @@ int tokenToIndex(int type){
 
 t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb){
     /* Precedencni tabulka */
-	debug_print(local_table); //DEBUG PRINT TODO
+	debug_print(local_table, t, tb); //DEBUG PRINT TODO
 
     int prec_table[PT_SIZE][PT_SIZE] = {
         {PT_R, PT_L, PT_R, PT_L, PT_R, PT_L, PT_R},
@@ -148,7 +150,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb)
             case PT_E:
 				//fprintf(stderr, "PT_E\n");
 
-				addInitInstruction(&s, b_token);
+				addInitInstruction(&s, local_table, b_token);
 
 				//test jestli mame nacteny token
 				if (usingTb == 1)
@@ -167,7 +169,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb)
                 //fprintf(stderr, "PT_L\n");
 
 				i_termTopPush(&s, PT_L, NON_TYPE);
-				addInitInstruction(&s, b_token);
+				addInitInstruction(&s, local_table, b_token);
 
 				if (usingTb == 1)
 				{
@@ -223,7 +225,8 @@ int resultType(int t1, int t2)
 	else
 	{
 			fprintf(stderr, "ERROR_SEM_COMPATIBILITY\n");
-			exit(ERROR_SEM_COMPATIBILITY);
+			return NON_TYPE;
+			//exit(ERROR_SEM_COMPATIBILITY);
 	}
 }
 
@@ -275,16 +278,16 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 }
 
 //vypise jestli jsem zanoreni ve funkci nebo ne
-void debug_print(struct table *local_table)
+void debug_print(struct table *local_table, t_Token t, t_Token tb)
 {
-    if (localTable == NULL)
+    if (local_table == NULL)
 	{
         fprintf(stderr, "--globalni scope\n");
     }
 	else
 	{
         fprintf(stderr, "--lokalni scope\n");
-        tablePrint(localTable, 1);
+        tablePrint(local_table, 1);
     }
 	fprintf(stderr, "**** EXPR ****\n");
 	printToken(t, 0); 
