@@ -203,7 +203,7 @@ void param11(int *param_cnt){
 
 			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
 			tableChangeItemByNode(temp, 1, 0, 1, 0);
-            addInst(PI_DEFPARAM, (void*), NULL, NULL , 0);
+            addInst(PI_DEFPARAM, (void*) temp, NULL, NULL , 0);
 		//###########################################
         }else{
             P("__fcall param11");
@@ -336,7 +336,7 @@ void sec2(){
 }
 void code(t_Token token){
     P("--code");
-    int ret_val = 0;
+    int ret_type = 0;
     int error = 0;
     switch (token.type){
         case T_IF:
