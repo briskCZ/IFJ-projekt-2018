@@ -22,11 +22,21 @@
 int isGlobal(){
     return (pa_funcLocalTable == NULL) ? 1 : 0;
 }
+void assNew(int isNew, t_Node* leftVar, char* err){
+    if (isNew){
+        tableChangeItemByNode(leftVar, 1, 0, 1, isGlobal());
+    }
+    if(leftVar->data->is_var == 0){
+        fprintf(stderr, "ERROR_SEMANTIC: Cannot assign to function %s, on line: %d\n", err, sc_line_cnt);
+        exit(ERROR_SEMANTIC);
+    }
+}
 void assign(t_Token left, t_Token ass){
     //otestovat levou stranu v tabulce symbolu, dale pokud je funkce
     P("--assign");
     t_symTable *scopeTable;
     t_Node *leftVar;
+    int isNew = 0;
     if (isGlobal()){
         scopeTable = &table;
     }else{
@@ -37,15 +47,10 @@ void assign(t_Token left, t_Token ass){
     if (n == NULL){
         //polozka nebyla nalezena, definuje se nova promena
         leftVar = tableInsertToken(scopeTable, left);
-        tableChangeItemByNode(leftVar, 1, 0, 0, isGlobal());
+        isNew = 1;
+        tableChangeItemByNode(leftVar, -1, 0, 0, isGlobal());
     }else{
-        //pokud byla polozka nalezena
-        if(n->data->is_var == 0){
-            fprintf(stderr, "ERROR_SEMANTIC: Cannot assign to function %s, on_line: %d\n", stringGet(&left.attr), sc_line_cnt);
-            exit(ERROR_SEMANTIC);
-        }else{
-            leftVar = n;
-        }
+        leftVar = n;
     }
     t_Token ta, tb;
     int error = 0;
@@ -67,8 +72,11 @@ void assign(t_Token left, t_Token ass){
             case T_INT:
             case T_STRING:
                 // volani funkce
-                //fprintf(stderr, "L: %s, ASS: %s, R: %s, P1: %s\n", left.attr.val, ass.type, ta.attr.val, tb.attr);
                 f_call(ta, tb);
+                //pokud je novy zaznam v tabulce symbolu
+                if (isNew){
+                    tableChangeItemByNode(leftVar, 1, 0, 1, isGlobal());
+                }
                 break;
             case T_PLUS:
             case T_MINUS:
@@ -82,18 +90,29 @@ void assign(t_Token left, t_Token ass){
             case T_NOT_EQ:
                 /* expr */
                 P("--expr v assign");
+                assNew(isNew, leftVar, stringGet(&left.attr));
+                addInst(PI_ASSBEG, (void*)leftVar, NULL, NULL, 0);
                 returnToken(exprParse(ta, tb, pa_funcLocalTable, 1));
+                //pokud je novy zaznam v tabulce symbolu
+                addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
 
                 break;
             default:
             PRINT_SYNTAX_ERROR("Function call or expression");
 
         }
-    }else if (ta.type == T_INT || ta.type == T_DOUBLE || ta.type == T_STRING){
+    }else if (ta.type == T_INT || ta.type == T_DOUBLE || ta.type == T_STRING || ta.type == T_NIL){
+
+        P("--assign term");
+        assNew(isNew, leftVar, stringGet(&left.attr));
+        addInst(PI_ASSBEG, (void*)leftVar, NULL, NULL, 0);
+        returnToken(exprParse(ta, ta, 0, scopeTable));
         tableChangeItemByNode(leftVar, 1, ta.type, 1, isGlobal());
+        addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
+
         //vygeneruj piass (a, ta.attr, typ, 0);
-        addInst(PI_ASS, (void*)leftVar, (void*)ta.attr.val, (void*)ta.type, 0);
-        return;
+    }else{
+        PRINT_SYNTAX_ERROR("in assign: fcall or exp");
     }
 }
 void f_call(t_Token ta, t_Token tb){
@@ -363,8 +382,6 @@ void code(t_Token token){
                 case T_ASSIGNMENT:
                     {
                     /* ID = */
-                    t_Node *temp = tableInsertToken(&table, token);
-    				tableChangeItemByNode(temp, 1, 0, 1, isGlobal()); //TODO nevime jestli global
                     assign(token, tb);
                     break;
                     }
@@ -429,6 +446,7 @@ void program(){
     				node = tableInsertToken(&table, token);
     				if (node != NULL){
     					tableChangeItemByNode(node, 0, 0, 1, 1);
+                        fprintf(stderr, "--fce: %s, %d\n", node->data->name->val, node->data->is_var);
                         pa_funcLocalTable = node->data->local_symTable;
     				}else{
     					exit(ERROR_INTERNAL); //todo
@@ -464,25 +482,27 @@ void program(){
 
     }
 }
-
 int main(){
 
-/*
+
     //ungetc('\n', stdin);
-    scannerInit();
+    // scannerInit();
     //inicializace globalni tabulky symbolu
-    program();
+    //program();
     // t_Token token;
     // do{
     //     int error;
     //     token = getPrintNextToken(&error);
     // }while(token.type != T_EOF);
-    scannerClean();*/
+    // scannerClean();
 
     //ungetc('\n', stdin);
 
-	//inicializace potrebnych veci
-	scannerInit();
+
+
+    //inicializace potrebnych veci
+
+    scannerInit();
 	table = tableInit();
 	listInit();
 

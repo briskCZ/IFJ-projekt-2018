@@ -481,20 +481,9 @@ int isNumberEnding(char c){
 
 int isKwEnd(){
     char symbol = getc(stdin);
-    if (isspace(symbol) || symbol == '#'){
+    if (!isalnum(symbol) || isspace(symbol) || symbol == '#'){
         //pokud bude eol, tak ho musime taky vratit
-        if (symbol == '\n'){
-            sc_line_cnt++;
-            sc_was_eol = 1;
-            t_Token ret;
-            ret.type = T_EOL;
-            stringInit(&ret.attr);
-            returnToken(ret);
-
-        }
-        if (symbol == '#'){
-            ungetc(symbol, stdin);
-        }
+        ungetc(symbol, stdin);
         return 1;
     }else{
         ungetc(symbol, stdin);

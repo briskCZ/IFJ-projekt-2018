@@ -33,6 +33,7 @@ typedef struct
 	int is_var; //0 - funkce, jinak promenna
 	string *name; // identifikator promenne
 	int data_type; // datovy typ
+	int nil; //0 neni 1 je
 	int defined; //  0 - neni definovana, jinak je definovana
 	int global; // 0 lokalni, jinak globalni
 	int params_cnt; // pocet parametru funkce
@@ -53,7 +54,7 @@ struct node
 };
 
 /* tabulka symbol */
-struct table
+typedef struct table
 {
 	t_Node *root; //pocatek tabulky
 

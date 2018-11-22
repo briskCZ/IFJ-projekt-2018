@@ -10,41 +10,9 @@
 
 #include "expr_parser.h"
 
-int isEnd(int val){
-    return (val == T_DO || val == T_THEN || val == T_EOL || val == PT_END) ? 1 : 0;
-}
-
-int resultType(int t1, int t2)
-{
-	if (t1 == t2)
-		return t1;
-	else if (t1 == T_INT || t2 == T_DOUBLE)
-	{
-		/*
-		DEFVAR v1
-		INT2FLOAT v1,
-
-		*/
-		//addInst(INS_DEFVAR, NULL, NULL, NULL); //TODO
-		//addInst(INS_INT2FLOAT, NULL, , NULL);
-
-
-
-		return T_DOUBLE;
-	}
-	else if (t2 == T_INT || t1 == T_DOUBLE)
-	{
-		//addInst(INS_DEFVAR, NULL, NULL, NULL); //TODO
-		//addInst(INS_INT2FLOAT, NULL, , NULL);
-
-		return T_DOUBLE;
-	}
-	else
-	{
-			fprintf(stderr, "ERROR_SEM_COMPATIBILITY\n");
-			exit(ERROR_SEM_COMPATIBILITY);
-	}
-}
+//definice lokalni funkci
+void debug_print(struct table *local_table, t_Token t, t_Token tb);
+int resultType(int t1, int t2);
 
 int checkRule(t_IStack *s, int *type){
     int elem1, elem2, elem3;
@@ -84,24 +52,27 @@ int checkRule(t_IStack *s, int *type){
             case T_DIV:
 				addInst(INS_DIV, NULL, NULL, NULL, 0);
 				return R_DIV;
-            case T_ID:
-                return R_ID; //wtf
             case T_LESS:
+				addInst(INS_LT, NULL, NULL, NULL, 0);
                 return R_LESS;
             case T_MORE:
+				addInst(INS_GT, NULL, NULL, NULL, 0);
                 return R_MORE;
             case T_LESS_EQ:
+				addInst(PI_LTE, NULL, NULL, NULL, 0);
                 return R_LESSEQ;
             case T_MORE_EQ:
+				addInst(PI_GTE, NULL, NULL, NULL, 0);
                 return R_MOREEQ;
             case T_EQ_REL:
+				addInst(INS_EQ, NULL, NULL, NULL, 0);
                 return R_EQ;
             case T_NOT_EQ:
+				addInst(PI_NEQ, NULL, NULL, NULL, 0);
                 return R_NEQ;
             default:
                 fprintf(stderr, "ERROR1: Syntax error, unexpected symbol\n");
                 return ERROR_SYNTAX;
-
         }
     }
     else
@@ -145,17 +116,11 @@ int tokenToIndex(int type){
     }
 }
 
-t_Token exprParse(t_Token t, t_Token tb, struct table *localTable, int usingTb){
+
+
+t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb){
     /* Precedencni tabulka */
-    if (localTable == NULL){
-        fprintf(stderr, "--globalni scope\n");
-    }else{
-        fprintf(stderr, "--lokalni scope\n");
-        tablePrint(localTable, 1);
-    }
-	fprintf(stderr, "EXPER ///////\n");
-	printToken(t, 0);
-	printToken(tb, 0);
+	debug_print(local_table, t, tb); //DEBUG PRINT TODO
 
     int prec_table[PT_SIZE][PT_SIZE] = {
         {PT_R, PT_L, PT_R, PT_L, PT_R, PT_L, PT_R},
@@ -167,6 +132,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *localTable, int usingTb){
         {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
     };
     int error, r, b, type, temp;
+
     t_IStack s = i_stackInit();
     //vlozeni koncoveho symbolu na zasobnik
     i_push(&s, PT_END, NON_TYPE);
@@ -179,48 +145,45 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *localTable, int usingTb){
         int a = i_termTop(&s, &type);
 
         b = b_token.type;
-        //fprintf(stderr, "[%d, %d] || [%d, %d]\n", a, b, tokenToIndex(a), tokenToIndex(b));
         switch (prec_table[tokenToIndex(a)][tokenToIndex(b)])
         {
-
             case PT_E:
-				fprintf(stderr, "PT_E\n");
+				//fprintf(stderr, "PT_E\n");
 
-				addInitInstruction(&s, b_token);
+				addInitInstruction(&s, local_table, b_token);
 
 				//test jestli mame nacteny token
-				if (usingTb == 1){
+				if (usingTb == 1)
+				{
                     b_token = tb;
                     usingTb = 0;
-                }else{
+                }
+				else
+				{
                     b_token = getNextToken(&error);
-                    //CHECK_ERROR(error);
-
                 }
                 if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
 
             case PT_L:
-                fprintf(stderr, "PT_L\n");
-                //fprintf(stderr, "b: "); i_display(&s);
+                //fprintf(stderr, "PT_L\n");
 
 				i_termTopPush(&s, PT_L, NON_TYPE);
-				printToken(b_token, 0);
-				addInitInstruction(&s, b_token);
-                //fprintf(stderr, "a: "); i_display(&s);
+				addInitInstruction(&s, local_table, b_token);
 
-				if (usingTb == 1){
+				if (usingTb == 1)
+				{
                     b_token = tb;
                     usingTb = 0;
-                }else{
-                    b_token = getNextToken(&error);
-                    //CHECK_ERROR(error);
                 }
-                if (error == ERROR_LEX) exit(ERROR_LEX);
+				else
+                    b_token = getNextToken(&error);
+                
+				if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
 
             case PT_R:
-                fprintf(stderr, "PT_R\n");
+                //fprintf(stderr, "PT_R\n");
 
                 r = checkRule(&s, &type);
                 if (r != ERROR_SYNTAX)
@@ -233,50 +196,67 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *localTable, int usingTb){
                 }
                 else
                 {
-
-                    //fprintf(stderr, "EXPR: SYN1 ERROR\n");
-
                     exit(ERROR_SYNTAX);
                 }
                 break;
             default:
-
-                //fprintf(stderr, "EXPR: SYN2 ERROR\n");
                 exit(ERROR_SYNTAX);
         }
-        //i_display(&s);
-        //fprintf(stderr,"i_termTop: %d\n", i_termTop(&s, &temp));
-        //fprintf(stderr,"DEBUG: ISENDB: %d | ISENDST: %d\n", isEnd(b), isEnd(i_termTop(&s, &temp)));
     } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));
     i_stackDestroy(&s);
 	return b_token;
 }
 
-
-/*
-int main(){
-
+//vrati hodnotu, jestli dany symbol je ukoncujici symbol $
+int isEnd(int val)
+{
+    return (val == T_DO || val == T_THEN || val == T_EOL || val == PT_END) ? 1 : 0;
 }
-*/
 
-void addInitInstruction(t_IStack *s, t_Token b_token)
+//vrati vysledny typ
+int resultType(int t1, int t2)
+{
+	if (t1 == t2)
+		return t1;
+	else if (t1 == T_INT || t2 == T_DOUBLE)
+		return T_DOUBLE;
+	else if (t2 == T_INT || t1 == T_DOUBLE)
+		return T_DOUBLE;
+	else
+	{
+			fprintf(stderr, "ERROR_SEM_COMPATIBILITY\n");
+			return NON_TYPE;
+			//exit(ERROR_SEM_COMPATIBILITY);
+	}
+}
+
+//prida instrukci do listu, ktera definuje novou promennou
+void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 {
 	t_Node *aux;
 	int b = b_token.type;
+	int found = 0; //indikator jestli se idendifikator tokenu nasel v lokalni tabulce symbolu
+
 	if (b == T_ID)
 	{
-		//podivej se to tabulky symbolu
-		//fprintf(stderr, "asdfasdfasdfasdfasd %d %s\n", b, b_token.attr.val);
-		aux = tableSearchItem(&table, b_token.attr);
+		 //hledej v lokalni tabulce
+		if (local_table != NULL)		
+		{
+			aux = tableSearchItem(local_table, b_token.attr);
+			if (aux != NULL) //nasli jsme
+				found = 1;
+		}
 
-		//fprintf(stderr, "AHAHAHAH\n");
-		//printToken(b_token, 0);
-		tablePrint(&table, 0);
+		//pokud jsme nenasli, hledej jeste v globalni tabulce symbolu
+		if (!found) //
+		{	
+			aux = tableSearchItem(&table, b_token.attr);
+			if (aux == NULL) 			//nenasli jsme ani v globalni tabulce symbolu
+				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+		}
 
 		i_push(s, b, b);
-		//fprintf(stderr, "asdfasdfasdfasdfasd %d\n", b);
 		addInst(PI_INIT, NULL, (void*) aux->data, NULL, 0); //TODO
-
 	}
     else if (b == T_INT)
 	{
@@ -295,5 +275,21 @@ void addInitInstruction(t_IStack *s, t_Token b_token)
 	}
 	else
 		i_push(s, b, NON_TYPE);
+}
 
+//vypise jestli jsem zanoreni ve funkci nebo ne
+void debug_print(struct table *local_table, t_Token t, t_Token tb)
+{
+    if (local_table == NULL)
+	{
+        fprintf(stderr, "--globalni scope\n");
+    }
+	else
+	{
+        fprintf(stderr, "--lokalni scope\n");
+        tablePrint(local_table, 1);
+    }
+	fprintf(stderr, "**** EXPR ****\n");
+	printToken(t, 0); 
+	printToken(tb, 0);
 }

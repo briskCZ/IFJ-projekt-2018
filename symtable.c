@@ -127,6 +127,7 @@ t_Node *tableInsertToken(t_symTable *table, t_Token token)
 
 void tableChangeItemByNode(t_Node *node, int is_var, int data_type, int defined, int global)
 {
+	fprintf(stderr, "!changing node: %s, %d\n", node->data->name->val, is_var);
 	if (node->data != NULL)
 	{
 		if (is_var != -1) node->data->is_var = is_var;
@@ -195,7 +196,7 @@ t_Node* createNode(t_Token token)
 		free(new);
 		return NULL;
 	}
-	
+
 	//ulozim identifikator
 	new->data->name = malloc(sizeof(string));
 	if (new->data->name == NULL)

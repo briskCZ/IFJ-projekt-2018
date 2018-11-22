@@ -29,8 +29,9 @@
 
 int checkRule(t_IStack *stack, int *type);
 int isEnd(int val);
-t_Token exprParse(t_Token t, t_Token tb, struct table *localTable, int usingTb);
-void addInitInstruction(t_IStack *s, t_Token b_token);
+t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb);
+void addInitInstruction(t_IStack *s, struct table* local_table, t_Token b_token);
+
 
 typedef enum{
     R_PLUS = 200,
