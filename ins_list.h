@@ -93,9 +93,9 @@
 #define PI_ENDFUNC 61
 
 #define PI_INIT 62
-/* addInst(INS_DEFVAR, NULL, NULL, NULL);
-	addInst(INS_MOVE, NULL, tabulka, NULL);
-*/
+#define PI_LTE 63
+#define PI_GTE 64
+#define PI_NEQ 65
 
 typedef struct{
 	int ins_type;
