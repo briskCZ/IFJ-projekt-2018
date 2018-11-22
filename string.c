@@ -120,7 +120,7 @@ char *stringGet(string *s){
 }
 
 void stringPrint(string *s){
-    printf("%s | len: %d | alloc: %d\n", s->val, s->length, s->allocated_size);
+    fprintf(stderr, "%s | len: %d | alloc: %d\n", s->val, s->length, s->allocated_size);
 }
 /*
 int main(){

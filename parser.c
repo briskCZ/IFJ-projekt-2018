@@ -14,13 +14,16 @@
 
 #define PRINT_SYNTAX_ERROR(symbol) {fprintf(stderr, "ERROR_SYNTAX: %s expected on line %d\n", symbol, sc_line_cnt);\
                                    exit(ERROR_SYNTAX);}
-
 #define SAVE_ERROR(error){if (ERROR == 0) ERROR = error;}
 
+//#define P(a) fprintf(stderr, "%s\n", a);
 
 //int ERROR = 0;
-
+int isGlobal(){
+    return (pa_funcLocalTable == NULL) ? 1 : 0;
+}
 void assign(t_Token left, t_Token ass){
+    //otestovat levou stranu v tabulce symbolu, dale pokud je funkce
     P("--assign");
     t_Token ta, tb;
     int error = 0;
@@ -57,7 +60,7 @@ void assign(t_Token left, t_Token ass){
             case T_NOT_EQ:
                 /* expr */
                 P("--expr v assign");
-                returnToken(exprParse(ta, tb, 1));
+                returnToken(exprParse(ta, tb, pa_funcLocalTable, 1));
 
                 break;
             default:
@@ -70,27 +73,43 @@ void assign(t_Token left, t_Token ass){
 }
 void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
+    int param_cnt = 0;
     P("--fcall");
     // fprintf(stderr, "--s: %s =\n", ta.attr.val);
+    t_Node *temp = tableSearchItem(&table, ta.attr);
+    //funkce byla zavolana, ale jeste nevime jestli je definovana
+    if (temp == NULL){
+        temp = tableInsertToken(&table, ta);
+        temp->data->was_called = 1;
+    }
+    if (temp->data->is_var){
+        fprintf(stderr, "ERROR_SEMANTIC: %s is var, not function, line %d\n",stringGet(temp->data->name), sc_line_cnt);
+        exit(ERROR_SEMANTIC);
+    }
     switch (tb.type){
         case T_LEFT_PAR:
-            param1();
+            param1(&param_cnt);
             break;
         case T_ID:
         case T_DOUBLE:
         case T_INT:
         case T_STRING:
             // uz je prvni parametr funkce, ukladat nekam !!!
-            param2(tb);
+            param2(tb, &param_cnt);
             break;
         case T_EOL:
-            return;
+            break;
         default:
             PRINT_SYNTAX_ERROR("Function parameter");
     }
-
+    if (temp->data->defined == 1 && temp->data->params_cnt != param_cnt){
+        fprintf(stderr, "PARAM_ERROR: %s called with %d params instead of %d on line: %d\n",
+                stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt);
+        exit(ERROR_SEM_PARAM);
+    }
+    //fprintf(stderr, "%s called with: %d params\n", stringGet(node->data->name) ,node->data->params_cnt);
 }
-void param1(){
+void param1(int *param_cnt){
     P("--param1");
     int error = 0;
     P("--token v param1");
@@ -101,10 +120,21 @@ void param1(){
     }else{
         //term se postara aby se program ukoncil s chybou
         term(token);
-        param11();
+        if(param_cnt != NULL) (*param_cnt)++;
+		if (pa_funcLocalTable != NULL && node != NULL)
+		{
+            P("--jenom v def");
+			printToken(token, 0);
+			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
+
+			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
+			tableChangeItemByNode(temp, 1, 0, 0, 0);
+		}
+		//###########################################
+        param11(param_cnt);
     }
 }
-void param11(){
+void param11(int *param_cnt){
     P("--param11");
     int error = 0;
     P("--token v param11 na zacatku");
@@ -116,13 +146,26 @@ void param11(){
         CHECK_ERROR(error);
         term(token);
         //dalsi mozny parametr funkce, check v tabulce symbolu
-        param11();
+        if(param_cnt != NULL) (*param_cnt)++;
+		if (pa_funcLocalTable != NULL && node != NULL)
+		{
+			printToken(token, 0);
+			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
+
+			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
+			tableChangeItemByNode(temp, 1, 0, 0, 0);
+			}
+		//###########################################
+
+        param11(param_cnt);
     }else if (token.type == T_RIGHT_PAR){
         P("--token v param11 right par");
         token = getNextToken(&error);
         CHECK_ERROR(error);
         if (token.type == T_EOL){
+
             returnToken(token);
+
             return;
         }else{
             PRINT_SYNTAX_ERROR("EOL after PARAM");
@@ -132,7 +175,7 @@ void param11(){
     }
 }
 
-void param2(t_Token token){
+void param2(t_Token token, int *param_cnt){
     P("--param2");
     // int error = 0;
     // t_Token token = getNextToken(&error);
@@ -141,10 +184,11 @@ void param2(t_Token token){
         return;
     }else{
         term(token);
-        param22();
+        if(param_cnt != NULL) (*param_cnt)++;
+        param22(param_cnt);
     }
 }
-void param22(){
+void param22(int *param_cnt){
     P("--param22");
     int error = 0;
     t_Token token = getNextToken(&error);
@@ -153,7 +197,8 @@ void param22(){
         token = getNextToken(&error);
         CHECK_ERROR(error);
         term(token);
-        param22();
+        if(param_cnt != NULL) (*param_cnt)++;
+        param22(param_cnt);
     }else if (token.type == T_EOL){
         return;
     }else{
@@ -169,11 +214,12 @@ void term(t_Token token){
         case T_STRING:
             return;
         default:
-            PRINT_SYNTAX_ERROR("Terminal");
+            PRINT_SYNTAX_ERROR("TERM");
     }
 }
 void sec1(){
     P("--sec1");
+    if (pa_funcLocalTable == NULL){ P("--global scope"); }else{P("--local scope")};
     int error = 0;
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
@@ -234,15 +280,13 @@ void sec2(){
 void code(t_Token token){
     P("--code");
     int error = 0;
-    P("--potencionalni problem");
-    //printToken(token, error);
     switch (token.type){
         case T_IF:
             /* IF */
             P("--IF");
             token = getNextToken(&error);
             CHECK_ERROR(error);
-            token = exprParse(token, token, 0); //TODO
+            token = exprParse(token, token, pa_funcLocalTable, 0); //TODO
             if (token.type == T_THEN){
                 P("--then");
                 token = getNextToken(&error);
@@ -261,7 +305,7 @@ void code(t_Token token){
             P("--WHILE");
             token = getNextToken(&error);
             CHECK_ERROR(error);
-            token = exprParse(token, token, 0);
+            token = exprParse(token, token, pa_funcLocalTable, 0);
             if (token.type == T_DO){
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
@@ -278,22 +322,26 @@ void code(t_Token token){
         case T_INT:
         case T_DOUBLE:
         case T_STRING:
-            returnToken(exprParse(token, token, 0));
+            returnToken(exprParse(token, token, pa_funcLocalTable, 0));
             break;
         case T_ID:
             /* TODO dalsi prace s tabulkou symbolu*/
+
+
+			//##################################
             {
             t_Token tb = getNextToken(&error);
             CHECK_ERROR(error);
             switch (tb.type){
                 case T_ASSIGNMENT:
-                /* ID = */
-                //P("--predprdel");
-                //printToken(token, 99);
-                //printToken(token, 99);
+                    {
+                    /* ID = */
+                    t_Node *temp = tableInsertToken(&table, token);
+    				tableChangeItemByNode(temp, 1, 0, 1, isGlobal()); //TODO nevime jestli global
 
-                assign(token, tb);
+                    assign(token, tb);
                     break;
+                    }
                 /* ID -> volani funkce */
                 case T_ID:
                 case T_LEFT_PAR:
@@ -316,15 +364,18 @@ void code(t_Token token){
                 case T_EQ_REL:
                 case T_NOT_EQ:
                     /* expr */
-                    returnToken(exprParse(token, tb, 1));
+                    returnToken(exprParse(token, tb, pa_funcLocalTable, 1));
                     break;
                 default:
                     PRINT_SYNTAX_ERROR("Function call, assignment or expression");
             }
             break;
         }
-        case T_EOL: P("EEEEOL"); break;
+
+        case T_EOL: P("--EOL") break;
         default: PRINT_SYNTAX_ERROR("SYMBOL not"); break;
+
+
     }
 }
 
@@ -332,9 +383,7 @@ void program(){
     P("--program");
     int error = 0;
     t_Token token = getNextToken(&error);
-    //printToken(token, 0);
     CHECK_ERROR(error);
-    //TODO????
     switch (token.type){
         case T_EOF:
             return;
@@ -345,22 +394,40 @@ void program(){
             CHECK_ERROR(error);
             if (token.type == T_ID){
                 //TODO pridat do tabulky symbolu zaznam o definici funkce
+		        t_Node *find = tableSearchItem(&table, token.attr);
+                //jedna se o redefinici funkce
+                if (find != NULL && find->data->defined == 1){
+                    fprintf(stderr, "ERROR_SEMANTIC: Function redef: %s at line: %d\n", stringGet(&token.attr), sc_line_cnt);
+                    exit(ERROR_SEMANTIC);
+                }else{
+    				node = tableInsertToken(&table, token);
+    				if (node != NULL){
+    					tableChangeItemByNode(node, 0, 0, 1, 1);
+                        pa_funcLocalTable = node->data->local_symTable;
+    				}else{
+    					exit(ERROR_INTERNAL); //todo
+                    }
+                }
+				//#################################################
+
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
                 if (token.type == T_LEFT_PAR){
-                    param1();
+                    param1(NULL);
                     token = getNextToken(&error);
                     CHECK_ERROR(error);
                     if (token.type != T_EOL){
-                        PRINT_SYNTAX_ERROR("EOL")
+                        PRINT_SYNTAX_ERROR("EOL");
                     }
+
                     sec1();
+                    pa_funcLocalTable = NULL;
                     program();
                 }else{
                     PRINT_SYNTAX_ERROR("(");
                 }
             }else{
-                PRINT_SYNTAX_ERROR("ID");;
+                PRINT_SYNTAX_ERROR("ID");
             }
             break;
         default:
@@ -373,6 +440,8 @@ void program(){
 }
 
 int main(){
+
+/*
     //ungetc('\n', stdin);
     scannerInit();
     //inicializace globalni tabulky symbolu
@@ -382,6 +451,27 @@ int main(){
     //     int error;
     //     token = getPrintNextToken(&error);
     // }while(token.type != T_EOF);
+    scannerClean();*/
+
+    //ungetc('\n', stdin);
+
+	//inicializace potrebnych veci
+	scannerInit();
+	table = tableInit();
+	listInit();
+
+
+    program();
+
+	P("=========== TABLE PRINT ===============");
+	tablePrint(&table, 0);
+
+	printList();
+
+	//uvolneni zdroju
     scannerClean();
+	tableDestroy(&table);
+	freeList();
+
     return SUCCESS;
 }

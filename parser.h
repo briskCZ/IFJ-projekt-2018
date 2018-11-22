@@ -14,19 +14,22 @@
 #include "expr_parser.h"
 #include "scanner.h"
 #include "symtable.h"
+
+struct table *pa_funcLocalTable;
 /*
 t_symTable table; //globalni tabulka symbolu
 t_Node *node; //pomocny ukazatel na data do tabulky symbolu
 */
 
+int isGlobal();
 void code(t_Token token);
 void sec1();
 void sec2();
 void program();
-void param1();
-void param11();
-void param2(t_Token token);
-void param22();
+void param1(int *param_cnt);
+void param11(int *param_cnt);
+void param2(t_Token token, int *param_cnt);
+void param22(int *param_cnt);
 void assign(t_Token left, t_Token assign);
 void f_call(t_Token ta, t_Token tb);
 void term(t_Token token);

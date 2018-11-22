@@ -27,14 +27,15 @@ void i_stackDestroy(t_IStack *s)
 }
 
 // vlozi element na vrchol zasobniku
-int i_push(t_IStack *s, int data)
+int i_push(t_IStack *s, int sym, int type)
 {
     t_INode *node = malloc(sizeof(t_INode));
     if (node == NULL)
        return MEMORY_ERROR;
 
 
-    node->data = data;
+    node->sym = sym;
+	node->type = type;
 	node->next = s->top;
     s->top = node;
 
@@ -52,46 +53,61 @@ void i_pop(t_IStack *s)
 	free(node);
 }
 //vrati a odstrani hodnotu z vrcholu zasobniku
-int i_topPop(t_IStack *s)
+int i_topPop(t_IStack *s, int *type)
 {
-    int ret = i_top(s);
+    int sym = i_top(s, type);
     i_pop(s);
-    return ret;
+    return sym;
 }
 
 // vrati data z vrcholu zasobniku
-int i_top(t_IStack *s)
+int i_top(t_IStack *s, int *type)
 {
 	if (i_isEmpty(s))
 		return STACK_ERROR;
 
-	return s->top->data;
+	*type = s->top->type;
+	return s->top->sym;
 }
-int i_termTop(t_IStack *s){
+int i_termTop(t_IStack *s, int *type){
 	if (i_isEmpty(s))
 		return STACK_ERROR;
 
 	t_INode *node = s->top;
 	//tokeny 0 az 13
-	while(!(node->data >= 0 && node->data <= 13)){
+	//while(!(node->sym >= 0 && node->sym <= 13)  || node->sym != T_INT){
+	while(node->sym < 0 || node->sym > 13)
+	{
+		if (node->sym == T_INT || node->sym == T_DOUBLE || node->sym == T_STRING) //TODO pro double a string
+			break;
 		node = node->next;
 		if (node == NULL) return STACK_ERROR;
 	}
-	return node->data;
+	
+	*type = node->type;
+	return node->sym;
 }
 
-int i_termTopPush(t_IStack *s, int val){
+int i_termTopPush(t_IStack *s, int sym, int type){
 	if (i_isEmpty(s))
 		return STACK_ERROR;
 
 	t_INode *new = malloc(sizeof(t_INode));
-	//TODO
-	new->data = val;
+	if (new == NULL) 
+		return MEMORY_ERROR;
+	new->sym = sym;
+	new->type = type;
 
 	t_INode *node = s->top;
 	t_INode *prev = NULL;
+	
+	
 	//tokeny 0 az 13
-	while(!(node->data >= 0 && node->data <= 13)){
+	while(node->sym < 0 || node->sym > 13)
+	{
+		if (node->sym == T_INT || node->sym == T_DOUBLE || node->sym == T_STRING) //TODO pro double a string
+			break;
+			
 		prev = node;
 		node = node->next;
 		if (node == NULL) return STACK_ERROR;
@@ -108,7 +124,7 @@ int i_termTopPush(t_IStack *s, int val){
 		prev->next = new;
 	}
 
-	return node->data;
+	return MEMORY_OK;
 }
 
 /* test jestli zasobnik je prazdny
@@ -127,7 +143,7 @@ void i_display(t_IStack *s)
     fprintf(stderr, "TOP: ");
     while (!i_isEmpty(&temp))
     {
-        fprintf(stderr, "%d |", temp.top->data);
+        fprintf(stderr, "[%d %d] |", temp.top->sym, temp.top->type);
         temp.top = temp.top->next;
     }
 

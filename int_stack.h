@@ -22,7 +22,8 @@
 /* element v zasobniku */
 typedef struct inode
 {
-	int data; // data
+	int sym; // data
+	int type; //datovy typ
 	struct inode *next; // ukazatel na dalsi element
 
 } t_INode;
@@ -53,7 +54,17 @@ vlozi element na vrchol zasobniku
 @param data date ktera se maji vlozit na zasobnik
 @return v uspechu vrati MEMORY_OK v opacnem pripade MEMORU_ERROR
 */
-int i_push(t_IStack *s, int data);
+int i_push(t_IStack *s, int sym, int type);
+
+/*
+vlozi element na vrchol zasobniku
+
+@param s zasobnik
+@param sym indexy u precedenci tabulky
+@param type datovy typ
+@return int jestli se povedlo vlozit prvek
+*/
+int i_termTopPush(t_IStack *s, int sym, int type);
 
 /*
 odstrani element z vrcholu zasobniku
@@ -63,33 +74,38 @@ odstrani element z vrcholu zasobniku
 void i_pop(t_IStack *s);
 
 /*
+Vrati a odstrani token z vrcholu zasobniku
+
+@param s ukazatel na vrchol zasobniku
+@param type vrati a odstrani datovy typ ktery je na vrcholu zasobniku
+@return int vrati a odstrani symbol ktery je na vrcholu zasobniku
+*/
+int i_topPop(t_IStack *s, int *type);
+
+/*
 vrati obsah dat na vrchulu zasobniku
 
 @param s ukazatel na vrchol zasobniku
-@return t_Data data, ktere jsou ulozeny na vrcholu zasobniku
+@param type vrati datovy typ ktery je na vrcholu zasobniku
+@return int vrati symbol ktery je na vrcholu zasobniku
 */
-int i_top(t_IStack *s);
+int i_top(t_IStack *s, int *type);
 
-//TODO
-int i_termTop(t_IStack *s);
+/*
+vrati data prvniho termu na zasobniku
 
-//TODO
-int i_termTopPush(t_IStack *s, int val);
+@param s ukazatel na vrchol zasobniku
+@param type vrati datovy typ termu ktery je nejbliz vrcholu zasobniku
+@return int vrati symbol, ktery je nejbliz vrcholu zasobniku
+*/
+int i_termTop(t_IStack *s, int *type);
+
 /*
 
 @param s ukazatel na vrchol zasobniku
 @return int 1 kdyz je prazdnu; 0 kdyz neni prazdny
 */
 int i_isEmpty(t_IStack *s);
-
-/*
-Vrati a odstrani token z vrcholu zasobniku
-
-@param s ukazatel na vrchol zasobniku
-@return token
-*/
-int i_topPop(t_IStack *s);
-
 
 /*-------------------------
  * 		extra funkce
