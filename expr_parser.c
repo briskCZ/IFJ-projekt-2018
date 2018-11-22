@@ -18,8 +18,8 @@ int checkRule(t_IStack *s, int *type){
     int elem1, elem2, elem3;
 	int type1, type2, type3;
 
-    elem1 = i_topPop(s, &type1);
-    if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING)
+    elem1 = i_topPop(s, &type1);															//TODO
+    if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING || elem1 == T_NIL)
 	{
 		*type = type1;
 		return R_ID;
@@ -37,43 +37,74 @@ int checkRule(t_IStack *s, int *type){
     {
 		//konverze typu
 		*type = resultType(type1, type3);
-
+	
         switch (elem2)
         {
             case T_PLUS:
-				addInst(INS_ADD, NULL, NULL, NULL, 0);
-                return R_PLUS;
+				if (*type == T_STRING)
+					addInst(PI_ADDSTR, NULL, NULL, NULL, 0);
+                else if (*type == T_INT || *type == T_DOUBLE);
+					addInst(PI_ADD, NULL, NULL, NULL, 0);
+				else
+				{	
+					fprintf(stderr, "EXPR ERROR: scitani dvou cisle alespon jedno z nich je T_NIL\n");
+					exit(ERROR_SEM_COMPATIBILITY);
+				}
+				return R_PLUS;
             case T_MINUS:
 				addInst(INS_SUB, NULL, NULL, NULL, 0);
-                return R_MINUS;
+                res = R_MINUS;
+				break;
             case T_MUL:
 				addInst(INS_MUL, NULL, NULL, NULL, 0);
-                return R_MUL;
+                res = R_MUL;
+				break;
             case T_DIV:
 				addInst(INS_DIV, NULL, NULL, NULL, 0);
-				return R_DIV;
+				res = R_DIV;
+				break;
             case T_LESS:
 				addInst(INS_LT, NULL, NULL, NULL, 0);
-                return R_LESS;
+                res = R_LESS;
+				break;
             case T_MORE:
 				addInst(INS_GT, NULL, NULL, NULL, 0);
-                return R_MORE;
+                res = R_MORE;
+				break;
             case T_LESS_EQ:
 				addInst(PI_LTE, NULL, NULL, NULL, 0);
-                return R_LESSEQ;
+                res = R_LESSEQ;
+				break;
             case T_MORE_EQ:
 				addInst(PI_GTE, NULL, NULL, NULL, 0);
-                return R_MOREEQ;
+                res = R_MOREEQ;
+				break;
             case T_EQ_REL:
 				addInst(INS_EQ, NULL, NULL, NULL, 0);
-                return R_EQ;
+                res = R_EQ;
+				break;
             case T_NOT_EQ:
 				addInst(PI_NEQ, NULL, NULL, NULL, 0);
-                return R_NEQ;
+                res = R_NEQ;
+				break;
             default:
-                fprintf(stderr, "ERROR SYNTAX\n");
+                fprintf(stderr, "EXPR ERROR: ERROR SYNTAX\n");
                 return ERROR_SYNTAX;
-        }
+			
+			if(elem2 == T_MINUS || elem2 == T_MUL || elem2 == T_DIV)
+			{
+				if (*type = T_STRING)
+				{
+					fprintf(stderr, "EXPR ERROR: - * / S T_STRING\n");
+					exit(ERROR_SEM_COMPATIBILITY);
+				}
+				else if (*type = T_STRING)
+				{
+					fprintf(stderr, "EXPR ERROR: - * / s T_NIL"
+					exit(ERROR_SEM_COMPATIBILITY);
+				}
+			} 
+       }
     }
     else
     {
@@ -119,7 +150,7 @@ int tokenToIndex(int type){
 
 
 
-t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb){
+t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb, int *return_type){
     /* Precedencni tabulka */
 	debug_print(local_table, t, tb); //DEBUG PRINT TODO
 
@@ -191,6 +222,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb)
                 //fprintf(stderr, "PT_R\n");
 
                 r = checkRule(&s, &type);
+				*return_type = type; //
                 if (r != ERROR_SYNTAX)
                 {
                     if (i_topPop(&s, &temp) == PT_L)
@@ -210,6 +242,8 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb)
                 exit(ERROR_SYNTAX);
         }
     } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));
+
+	fprintf("datovy typ vyrazu: %d\n", *return_type);
     i_stackDestroy(&s);
 	return b_token;
 }
@@ -229,6 +263,8 @@ int resultType(int t1, int t2)
 		return T_DOUBLE;
 	else if (t2 == T_INT || t1 == T_DOUBLE)
 		return T_DOUBLE;
+	else if (t1 == T_NIL || t2 == T_NIL)
+		return T_NIL;
 	else
 	{
 			fprintf(stderr, "ERROR_SEM_COMPATIBILITY\n");
@@ -273,7 +309,7 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 		}
 
 		i_push(s, b, b);
-		addInst(PI_INIT, NULL, (void*) aux->data, NULL, 0); //TODO
+		addInst(PI_INIT, NULL, (void*) aux->data, (void*)T_ID, 0); //TODO
 	}
     else if (b == T_INT)
 	{
