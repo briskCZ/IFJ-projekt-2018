@@ -15,17 +15,19 @@
 #include <stdlib.h>
 #include "string.h"
 #include "scanner.h"
-#include "parser.h"
 
 #define MAX_SIZE 8 //pocet alokovanych prvku pro parametry funkce
 
-typedef struct table t_symTable;
+//typedef struct table t_symTable;
 typedef struct node t_Node;
 typedef struct arrParam t_ArrParams;
 
+/* tabulka symbol */
+typedef struct table
+{
+	t_Node *root; //pocatek tabulky
 
-t_symTable table; //globalni tabulka symbolu
-t_Node *node; //pomocny ukazatel na data do tabulky symbolu
+}t_symTable;
 
 /* data v uzlu*/
 typedef struct
@@ -52,13 +54,6 @@ struct node
 
 };
 
-/* tabulka symbol */
-struct table
-{
-	t_Node *root; //pocatek tabulky
-
-};
-
 /* pole parametru */
 struct arrParam
 {
@@ -68,6 +63,9 @@ struct arrParam
 
 
 };
+
+t_symTable table; //globalni tabulka symbolu
+t_Node *node; //pomocny ukazatel na data do tabulky symbolu
 
 /*
 
