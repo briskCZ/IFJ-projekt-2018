@@ -202,6 +202,7 @@ void f_call(t_Token ta, t_Token tb){
     }
     addInst(PI_FCALL, (void*)temp, NULL, NULL, 0);
     setActive(list->last);
+    P("--POSILAM FRAME KURVA");
     addInst(INS_CREATEFRAME, (void*)temp, NULL, NULL, 1);
     switch (tb.type){
         case T_LEFT_PAR:
@@ -230,20 +231,20 @@ void f_call(t_Token ta, t_Token tb){
     //GENERACE FCALL INSTRUKCI
     //fprintf(stderr, "%s called with: %d params\n", stringGet(node->data->name) ,node->data->params_cnt);
 }
-void paramHandler(t_Token token){
+void paramHandler(t_Token token, int param_cnt){
     if (node->data->defined == 1){
         //aktualne pouzivana tabulka symbolu
         t_symTable *scopeTable = getScopeTable();
         if (token.type == T_ID){
             t_Node *param = tableSearchItem(scopeTable, token.attr);
             if (param != NULL){
-                addInst(PI_FCALL_PARAMID, (void*)param, NULL, param->data->data_type, 1);
+                addInst(PI_FCALL_PARAMID, (void*)param, (void*)param_cnt, param->data->data_type, 1);
             }else{
                 fprintf(stderr, "ERROR_SEMANTIC: Local variable: %s not defined on line: %d\n", token.attr, sc_line_cnt);
                 exit(ERROR_SEMANTIC);
             }
         }else{
-            addInst(PI_FCALL_PARAMT, (void*)token.attr.val, NULL, token.type, 1);
+            addInst(PI_FCALL_PARAMT, (void*)token.attr.val, (void*)param_cnt, token.type, 1);
         }
     }
 }
@@ -262,7 +263,7 @@ void param1(int *param_cnt){
         }else{
             term(token);
         }
-        if(param_cnt != NULL) (*param_cnt)++;
+        (*param_cnt)++;
         P("--node pred def v param1");
         tablePrintItem(node);
 		if (pa_funcLocalTable != NULL && node != NULL && !node->data->defined)
@@ -272,11 +273,11 @@ void param1(int *param_cnt){
 			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
 
 			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
-            addInst(PI_DEF_PARAM, (void*)temp, NULL, NULL , 0);
-			tableChangeItemByNode(temp, 1, 0, 1, 0);
+            addInst(PI_DEF_PARAM, (void*)temp, (void*)*param_cnt, NULL , 0);
+			tableChangeItemByNode(temp, 1, T_PARAM, 1, 0);
 		}else{
             P("call param11");
-            paramHandler(token);
+            paramHandler(token, *param_cnt);
 
         }
         //###########################################
@@ -298,7 +299,7 @@ void param11(int *param_cnt){
             term(token);
         }
         //dalsi mozny parametr funkce, check v tabulce symbolu
-        if(param_cnt != NULL) (*param_cnt)++;
+        (*param_cnt)++;
         tablePrintItem(node);
         if (pa_funcLocalTable != NULL && node != NULL && node->data->defined == 0)
 		{
@@ -307,12 +308,12 @@ void param11(int *param_cnt){
 			if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
 
 			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
-			tableChangeItemByNode(temp, 1, 0, 1, 0);
-            addInst(PI_DEF_PARAM, (void*)temp, NULL, NULL , 0);
+			tableChangeItemByNode(temp, 1, T_PARAM, 1, 0);
+            addInst(PI_DEF_PARAM, (void*)temp, (void*)*param_cnt, NULL , 0);
 		//###########################################
         }else{
             P("__fcall param11");
-            paramHandler(token);
+            paramHandler(token, *param_cnt);
 
         }
         param11(param_cnt);
@@ -343,7 +344,7 @@ void param2(t_Token token, int *param_cnt){
         term(token);
         P("__fcall param2");
         //pokud je definovana , TODO pokud neni definovana ale muze byt
-        paramHandler(token);
+        paramHandler(token, *param_cnt);
         if(param_cnt != NULL) (*param_cnt)++;
         param22(param_cnt);
     }
@@ -358,7 +359,7 @@ void param22(int *param_cnt){
         token = getNextToken(&error);
         CHECK_ERROR(error);
         term(token);
-        paramHandler(token);
+        paramHandler(token, *param_cnt);
         if(param_cnt != NULL) (*param_cnt)++;
         param22(param_cnt);
     }else if (token.type == T_EOL){
@@ -573,6 +574,7 @@ void program(){
             P("--def");
             token = getNextToken(&error);
             CHECK_ERROR(error);
+            int def_params_cnt = 0;
             if (token.type == T_ID){
                 //TODO pridat do tabulky symbolu zaznam o definici funkce
 		        t_Node *find = tableSearchItem(&table, token.attr);
@@ -593,7 +595,7 @@ void program(){
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
                 if (token.type == T_LEFT_PAR){
-                    param1(NULL);
+                    param1(&def_params_cnt);
                     tableChangeItemByNode(node, 0, 0, 1, 1);
                     token = getNextToken(&error);
                     CHECK_ERROR(error);
