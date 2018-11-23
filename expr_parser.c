@@ -39,6 +39,8 @@ int checkRule(t_IStack *s, int *type){
 		*type = resultType(type1, type3);
 		int res;
 
+		//fprintf(stderr, "-- EXPR: t1: %d | t2: %d\n", type1, type3);
+		//fprintf(stderr, "-- EXPR: res: %d\n", *type);
         switch (elem2)
         {
             case T_PLUS:
@@ -105,7 +107,7 @@ int checkRule(t_IStack *s, int *type){
 				fprintf(stderr, "EXPR ERROR: - * / s T_NIL\n");
 				exit(ERROR_SEM_COMPATIBILITY);
 			}
-			else
+			else if (*type == NON_TYPE)
 			{
 				fprintf(stderr, "EXPR ERROR: - * / s T_NIL nebo T_STRING\n");
 				exit(ERROR_SEM_COMPATIBILITY);	
@@ -302,7 +304,11 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 		{
 			aux = tableSearchItem(local_table, b_token.attr);
 			if (aux != NULL) //nasli jsme
-				found = 1;
+			{
+				fprintf(stderr, "----- %s %d\n", aux->data->name->val ,aux->data->defined);
+				if (aux->data->defined != 0) //je definovana
+					found = 1;
+			}
 		}
 
 		//pokud jsme nenasli, hledej jeste v globalni tabulce symbolu
@@ -314,6 +320,12 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
 				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
 			}
+			fprintf(stderr, "---- %s %d\n", aux->data->name->val ,aux->data->defined);
+			if (aux->data->defined == 0) // neni definovana
+			{
+				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
+				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou	
+			}
 		}
 
 		//funkce ve vyrazu nesmi byt
@@ -324,7 +336,7 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 		}
 
 		i_push(s, b, aux->data->data_type);
-		addInst(PI_INIT, NULL, (void*) aux->data, (void*)T_ID, 0); //TODO
+		addInst(PI_INIT, NULL, (void*) aux, (void*)T_ID, 0); //TODO
 	}
     else if (b == T_INT)
 	{
