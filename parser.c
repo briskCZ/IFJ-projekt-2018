@@ -200,7 +200,9 @@ void f_call(t_Token ta, t_Token tb){
         temp = tableInsertToken(&table, ta);
         temp->data->was_called = 1;
     }
-    addInst(PI_FCALL, &temp, NULL, NULL, 0);
+    addInst(PI_FCALL, (void*)temp, NULL, NULL, 0);
+    setActive(list->last);
+    addInst(INS_CREATEFRAME, (void*)temp, NULL, NULL, 1);
     switch (tb.type){
         case T_LEFT_PAR:
             param1(&param_cnt);
@@ -231,6 +233,7 @@ void f_call(t_Token ta, t_Token tb){
 void paramHandler(t_Token token){
     if (node->data->defined == 1){
         //aktualne pouzivana tabulka symbolu
+        addInst(INS_CREATEFRAME, NULL, NULL, NULL, 1);
         t_symTable *scopeTable = getScopeTable();
         if (token.type == T_ID){
             t_Node *param = tableSearchItem(scopeTable, token.attr);
@@ -634,7 +637,7 @@ int main(){
 	P("=========== TABLE PRINT ===============");
 	tablePrint(&table, 0);
 
-	printList();
+	//printList();
 
 	//uvolneni zdroju
     generate();
