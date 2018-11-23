@@ -99,7 +99,9 @@ void assign(t_Token left){
                     P("--assign jedne promenne");
                     assNew(isNew, leftVar, stringGet(&left.attr));
                     isQmExc(leftVar);
-                    tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
+                    int type = ta.type;
+                    if (stringCompare(&left.attr, &ta.attr) == 0) type = T_NIL;
+                    tableChangeItemByNode(leftVar, 1, type, 1, isGlobal());
                     returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type));
                     if(isNew){
                         addInst(PI_ASS_DECL, (void*)leftVar, NULL, NULL, 0);
@@ -195,13 +197,15 @@ void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
     int param_cnt = 0;
     P("--fcall");
-    fprintf(stderr, "funkce: %s\n", ta.attr.val);
+    /* pripadne vlozeni do tabulky symbolu */
+    //fprintf(stderr, "funkce: %s\n", ta.attr.val);
     t_Node *temp = tableSearchItem(&table, ta.attr);
     if (temp == NULL){
         temp = tableInsertToken(&table, ta);
         temp->data->was_called = 1;
     }
     node = temp;
+    //Volani printu
     addInst(PI_FCALL, (void*)temp, NULL, NULL, 0);
     setActive(list->last);
     addInst(INS_CREATEFRAME, (void*)temp, NULL, NULL, 1);
