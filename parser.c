@@ -238,7 +238,7 @@ void paramHandler(t_Token token){
         if (token.type == T_ID){
             t_Node *param = tableSearchItem(scopeTable, token.attr);
             if (param != NULL){
-                addInst(PI_FCALL_PARAMID, (void*)param, NULL, NULL, 1);
+                addInst(PI_FCALL_PARAMID, (void*)param, NULL, param->data->data_type, 1);
             }else{
                 fprintf(stderr, "ERROR_SEMANTIC: Local variable: %s not defined on line: %d\n", token.attr, sc_line_cnt);
                 exit(ERROR_SEMANTIC);
@@ -274,7 +274,7 @@ void param1(int *param_cnt){
 
 			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
             addInst(PI_DEF_PARAM, (void*)temp, NULL, NULL , 0);
-			tableChangeItemByNode(temp, 1, 0, 0, 0);
+			tableChangeItemByNode(temp, 1, 0, 1, 0);
 		}else{
             P("call param11");
             paramHandler(token);
@@ -514,10 +514,21 @@ void code(t_Token token){
                 case T_DOUBLE:
                 case T_INT:
                 case T_STRING:
-                case T_EOL:
                     // volani funkce
                     f_call(token, tb);
                     break;
+                case T_EOL:{
+                    /* volani funkce bez parametru jinak promenna */
+                    t_Node *var = tableSearchItem(getScopeTable(), token.attr);
+                    if (var != NULL && var->data->defined){
+                        if (var->data->is_var){
+                            returnToken(exprParse(token, token, pa_funcLocalTable, 0, &ret_type));
+                        }else{
+                            f_call(token, tb);
+                        }
+                    }
+                    break;
+                }
                 /* random vyraz */
                 case T_PLUS:
                 case T_MINUS:
@@ -640,7 +651,7 @@ int main(){
 	//printList();
 
 	//uvolneni zdroju
-    generate();
+    //generate();
     scannerClean();
 	tableDestroy(&table);
 	freeList();
