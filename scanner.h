@@ -110,14 +110,6 @@ Test zda charakter odpovida hexa formatu
 int isValidHex(char c);
 
 /*
-Vrati znak reprezentovany v sestnactkove soustave
-@param s - string, ve kterem je reprezentovanem
-
-@return - konvertovany znak
-*/
-int hexToChar(string *s);
-
-/*
 Test zda znak, muze byt validni konec cisla
 @param c - testovany znaky
 
@@ -160,4 +152,6 @@ Vrati token scanneru
 @return - uspesnost operace MEMORY_ERROR, pokud vracime vic nez 1 token
 */
 int returnToken(t_Token t);
+
+void stringToIns(string *s);
 #endif

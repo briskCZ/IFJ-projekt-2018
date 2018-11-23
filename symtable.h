@@ -15,7 +15,6 @@
 #include <stdlib.h>
 #include "string.h"
 #include "scanner.h"
-#include "parser.h"
 
 #define MAX_SIZE 8 //pocet alokovanych prvku pro parametry funkce
 

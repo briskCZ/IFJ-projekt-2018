@@ -263,9 +263,10 @@ t_Token getNextToken(int *error){
             case S_STRING: //"string"
                 sc_was_eol = 0;
                 if (symbol == '"'){
+                    stringToIns(&sc_buffer);
                     sc_token.type = T_STRING; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
-                }else if (symbol > 31 && symbol != '\\'){ //znaky vetsi nez ascii 31
+                }else if (symbol != '\\'){ //znaky vetsi nez ascii 31
                     strAdc(&sc_buffer, symbol);
                     state = S_STRING;
                 }else if (symbol == '\\'){
@@ -288,7 +289,7 @@ t_Token getNextToken(int *error){
                     state = S_STRING;
                 }else if (symbol == 'x'){
                     string_hex_count = 0;
-                    stringClear(&sc_aux_buffer);
+                    strAdc(&sc_buffer, symbol);
                     state = S_SPECIAL_HEX;
                 }else{
                     /*fprintf(stderr, "ERROR_LEX: Invalid escape sequence symbol\n");
@@ -301,10 +302,9 @@ t_Token getNextToken(int *error){
                 sc_was_eol = 0;
                 if (isValidHex(symbol) && string_hex_count <= 2){ //max hex
                     string_hex_count++;
-                    strAdc(&sc_aux_buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     // strAdc(&sc_buffer, symbol);
                     if (string_hex_count == 2){
-                        sc_buffer.val[sc_buffer.length-1] = hexToChar(&sc_aux_buffer);
                         state = S_STRING;
                     }else{
                         state = S_SPECIAL_HEX;
@@ -312,7 +312,6 @@ t_Token getNextToken(int *error){
                 }else{
                     //pokud je hexa pouze jeden symbol
                     if (!isValidHex(symbol) && string_hex_count == 1){
-                        sc_buffer.val[sc_buffer.length-1] = hexToChar(&sc_aux_buffer);
                         state = S_STRING;
                         ungetc(symbol, stdin);
                     }else{
@@ -455,7 +454,44 @@ t_Token getNextToken(int *error){
     }
 
 }
-
+void stringToIns(string *s){
+    string in_s;
+    stringInit(&in_s);
+    stringCopy(&in_s, s);
+    stringClear(s);
+    int esc_len = 0;
+    int length = stringGetLength(&in_s);
+    for (int i = 0; i < length; i++){
+        if (in_s.val[i] == ' '){
+            stringAddChar(s, '#');
+        }else if (in_s.val[i] == 92){ // zpetne lomeno
+            /* specialni znak */
+            stringAddChar(s, 92);
+            if (i + 1 < length && in_s.val[i+1] == 'x'){
+                string tmp;
+                stringInit(&tmp);
+                if (i + 2 < length && isValidHex(in_s.val[i+2])){
+                    esc_len = 1;
+                    stringAddChar(&tmp, in_s.val[i+2]);
+                    if (i + 3 < length && isValidHex(in_s.val[i+3])){
+                        esc_len = 2;
+                        stringAddChar(&tmp, in_s.val[i+3]);
+                    }
+                }
+                sprintf(tmp.val, "%03ld", strtol(tmp.val, NULL, 16));
+                //prekopirovani tmp na korektni pozici v output stringu
+                for (int j = 0; j < strlen(tmp.val); j++){
+                    stringAddChar(s, tmp.val[j]);
+                }
+                stringFree(&tmp);
+                i += esc_len + 1; //zvys i o prectene znaky
+            }
+        }else{
+            stringAddChar(s, in_s.val[i]);
+        }
+    }
+    stringFree(&in_s);
+}
 int isValidHex(char c){
     //if ((C >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
     if ((c >= 47 && c <= 57) || (c >= 65 && c <= 70)){
@@ -465,9 +501,6 @@ int isValidHex(char c){
     }
 }
 
-int hexToChar(string *s){
-    return (char)strtol(stringGet(s), NULL, 16); //16tkova soustava
-}
 
 int isNumberEnding(char c){
     if (c == '+' || c == '-' || c == '*' || c == ')' || c == '='
