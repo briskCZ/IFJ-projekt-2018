@@ -63,7 +63,10 @@ int checkRule(t_IStack *s, int *type){
                 res = R_MUL;
 				break;
             case T_DIV:
-				addInst(INS_DIV, NULL, NULL, NULL, 0);
+				if (*type == T_INT)
+					addInst(INS_IDIV, NULL, NULL, NULL, 0);
+				else
+					addInst(INS_DIV, NULL, NULL, NULL, 0);
 				res = R_DIV;
 				break;
             case T_LESS:
@@ -320,7 +323,7 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
 				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
 			}
-			fprintf(stderr, "---- %s %d\n", aux->data->name->val ,aux->data->defined);
+				fprintf(stderr, "---- %s %d\n", aux->data->name->val ,aux->data->defined);
 			if (aux->data->defined == 0) // neni definovana
 			{
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
