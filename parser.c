@@ -125,7 +125,7 @@ void assign(t_Token left, t_Token ass){
                 /* expr */
                 P("--expr v assign");
                 assNew(isNew, leftVar, stringGet(&left.attr));
-                returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, ret_type));
+                returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type));
                 tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
                 //pokud je novy zaznam v tabulce symbolu
                 addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
@@ -139,7 +139,7 @@ void assign(t_Token left, t_Token ass){
 
         P("--assign term");
         assNew(isNew, leftVar, stringGet(&left.attr));
-        returnToken(exprParse(ta, ta, 0, scopeTable, ret_type));
+        returnToken(exprParse(ta, ta, 0, scopeTable, &ret_type));
         tableChangeItemByNode(leftVar, 1, &ret_type, 1, isGlobal());
         addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
 
@@ -378,7 +378,7 @@ void code(t_Token token){
             P("--IF");
             token = getNextToken(&error);
             CHECK_ERROR(error);
-            token = exprParse(token, token, pa_funcLocalTable, 0, ret_type); //TODO
+            token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type); //TODO
             if (token.type == T_THEN){
                 P("--then");
                 token = getNextToken(&error);
@@ -397,7 +397,7 @@ void code(t_Token token){
             P("--WHILE");
             token = getNextToken(&error);
             CHECK_ERROR(error);
-            token = exprParse(token, token, pa_funcLocalTable, 0, ret_type);
+            token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
             if (token.type == T_DO){
                 token = getNextToken(&error);
                 CHECK_ERROR(error);
@@ -415,7 +415,7 @@ void code(t_Token token){
         case T_DOUBLE:
         case T_STRING:
         case T_NIL:
-            returnToken(exprParse(token, token, pa_funcLocalTable, 0, ret_type));
+            returnToken(exprParse(token, token, pa_funcLocalTable, 0, &ret_type));
             break;
         case T_ID:
             {
@@ -451,7 +451,7 @@ void code(t_Token token){
                 case T_NOT_EQ:
                 case T_NIL:
                     /* expr */
-                    returnToken(exprParse(token, tb, pa_funcLocalTable, 1,ret_type));
+                    returnToken(exprParse(token, tb, pa_funcLocalTable, 1, &ret_type));
                     break;
                 default:
                     PRINT_SYNTAX_ERROR("Function call, assignment or expression");
