@@ -80,7 +80,7 @@ void assign(t_Token left){
                 fprintf(stderr, "ERROR_SEMANTIC: Variable not defined: %s on line %d\n", stringGet(&ta.attr), sc_line_cnt);
                 exit(ERROR_SEMANTIC);
             }else{
-                if (rightVar->data->is_var == 0){
+                if (rightVar->data->is_var == 0 && rightVar->data->defined){
                     P("--assign fcall bez parametru");
                     //volani funkce bez parametru
                     node = rightVar;
