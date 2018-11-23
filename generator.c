@@ -11,7 +11,6 @@
 #include "generator.h"
 
 int is_in_func = 0;
-int last_inst = -1;
 
 char* ramec(){
 	char* a = (is_in_func == 0) ? "GF" : "LF";
@@ -19,89 +18,72 @@ char* ramec(){
 }
 //potrebne veci pro zacatek definice funkce
 void genBeginFunc(){
+	printf("\n");
 	printf("JUMP $FOOL%d\n", ++func_cnt);
 	printf("LABEL $FNAME%p\n", (void*)list->first->data->adr1);
 	printf("PUSHFRAME\n");
+	printf("\n");
 	//vytvor navratovou promennou
 	printf("DEFVAR LF@$RTVL%d\n",func_cnt); //TODO mozna menit ramec
 	printf("MOVE LF@$RTVL%d nil@nil\n",func_cnt);//TODO mozna menit ramec	
-	
 }
 //potrebne veci pro konec definice funkce
 void genEndFunc(){
-	
-
-	switch (last_inst){
-		case PI_ADD:
-		case INS_SUB:
-		case INS_DIV:
-		case INS_IDIV:
-			printf("POPS LF@$RTVL%d\n",func_cnt);
-		break;
-		case PI_ADDSTR:
-			printf("MOVE LF@$RTVL%d LF@$%d\n",func_cnt,uniqueNum-1); 
-		break;
-	}
-	
-	
+	printf("POPS LF@$RTVL%d\n",func_cnt);
 	printf("POPFRAME\n");
 	printf("RETURN\n");
 	printf("LABEL $FOOL%d\n", func_cnt);
 	printf("\n");
 }
-
+//parametry pri def fuknce vevnitr tela fce
+void genFdefPar(){
+	printf("#genFdefPar \n");
+	printf("DEFVAR LF@$%p\n",(void*)list->first->data->adr1);//tady mozna nemuze byt uniqueNum
+	printf("MOVE LF@$%p LF@$P%d\n",(void*)list->first->data->adr1,(void*)list->first->data->adr2);
+}
 //volani fuckne
 void genFcall(){
 	printf("#fcall\n");
 	printf("CALL $FNAME%p\n",(void*)list->first->data->adr1);
 }
-
+//CREATEFRAME
 void genFcallCreateFrame(){
 	printf("CREATEFRAME\n");
 }
-//parametgryT
+//parametgryT 
 void genFcallParT(){
 	printf("#genFcallParT \n");
 	int i; double f;
 	int a = (void*)list->first->data->adr3;
-	printf("DEFVAR TF@$%d\n",uniqueNum);
+	printf("DEFVAR TF@$P%d\n",(void*)list->first->data->adr2);
 	switch(a){
 		case T_INT:
 			i = strtol((char*)list->first->data->adr1, NULL, 10);
-			printf("MOVE TF@$%d int@%d\n",uniqueNum,i);
+			printf("MOVE TF@$P%d int@%d\n",(void*)list->first->data->adr2,i);
 		break;
 		case T_DOUBLE:
 			f = strtod((void*)list->first->data->adr1, NULL);
-			printf("MOVE TF@$%d floatg@%a\n",uniqueNum,f);
+			printf("MOVE TF@$P%d floatg@%a\n",(void*)list->first->data->adr2,f);
 		break;
 		case T_STRING:
-			printf("MOVE TF@$%d string@%s\n",uniqueNum,(char*)list->first->data->adr1);
-		break;
-		
-		/*case T_ID:
-			printf("PUSHS %s@$%p\n",ramec(),(void*)list->first->data->adr2);				
-		break;*/
-		
+			printf("MOVE TF@$P%d string@%s\n",(void*)list->first->data->adr2,(char*)list->first->data->adr1);
+		break;		
 		case T_NIL: //todo
-			printf("MOVE %s@$%d %s@$%p\n",ramec(),uniqueNum,ramec(),(void*)list->first->data->adr2);// mozna nefunguje
+			printf("MOVE TF@$P%d nil@nil\n",(void*)list->first->data->adr2);
 		break;
-		
 		default:
 			printf("WTF %d\n",a);
 		break;
 	}
 	uniqueNum++;	
 }
-//parametgryID
+//parametgryID pri volani funkce
 void genFcallParID(){
 	printf("#genFcallParID \n");
 	
-	printf("DEFVAR TF@$%d\n",uniqueNum);
-	printf("MOVE TF@$%d %s@$%p\n",uniqueNum,ramec(),(void*)list->first->data->adr1);
-	uniqueNum++;
+	printf("DEFVAR TF@$P%d\n",(void*)list->first->data->adr2);
+	printf("MOVE TF@$P%d %s@$%p\n",(void*)list->first->data->adr2,ramec(),(void*)list->first->data->adr1);
 }
-
-
 
 //konverze typu pro scitani
 void convertTypesAdd(unsigned un1, unsigned un2){
@@ -139,6 +121,11 @@ void convertTypesAdd(unsigned un1, unsigned un2){
 	temp_label = maxtemp;
 	temp_num++;
 }
+
+//scitani všech ****** ****** ***** ***** ******* *** co mi poslal kapur
+void genAddAll(){
+	printf("#tusebudouscitat veci\n");
+}
 //scitani 
 void genAddS(){
 	printf("#add\n");	
@@ -153,11 +140,18 @@ void genAddS(){
 //scitani stringu
 void genAddStr(){
 	printf("#addStr\n");	
+
+	printf("DEFVAR %s@$%d\n",ramec(),uniqueNum);
+	printf("POPS %s@$%d\n",ramec(),uniqueNum++);
+	printf("DEFVAR %s@$%d\n",ramec(),uniqueNum);
+	printf("POPS %s@$%d\n",ramec(),uniqueNum++);
 	//vysledek scitani
-	printf("DEFVAR %s@$%d\n",ramec(),uniqueNum);//todo ramce
+	printf("DEFVAR %s@$%d\n",ramec(),uniqueNum);
+	printf("CONCAT %s@$%d %s@$%d %s@$%d\n",ramec(),uniqueNum,ramec(),uniqueNum-1,ramec(),uniqueNum-2);
+	
+	printf("PUSHS %s@$%d\n",ramec(),uniqueNum);
 	uniqueNum++;
-	//secti
-	printf("CONCAT %s@$%d %s@$%d %s@$%d\n",ramec(),uniqueNum-1,ramec(),uniqueNum-3,ramec(),uniqueNum-2);//todo ramce
+	
 	printf("\n");	
 }
 //odcitani
@@ -234,7 +228,6 @@ void genIdivS(){
 	printf("LABEL $L%d\n",temp_label);
 	temp_label += 2;
 	printf("\n");	
-	
 }
 //definice a inicializace promenne
 void genDefVar(){
@@ -255,8 +248,7 @@ void genDefVar(){
 			break;
 			
 			case T_STRING:
-				printf("DEFVAR %s@$%d\n",ramec(),uniqueNum);
-				printf("MOVE %s@$%d string@%s\n",ramec(),uniqueNum,(char*)list->first->data->adr2);
+				printf("PUSHS string@%s\n",(void*)list->first->data->adr2);
 			break;
 			
 			case T_ID:
@@ -264,7 +256,7 @@ void genDefVar(){
 			break;
 			
 			case T_NIL:
-				printf("MOVE %s@$%d %s@$%p\n",ramec(),uniqueNum,ramec(),(void*)list->first->data->adr2);// mozna nefunguje
+				printf("PUSHS nil@nil\n");
 			break;
 			
 			default:
@@ -278,26 +270,14 @@ void genDefVar(){
 //deklarace a prirazeni do idcka
 void genAssignDecl(){
 	printf("#prirazeni s declaraci\n");
-	
 	printf("DEFVAR %s@$%p\n",ramec(),(void*)list->first->data->adr1);
-	
-	if(last_inst == PI_ADDSTR){
-		printf("MOVE %s@$%p %s@$%d",ramec(),(void*)list->first->data->adr1,ramec(),uniqueNum - 1);
-	}else{
-		printf("POPS %s@$%p",ramec(),(void*)list->first->data->adr1);
-	}
+	printf("POPS %s@$%p",ramec(),(void*)list->first->data->adr1);
 	printf("\n");
 }
 //prirazeni do idcka
 void genAssign(){
 	printf("#prirazeni\n");
-
-	if(last_inst == PI_ADDSTR){
-		printf("MOVE %s@$%p %s@$%d",ramec(),(void*)list->first->data->adr1,ramec(),uniqueNum - 1);
-	}else{
-		printf("POPS %s@$%p",ramec(),(void*)list->first->data->adr1);
-	}
-	
+	printf("POPS %s@$%p",ramec(),(void*)list->first->data->adr1);
 	printf("\n");
 }
 //prirazeni do idcka z funkce
@@ -326,12 +306,14 @@ int generate()
 	//printList();
 	while (list->first != NULL)
 	{
-		//printf("%d\n", last_inst);
 		switch(list->first->data->ins_type)
 		{
 			case PI_BEGINFUNC:
 				genBeginFunc();
 				is_in_func = 1;
+				break;
+			case PI_DEF_PARAM:
+				genFdefPar();
 				break;
 			case PI_ENDFUNC:
 				genEndFunc();
@@ -355,6 +337,9 @@ int generate()
 				break;
 			case PI_ADD:
 				genAddS();
+				break;
+			case INS_ADD:
+				genAddAll();
 				break;
 			case INS_SUB:
 				genSubS();
@@ -386,7 +371,6 @@ int generate()
 			default:
 				break;
 		}
-		last_inst = list->first->data->ins_type;
 		test = (void*)list->first->data->adr1; //vypis posledniho vysledku prirazeni
 		deleteFirst();
 	}
