@@ -100,10 +100,11 @@ void assign(t_Token left){
                     assNew(isNew, leftVar, stringGet(&left.attr));
                     isQmExc(leftVar);
                     tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
+                    returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type));
                     if(isNew){
-                        addInst(PI_ASS_DECL, (void*)leftVar, (void*)rightVar, NULL, 0);
+                        addInst(PI_ASS_DECL, (void*)leftVar, NULL, NULL, 0);
                     }else{
-                        addInst(PI_ASS, (void*)leftVar, (void*)rightVar, NULL, 0);
+                        addInst(PI_ASS, (void*)leftVar, NULL, NULL, 0);
                     }
                     return;
                 }
@@ -194,15 +195,15 @@ void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
     int param_cnt = 0;
     P("--fcall");
-    // fprintf(stderr, "--s: %s =\n", ta.attr.val);
+    fprintf(stderr, "funkce: %s\n", ta.attr.val);
     t_Node *temp = tableSearchItem(&table, ta.attr);
     if (temp == NULL){
         temp = tableInsertToken(&table, ta);
         temp->data->was_called = 1;
     }
+    node = temp;
     addInst(PI_FCALL, (void*)temp, NULL, NULL, 0);
     setActive(list->last);
-    P("--POSILAM FRAME KURVA");
     addInst(INS_CREATEFRAME, (void*)temp, NULL, NULL, 1);
     switch (tb.type){
         case T_LEFT_PAR:
@@ -220,10 +221,11 @@ void f_call(t_Token ta, t_Token tb){
         default:
             PRINT_SYNTAX_ERROR("Function parameter");
     }
+    if(stringCompareConst(&ta.attr, "print") == 0) param_cnt = -1;
     fprintf(stderr,"params: %d, expected: %d\n", param_cnt, temp->data->params_cnt);
     if (temp->data->defined == 1 && temp->data->params_cnt != param_cnt){
         fprintf(stderr, "PARAM_ERROR: %s called with %d params instead of %d on line: %d\n",
-                stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt);
+                stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt-1);
         exit(ERROR_SEM_PARAM);
     }
     //////////////////////
@@ -232,6 +234,7 @@ void f_call(t_Token ta, t_Token tb){
     //fprintf(stderr, "%s called with: %d params\n", stringGet(node->data->name) ,node->data->params_cnt);
 }
 void paramHandler(t_Token token, int param_cnt){
+    P("--tu");
     if (node->data->defined == 1){
         //aktualne pouzivana tabulka symbolu
         t_symTable *scopeTable = getScopeTable();
@@ -240,7 +243,7 @@ void paramHandler(t_Token token, int param_cnt){
             if (param != NULL){
                 addInst(PI_FCALL_PARAMID, (void*)param, (void*)param_cnt, param->data->data_type, 1);
             }else{
-                fprintf(stderr, "ERROR_SEMANTIC: Local variable: %s not defined on line: %d\n", stringGet(&token.attr), sc_line_cnt);
+                fprintf(stderr, "ERROR_SEMANTIC: Variable: %s not defined on line: %d\n", stringGet(&token.attr), sc_line_cnt);
                 exit(ERROR_SEMANTIC);
             }
         }else{
@@ -342,6 +345,7 @@ void param2(t_Token token, int *param_cnt){
         return;
     }else{
         term(token);
+        printToken(token, 0);
         P("__fcall param2");
         //pokud je definovana , TODO pokud neni definovana ale muze byt
         paramHandler(token, *param_cnt);
@@ -623,6 +627,27 @@ void program(){
 
     }
 }
+void addSingleBuiltin(char* name, int params_cnt){
+    t_Node *fun;
+    t_Token toadd;
+    toadd.type = T_ID;
+    stringInit(&toadd.attr);
+    stringInsert(&toadd.attr, name);
+    fun = tableInsertToken(&table, toadd);
+    addInst(PI_BUILTFUNC, (void*)fun, NULL, NULL, 0);
+    tableChangeItemByNode(fun, 0, 0, 1, 1);
+    fun->data->params_cnt = params_cnt;
+}
+void addBuiltins(){
+    addSingleBuiltin("inputs", 0);
+    addSingleBuiltin("inputi", 0);
+    addSingleBuiltin("inputf", 0);
+    addSingleBuiltin("print", -1);
+    addSingleBuiltin("length", 1);
+    addSingleBuiltin("substr", 3);
+    addSingleBuiltin("ord", 2);
+    addSingleBuiltin("chr", 1);
+}
 int main(){
 
 
@@ -646,6 +671,8 @@ int main(){
     scannerInit();
 	table = tableInit();
 	listInit();
+    addBuiltins();
+
 
 
     program();
