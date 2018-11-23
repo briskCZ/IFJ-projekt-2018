@@ -202,6 +202,7 @@ void f_call(t_Token ta, t_Token tb){
     }
     addInst(PI_FCALL, (void*)temp, NULL, NULL, 0);
     setActive(list->last);
+    P("--POSILAM FRAME KURVA");
     addInst(INS_CREATEFRAME, (void*)temp, NULL, NULL, 1);
     switch (tb.type){
         case T_LEFT_PAR:
@@ -233,7 +234,6 @@ void f_call(t_Token ta, t_Token tb){
 void paramHandler(t_Token token){
     if (node->data->defined == 1){
         //aktualne pouzivana tabulka symbolu
-        addInst(INS_CREATEFRAME, NULL, NULL, NULL, 1);
         t_symTable *scopeTable = getScopeTable();
         if (token.type == T_ID){
             t_Node *param = tableSearchItem(scopeTable, token.attr);
@@ -526,6 +526,9 @@ void code(t_Token token){
                         }else{
                             f_call(token, tb);
                         }
+                    }else{
+                        fprintf(stderr, "ERROR_SEMANTIC: Using not defined: %s on line: %d\n", token.attr.val, sc_line_cnt-1);
+                        exit(ERROR_SEMANTIC);
                     }
                     break;
                 }
