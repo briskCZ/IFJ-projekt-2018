@@ -200,6 +200,7 @@ void f_call(t_Token ta, t_Token tb){
         temp = tableInsertToken(&table, ta);
         temp->data->was_called = 1;
     }
+    addInst(PI_FCALL, &temp, NULL, NULL, 0);
     switch (tb.type){
         case T_LEFT_PAR:
             param1(&param_cnt);
@@ -234,13 +235,13 @@ void paramHandler(t_Token token){
         if (token.type == T_ID){
             t_Node *param = tableSearchItem(scopeTable, token.attr);
             if (param != NULL){
-                addInst(PI_FCALL_PARAMID, (void*)param, NULL, NULL, 0);
+                addInst(PI_FCALL_PARAMID, (void*)param, NULL, NULL, 1);
             }else{
                 fprintf(stderr, "ERROR_SEMANTIC: Local variable: %s not defined on line: %d\n", token.attr, sc_line_cnt);
                 exit(ERROR_SEMANTIC);
             }
         }else{
-            addInst(PI_FCALL_PARAMT, (void*)token.attr.val, NULL, token.type, 0);
+            addInst(PI_FCALL_PARAMT, (void*)token.attr.val, NULL, token.type, 1);
         }
     }
 }
