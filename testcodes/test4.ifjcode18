@@ -1,0 +1,19 @@
+.IFJcode18
+
+
+DEFVAR GF@a
+MOVE GF@a string@abc\010
+
+JUMPIFNEQ L1 string@abc\010 GF@a
+
+WRITE GF@a
+
+
+
+WRITE float@0x4.33333333p+0
+
+LABEL L1
+
+
+
+EXIT int@0
