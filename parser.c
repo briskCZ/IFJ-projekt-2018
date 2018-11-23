@@ -240,7 +240,7 @@ void paramHandler(t_Token token, int param_cnt){
             if (param != NULL){
                 addInst(PI_FCALL_PARAMID, (void*)param, (void*)param_cnt, param->data->data_type, 1);
             }else{
-                fprintf(stderr, "ERROR_SEMANTIC: Local variable: %s not defined on line: %d\n", token.attr, sc_line_cnt);
+                fprintf(stderr, "ERROR_SEMANTIC: Local variable: %s not defined on line: %d\n", stringGet(&token.attr), sc_line_cnt);
                 exit(ERROR_SEMANTIC);
             }
         }else{
@@ -523,7 +523,7 @@ void code(t_Token token){
                     if (var != NULL && var->data->defined){
                         if (var->data->is_var){
                             tableChangeItemByNode(var, 1, token.type, -1, isGlobal());
-                            returnToken(exprParse(token, token, pa_funcLocalTable, 0, token.type));
+                            returnToken(exprParse(token, token, pa_funcLocalTable, 0, &token.type));
                         }else{
                             f_call(token, tb);
                         }
