@@ -54,6 +54,7 @@
 #define T_INT 24
 #define T_DOUBLE 25
 #define T_STRING 26
+#define T_PARAM 28
 
 
 /* Stavy pro konecny automat */

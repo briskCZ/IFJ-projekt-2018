@@ -48,6 +48,8 @@ int checkRule(t_IStack *s, int *type){
 					addInst(PI_ADDSTR, NULL, NULL, NULL, 0);
                 else if (*type == T_INT || *type == T_DOUBLE)
 					addInst(PI_ADD, NULL, NULL, NULL, 0);
+				else if (*type == T_PARAM)
+					addInst(INS_ADD, NULL, NULL, NULL, 0);
 				else
 				{	
 					fprintf(stderr, "EXPR ERROR: scitani dvou cisle alespon jedno z nich je T_NIL nebo T_STRING\n");
@@ -115,6 +117,7 @@ int checkRule(t_IStack *s, int *type){
 				fprintf(stderr, "EXPR ERROR: - * / s T_NIL nebo T_STRING\n");
 				exit(ERROR_SEM_COMPATIBILITY);	
 			}
+			
 		}
 		else
 		{
@@ -153,7 +156,8 @@ int tokenToIndex(int type){
         case T_INT:
         case T_ID:
 		case T_NIL: //TODO
-            return 5;
+        case T_PARAM:
+		    return 5;
         case T_EOL:
         case PT_END:
         case T_DO:
@@ -285,12 +289,10 @@ int resultType(int t1, int t2)
 		return T_DOUBLE;
 	else if (t1 == T_NIL || t2 == T_NIL)
 		return T_NIL;
+	else if (t1 == T_PARAM || t2 == T_PARAM)
+		return T_PARAM;
 	else
-	{
-//			fprintf(stderr, "ERROR_SEM_COMPATIBILITY\n");
-			return NON_TYPE;
-			//exit(ERROR_SEM_COMPATIBILITY);
-	}
+		return NON_TYPE;
 }
 
 //prida instrukci do listu, ktera definuje novou promennou
@@ -314,9 +316,14 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 			}
 			else // nasli jsme
 			{
-
-				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
-				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+				if (aux->data->data_type != T_PARAM) // neni perametr musi byt definovana		
+				{
+					if (aux->data->defined == 0)
+					{
+						fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
+						exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+					}
+				}
 			}
 		}
 		else // jinak v globalni tabulce
@@ -332,8 +339,6 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
 				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou	
 			}
-			
-			
 		}
 
 		//funkce ve vyrazu nesmi byt
@@ -343,7 +348,7 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 			exit(ERROR_SEM_COMPATIBILITY);
 		}
 
-		fprintf(stderr, "typeeeeeeE: %s | %d\n", aux->data->name->val, aux->data->data_type);
+		//fprintf(stderr, "typeeeeeeE: %s | %d\n", aux->data->name->val, aux->data->data_type);
 		i_push(s, b, aux->data->data_type);
 		addInst(PI_INIT, NULL, (void*) aux, (void*)T_ID, 0); //TODO
 	}
@@ -366,6 +371,11 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 	{
 		i_push(s, b, b);
 		addInst(PI_INIT, NULL, (void*)b_token.attr.val, (void*)T_NIL, 0);
+	}
+	else if (b == T_PARAM)
+	{
+		i_push(s, b, b);
+		addInst(PI_INIT, NULL, (void*)b_token.attr.val, (void*)T_PARAM, 0);
 	}
 	else
 		i_push(s, b, NON_TYPE);
