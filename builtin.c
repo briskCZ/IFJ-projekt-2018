@@ -1,9 +1,28 @@
 
 
+void builtinGenBeginFunc(char *name_of_builtin_function)
+{
+    printf("JUMP $FOOL%d\n", ++func_cnt);
+    printf("LABEL $FNAME%s\n", name_of_builtin_function);
+    printf("PUSHFRAME\n");
+    //vytvor navratovou promennou
+    printf("DEFVAR LF@$RTVL%d\n",func_cnt); //TODO mozna menit ramec
+    printf("MOVE LF@$RTVL%d nil@nil\n",func_cnt);//TODO mozna menit ramec   
+}
 
 void builtinPrint()
 {
-	int max_temp;
+
+	builtinGenBeginFunc("print");
+	
+	printf("READ LF@$1\n");
+
+	gen_EndFunc();
+
+
+
+
+/*	int max_temp;
 	printf("DEFVAR %s@$%d\n", ramec(), unique_num++);
 	printf("TYPE %s@$%d %s\n", ramec(), unique_num-1, ramec(), (void*)list->first->data->adr1);
 
@@ -23,17 +42,37 @@ void builtinPrint()
 
 
 	temp_label = max_temp;
+*/
 }
 
 
-void builtinGenBeginFunc(char *name_of_builtin_function)
+void builtinInputs()
 {
-    printf("JUMP $FOOL%d\n", ++func_cnt);
-    printf("LABEL $FNAME%s\n", name_of_builtin_function);
-    printf("PUSHFRAME\n");
-    //vytvor navratovou promennou
-    printf("DEFVAR LF@$RTVL%d\n",func_cnt); //TODO mozna menit ramec
-    printf("MOVE LF@$RTVL%d nil@nil\n",func_cnt);//TODO mozna menit ramec   
+	builtinGenBeginFunc("inputs");
+	
+	printf("READ LF@$RTVL%d string\n", func_cnt);
+
+	gen_EndFunc();
+}
+
+void builtinInputi()
+{
+	builtinGenBeginFunc("inputi");
+	
+	printf("READ LF@$RTVL%d int\n", func_cnt);
+
+	gen_EndFunc();
+}
+
+void builtinInputs()
+{
+	builtinGenBeginFunc("inputs");
+	
+	printf("READ LF@$RTVL%d float\n", func_cnt);
+
+	gen_EndFunc();
+}
+
 }
 
 void builtinLength()
