@@ -98,9 +98,11 @@
 #define PI_NEQ 65
 #define PI_ADDSTR 66 //secte dva strinky
 #define PI_ADD 67	//secte dve cisla
-#define PI_ASSEND 81 //expression je hotovy, ulozit promennou
-#define PI_DEFPARAM 82
-#define PI_ASS_FUNCCALL 83
+#define PI_ASS 81 //expression je hotovy, ulozit promennou
+#define PI_ASS_FUNC 82
+#define PI_ASS_DECL 83
+#define PI_ASS_DECL_FUNC 84
+#define PI_DEFPARAM 85
 
 
 typedef struct{

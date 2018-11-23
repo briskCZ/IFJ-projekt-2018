@@ -72,15 +72,24 @@ void assign(t_Token left, t_Token ass){
                     //volani funkce bez parametru
                     f_call(ta, tb);
                     assNew(isNew, leftVar, stringGet(&left.attr));
+                    //TODO BACHA MUZE TU BYT KRAVINA
                     tableChangeItemByNode(leftVar, 1, -1, 1, isGlobal());
-                    addInst(PI_ASS_FUNCCALL, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    if(isNew){
+                        addInst(PI_ASS_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    }else{
+                        addInst(PI_ASS_DECL_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    }
                     return;
                 }else{
                     P("--assign jedne promenne");
                     //prirazeni
                     assNew(isNew, leftVar, stringGet(&left.attr));
                     tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
-                    addInst(PI_ASSEND, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    if(isNew){
+                        addInst(PI_ASS_DECL, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    }else{
+                        addInst(PI_ASS, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    }
                     return;
                 }
             }
@@ -106,7 +115,11 @@ void assign(t_Token left, t_Token ass){
                         f_call(ta, tb);
                         assNew(isNew, leftVar, stringGet(&left.attr));
                         tableChangeItemByNode(leftVar, 1, -1, 1, isGlobal());
-                        addInst(PI_ASS_FUNCCALL, (void*)leftVar, (void*)rightVar, NULL, 0);
+                        if(isNew){
+                            addInst(PI_ASS_DECL_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
+                        }else{
+                            addInst(PI_ASS_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
+                        }
                         return;
                     }
                 }
@@ -124,12 +137,16 @@ void assign(t_Token left, t_Token ass){
             case T_NOT_EQ:
                 /* expr */
                 P("--expr v assign");
+
                 assNew(isNew, leftVar, stringGet(&left.attr));
                 returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type));
                 tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
                 //pokud je novy zaznam v tabulce symbolu
-                addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
-
+                if (isNew){
+                    addInst(PI_ASS_DECL, (void*)leftVar, NULL, NULL, 0);
+                }else{
+                    addInst(PI_ASS, (void*)leftVar, NULL, NULL, 0);
+                }
                 break;
             default:
             PRINT_SYNTAX_ERROR("Function call or expression");
@@ -139,9 +156,13 @@ void assign(t_Token left, t_Token ass){
 
         P("--assign term");
         assNew(isNew, leftVar, stringGet(&left.attr));
-        returnToken(exprParse(ta, ta, 0, scopeTable, &ret_type));
-        tableChangeItemByNode(leftVar, 1, &ret_type, 1, isGlobal());
-        addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
+        returnToken(exprParse(ta, ta, scopeTable, 0, &ret_type));
+        tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
+        if (isNew){
+            addInst(PI_ASS_DECL, (void*)leftVar, NULL, NULL, 0);
+        }else{
+            addInst(PI_ASS, (void*)leftVar, NULL, NULL, 0);
+        }
 
         //vygeneruj piass (a, ta.attr, typ, 0);
     }else{
