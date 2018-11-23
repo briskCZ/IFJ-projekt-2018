@@ -17,7 +17,7 @@
 #define SAVE_ERROR(error){if (ERROR == 0) ERROR = error;}
 
 //#define P(a) fprintf(stderr, "%s\n", a);
-
+void assNew(int isNew, t_Node* leftVar, char* err);
 //int ERROR = 0;
 int isGlobal(){
     return (pa_funcLocalTable == NULL) ? 1 : 0;
@@ -60,24 +60,58 @@ void assign(t_Token left, t_Token ass){
     if (ta.type == T_ID){
         tb = getNextToken(&error);
         CHECK_ERROR(error);
+        if (tb.type == T_EOL){
+            //pokud prirazujeme id do id
+            t_Node *rightVar = tableSearchItem(scopeTable, ta.attr);
+            if (rightVar == NULL){
+                fprintf(stderr, "ERROR_SEMANTIC: Variable not defined: %s on line %d\n", stringGet(&ta.attr), sc_line_cnt);
+                exit(ERROR_SEMANTIC);
+            }else{
+                if (rightVar->data->is_var == 0){
+                    P("--assign fcall bez parametru");
+                    //volani funkce bez parametru
+                    f_call(ta, tb);
+                    assNew(isNew, leftVar, stringGet(&left.attr));
+                    tableChangeItemByNode(leftVar, 1, -1, 1, isGlobal());
+                    addInst(PI_ASS_FUNCCALL, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    return;
+                }else{
+                    P("--assign jedne promenne");
+                    //prirazeni
+                    assNew(isNew, leftVar, stringGet(&left.attr));
+                    tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
+                    addInst(PI_ASSEND, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    return;
+                }
+            }
+        }
         /*  ID = ID ID  || ID = ID ( ID = ID "test" - fcall
         */
-        if (tb.type == T_EOL){
-            return;
-        }
         switch (tb.type){
             case T_ID:
             case T_LEFT_PAR:
             case T_DOUBLE:
             case T_INT:
-            case T_STRING:
-                // volani funkce
-                f_call(ta, tb);
-                //pokud je novy zaznam v tabulce symbolu
-                if (isNew){
-                    tableChangeItemByNode(leftVar, 1, 0, 1, isGlobal());
+            case T_STRING:{
+                /* Volani funkce v assign s parametry */
+                //TODO POKUD JE PRINT SPECIALNI S X PARAMETRAMA
+                t_Node *rightVar = tableSearchItem(scopeTable, ta.attr);
+                if (rightVar == NULL){
+                    fprintf(stderr, "ERROR_SEMANTIC: Variable not defined: %s on line %d\n", stringGet(&ta.attr), sc_line_cnt);
+                    exit(ERROR_SEMANTIC);
+                }else{
+                    if (rightVar->data->is_var == 0){
+                        P("--assign fcall s parametry");
+                        //volani funkce bez parametru
+                        f_call(ta, tb);
+                        assNew(isNew, leftVar, stringGet(&left.attr));
+                        tableChangeItemByNode(leftVar, 1, -1, 1, isGlobal());
+                        addInst(PI_ASS_FUNCCALL, (void*)leftVar, (void*)rightVar, NULL, 0);
+                        return;
+                    }
                 }
                 break;
+            }
             case T_PLUS:
             case T_MINUS:
             case T_MUL:
@@ -92,7 +126,7 @@ void assign(t_Token left, t_Token ass){
                 P("--expr v assign");
                 assNew(isNew, leftVar, stringGet(&left.attr));
                 returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type));
-                tableChangeItemByNode(leftVar, 1, &ret_type, 1, isGlobal());
+                tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
                 //pokud je novy zaznam v tabulce symbolu
                 addInst(PI_ASSEND, (void*)leftVar, NULL, NULL, 0);
 

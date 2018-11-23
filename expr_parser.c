@@ -19,7 +19,7 @@ int checkRule(t_IStack *s, int *type){
 	int type1, type2, type3;
 
     elem1 = i_topPop(s, &type1);															//TODO
-    if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING || elem1 == T_NIL)
+	if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING || elem1 == T_NIL)
 	{
 		*type = type1;
 		return R_ID;
@@ -48,7 +48,7 @@ int checkRule(t_IStack *s, int *type){
 					addInst(PI_ADD, NULL, NULL, NULL, 0);
 				else
 				{	
-					fprintf(stderr, "EXPR ERROR: scitani dvou cisle alespon jedno z nich je T_NIL\n");
+					fprintf(stderr, "EXPR ERROR: scitani dvou cisle alespon jedno z nich je T_NIL nebo T_STRING\n");
 					exit(ERROR_SEM_COMPATIBILITY);
 				}
 				return R_PLUS;
@@ -91,22 +91,31 @@ int checkRule(t_IStack *s, int *type){
             default:
                 fprintf(stderr, "EXPR ERROR: ERROR SYNTAX\n");
                 return ERROR_SYNTAX;
-			
-			if(elem2 == T_MINUS || elem2 == T_MUL || elem2 == T_DIV)
+		}		
+
+		if(elem2 == T_MINUS || elem2 == T_MUL || elem2 == T_DIV)
+		{
+			if (*type == T_STRING)
 			{
-				if (*type == T_STRING)
-				{
-					fprintf(stderr, "EXPR ERROR: - * / S T_STRING\n");
-					exit(ERROR_SEM_COMPATIBILITY);
-				}
-				else if (*type == T_STRING)
-				{
-					fprintf(stderr, "EXPR ERROR: - * / s T_NIL\n");
-					exit(ERROR_SEM_COMPATIBILITY);
-				}
+				fprintf(stderr, "EXPR ERROR: - * / S T_STRING\n");
+				exit(ERROR_SEM_COMPATIBILITY);
 			}
-			return res; 
-       }
+			else if (*type == T_NIL)
+			{
+				fprintf(stderr, "EXPR ERROR: - * / s T_NIL\n");
+				exit(ERROR_SEM_COMPATIBILITY);
+			}
+			else
+			{
+				fprintf(stderr, "EXPR ERROR: - * / s T_NIL nebo T_STRING\n");
+				exit(ERROR_SEM_COMPATIBILITY);	
+			}
+		}
+		else
+		{
+			*type = NON_TYPE;
+		}
+			return res;        
     }
     else
     {
@@ -215,7 +224,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
 				{
                     b_token = getNextToken(&error);
 					printToken(b_token, 0);
-                }
+               }
 
 				if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
@@ -224,12 +233,16 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
                 //fprintf(stderr, "PT_R\n");
 
                 r = checkRule(&s, &type);
-				*return_type = type; //
+                
+				if (return_type != NULL) //TODO
+					*return_type = type; 
+			
+				fprintf(stderr, "r:   %d\n", *return_type);
                 if (r != ERROR_SYNTAX)
                 {
                     if (i_topPop(&s, &temp) == PT_L)
                     {
-                        i_push(&s, PT_E_RULE, type);
+			             i_push(&s, PT_E_RULE, type);
                         fprintf(stderr, "expr_parser: RULE: %d | %d\n", r, type);
                     }
                 }
@@ -245,7 +258,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
         }
     } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));
 
-	fprintf("datovy typ vyrazu: %d\n", *return_type);
+	fprintf(stderr, "datovy typ vyrazu: %d\n", *return_type);
     i_stackDestroy(&s);
 	return b_token;
 }
@@ -261,15 +274,15 @@ int resultType(int t1, int t2)
 {
 	if (t1 == t2)
 		return t1;
-	else if (t1 == T_INT || t2 == T_DOUBLE)
+	else if (t1 == T_INT && t2 == T_DOUBLE)
 		return T_DOUBLE;
-	else if (t2 == T_INT || t1 == T_DOUBLE)
+	else if (t2 == T_INT && t1 == T_DOUBLE)
 		return T_DOUBLE;
 	else if (t1 == T_NIL || t2 == T_NIL)
 		return T_NIL;
 	else
 	{
-			fprintf(stderr, "ERROR_SEM_COMPATIBILITY\n");
+//			fprintf(stderr, "ERROR_SEM_COMPATIBILITY\n");
 			return NON_TYPE;
 			//exit(ERROR_SEM_COMPATIBILITY);
 	}
@@ -310,7 +323,7 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 			exit(ERROR_SEM_COMPATIBILITY);
 		}
 
-		i_push(s, b, b);
+		i_push(s, b, aux->data->data_type);
 		addInst(PI_INIT, NULL, (void*) aux->data, (void*)T_ID, 0); //TODO
 	}
     else if (b == T_INT)
