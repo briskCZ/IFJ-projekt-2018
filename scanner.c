@@ -45,7 +45,8 @@ t_Token getNextToken(int *error){
             if (sc_abi == stringGetLength(&sc_aux_buffer)){
                 sc_uab = 0;
                 sc_abi = 0;
-                stringClear(&sc_aux_buffer);    }
+                stringClear(&sc_aux_buffer);
+            }
         }
         //fprintf(stderr, "Symbol: %d line: %d\n", symbol, sc_line_cnt);
         //printf("DEBUG: S: %d |SYM: %d | UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
@@ -478,7 +479,7 @@ void stringToIns(string *s){
                 }
                 sprintf(tmp.val, "%03ld", strtol(tmp.val, NULL, 16));
                 //prekopirovani tmp na korektni pozici v output stringu
-                for (int j = 0; j < strlen(tmp.val); j++){
+                for (unsigned int j = 0; j < strlen(tmp.val); j++){
                     stringAddChar(s, tmp.val[j]);
                 }
                 stringFree(&tmp);
@@ -487,12 +488,11 @@ void stringToIns(string *s){
                 stringAddChar(s, '0');
                 stringAddChar(s, '9');
                 stringAddChar(s, '2');
-                //fprintf(stderr, "in_s.val[]: %d \n", in_s.val[9]);
             }
         //prevod na nutne escape sekvence
-        }else if (in_s.val[i] >= 0 && in_s.val[i] <= 32 || in_s.val[i] == 35){
+        }else if ((in_s.val[i] >= 0 && in_s.val[i] <= 32) || in_s.val[i] == 35){
             char tmp[3];
-            sprintf(tmp, "%03d", in_s.val[i]);
+            sprintf(tmp, "%03u", in_s.val[i]);
             //pridej \\xyz
             stringAddChar(s, 92);
             stringAddChar(s, tmp[0]);

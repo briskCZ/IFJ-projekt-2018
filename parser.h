@@ -32,7 +32,7 @@ void param1(int *param_cnt);
 void param11(int *param_cnt);
 void param2(t_Token token, int *param_cnt);
 void param22(int *param_cnt);
-void assign(t_Token left, t_Token assign);
+void assign(t_Token left);
 void f_call(t_Token ta, t_Token tb);
 void term(t_Token token);
 int isNextEol();
