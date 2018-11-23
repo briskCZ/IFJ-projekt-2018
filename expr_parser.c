@@ -242,7 +242,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
 				if (return_type != NULL) //TODO
 					*return_type = type; 
 			
-				fprintf(stderr, "r:   %d\n", *return_type);
+				//fprintf(stderr, "r:   %d\n", *return_type);
                 if (r != ERROR_SYNTAX)
                 {
                     if (i_topPop(&s, &temp) == PT_L)

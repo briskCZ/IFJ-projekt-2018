@@ -18,16 +18,13 @@
 
 #define MAX_SIZE 8 //pocet alokovanych prvku pro parametry funkce
 
-//typedef struct table t_symTable;
+typedef struct table t_symTable;
 typedef struct node t_Node;
 typedef struct arrParam t_ArrParams;
 
-/* tabulka symbol */
-typedef struct table
-{
-	t_Node *root; //pocatek tabulky
 
-}t_symTable;
+t_symTable table; //globalni tabulka symbolu
+t_Node *node; //pomocny ukazatel na data do tabulky symbolu
 
 /* data v uzlu*/
 typedef struct
@@ -35,6 +32,7 @@ typedef struct
 	int is_var; //0 - funkce, jinak promenna
 	string *name; // identifikator promenne
 	int data_type; // datovy typ
+	int nil; //0 neni 1 je
 	int defined; //  0 - neni definovana, jinak je definovana
 	int global; // 0 lokalni, jinak globalni
 	int params_cnt; // pocet parametru funkce
@@ -54,6 +52,13 @@ struct node
 
 };
 
+/* tabulka symbol */
+typedef struct table
+{
+	t_Node *root; //pocatek tabulky
+
+};
+
 /* pole parametru */
 struct arrParam
 {
@@ -63,9 +68,6 @@ struct arrParam
 
 
 };
-
-t_symTable table; //globalni tabulka symbolu
-t_Node *node; //pomocny ukazatel na data do tabulky symbolu
 
 /*
 
@@ -113,7 +115,7 @@ void arrPrintParam(t_Data *data);
 
 //vypise tabulku symbolu
 void tablePrint(t_symTable *table, int local);
-
+void tablePrintItem(t_Node *node);
 //vytvori token a vlozi to tabulky symbolu
 void sInsert(t_symTable *table, int itype, char *is);
 
