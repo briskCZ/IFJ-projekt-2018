@@ -24,7 +24,7 @@ int isGlobal(){
 }
 void assNew(int isNew, t_Node* leftVar, char* err){
     if (isNew){
-        tableChangeItemByNode(leftVar, 1, 0, 1, isGlobal());
+        tableChangeItemByNode(leftVar, -1, 0, 1, isGlobal());
     }
     if(leftVar->data->is_var == 0){
         fprintf(stderr, "ERROR_SEMANTIC: Cannot assign to function %s, on line: %d\n", err, sc_line_cnt);
@@ -48,6 +48,7 @@ void assign(t_Token left, t_Token ass){
         //polozka nebyla nalezena, definuje se nova promena
         leftVar = tableInsertToken(scopeTable, left);
         isNew = 1;
+        //TODO kdyz bude funkce definovana potom nemusi byt nula
         tableChangeItemByNode(leftVar, -1, 0, 0, isGlobal());
     }else{
         leftVar = n;
@@ -75,9 +76,9 @@ void assign(t_Token left, t_Token ass){
                     //TODO BACHA MUZE TU BYT KRAVINA
                     tableChangeItemByNode(leftVar, 1, -1, 1, isGlobal());
                     if(isNew){
-                        addInst(PI_ASS_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
-                    }else{
                         addInst(PI_ASS_DECL_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
+                    }else{
+                        addInst(PI_ASS_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
                     }
                     return;
                 }else{
@@ -551,39 +552,39 @@ void program(){
 int main(){
 
 
-    //ungetc('\n', stdin);
-    // scannerInit();
+    ungetc('\n', stdin);
+    scannerInit();
     //inicializace globalni tabulky symbolu
     //program();
-    // t_Token token;
-    // do{
-    //     int error;
-    //     token = getPrintNextToken(&error);
-    // }while(token.type != T_EOF);
-    // scannerClean();
+    t_Token token;
+    do{
+        int error;
+        token = getPrintNextToken(&error);
+    }while(token.type != T_EOF);
+    scannerClean();
 
-    //ungetc('\n', stdin);
+    ungetc('\n', stdin);
 
 
 
     //inicializace potrebnych veci
 
-    scannerInit();
-	table = tableInit();
-	listInit();
-
-
-    program();
-
-	P("=========== TABLE PRINT ===============");
-	tablePrint(&table, 0);
-
-	printList();
-
-	//uvolneni zdroju
-    scannerClean();
-	tableDestroy(&table);
-	freeList();
+    // scannerInit();
+	// table = tableInit();
+	// listInit();
+    //
+    //
+    // program();
+    //
+	// P("=========== TABLE PRINT ===============");
+	// tablePrint(&table, 0);
+    //
+	// printList();
+    //
+	// //uvolneni zdroju
+    // scannerClean();
+	// tableDestroy(&table);
+	// freeList();
 
     return SUCCESS;
 }

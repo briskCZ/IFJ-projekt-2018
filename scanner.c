@@ -462,9 +462,7 @@ void stringToIns(string *s){
     int esc_len = 0;
     int length = stringGetLength(&in_s);
     for (int i = 0; i < length; i++){
-        if (in_s.val[i] == ' '){
-            stringAddChar(s, '#');
-        }else if (in_s.val[i] == 92){ // zpetne lomeno
+        if (in_s.val[i] == 92){ // zpetne lomeno
             /* specialni znak */
             stringAddChar(s, 92);
             if (i + 1 < length && in_s.val[i+1] == 'x'){
@@ -485,8 +483,23 @@ void stringToIns(string *s){
                 }
                 stringFree(&tmp);
                 i += esc_len + 1; //zvys i o prectene znaky
+            }else{
+                stringAddChar(s, '0');
+                stringAddChar(s, '9');
+                stringAddChar(s, '2');
+                //fprintf(stderr, "in_s.val[]: %d \n", in_s.val[9]);
             }
+        //prevod na nutne escape sekvence
+        }else if (in_s.val[i] >= 0 && in_s.val[i] <= 32 || in_s.val[i] == 35){
+            char tmp[3];
+            sprintf(tmp, "%03d", in_s.val[i]);
+            //pridej \\xyz
+            stringAddChar(s, 92);
+            stringAddChar(s, tmp[0]);
+            stringAddChar(s, tmp[1]);
+            stringAddChar(s, tmp[2]);
         }else{
+                //prevod vstupnich escape sekvenci
             stringAddChar(s, in_s.val[i]);
         }
     }
