@@ -202,7 +202,6 @@ void f_call(t_Token ta, t_Token tb){
     }
     addInst(PI_FCALL, (void*)temp, NULL, NULL, 0);
     setActive(list->last);
-    P("--POSILAM FRAME KURVA");
     addInst(INS_CREATEFRAME, (void*)temp, NULL, NULL, 1);
     switch (tb.type){
         case T_LEFT_PAR:
@@ -522,7 +521,8 @@ void code(t_Token token){
                     t_Node *var = tableSearchItem(getScopeTable(), token.attr);
                     if (var != NULL && var->data->defined){
                         if (var->data->is_var){
-                            returnToken(exprParse(token, token, pa_funcLocalTable, 0, &ret_type));
+                            tableChangeItemByNode(var, 1, token.type, -1, isGlobal());
+                            returnToken(exprParse(token, token, pa_funcLocalTable, 0, token.type));
                         }else{
                             f_call(token, tb);
                         }
