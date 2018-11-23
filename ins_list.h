@@ -102,8 +102,10 @@
 #define PI_ASS_FUNC 82
 #define PI_ASS_DECL 83
 #define PI_ASS_DECL_FUNC 84
-#define PI_DEFPARAM 85
-
+#define PI_DEF_PARAM 85
+#define PI_FCALL 86
+#define PI_FCALL_PARAMT 87
+#define PI_FCALL_PARAMID 88
 
 typedef struct{
 	int ins_type;
