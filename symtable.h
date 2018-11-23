@@ -115,7 +115,7 @@ void arrPrintParam(t_Data *data);
 
 //vypise tabulku symbolu
 void tablePrint(t_symTable *table, int local);
-
+void tablePrintItem(t_Node *node);
 //vytvori token a vlozi to tabulky symbolu
 void sInsert(t_symTable *table, int itype, char *is);
 

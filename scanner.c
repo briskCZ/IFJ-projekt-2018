@@ -517,7 +517,7 @@ int isValidHex(char c){
 
 int isNumberEnding(char c){
     if (c == '+' || c == '-' || c == '*' || c == ')' || c == '='
-        || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' '){
+        || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' ' || c == ','){
         ungetc(c, stdin);
         return 1;
     }else{

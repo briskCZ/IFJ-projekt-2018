@@ -24,7 +24,7 @@ int isGlobal(){
 }
 void assNew(int isNew, t_Node* leftVar, char* err){
     if (isNew){
-        tableChangeItemByNode(leftVar, -1, 0, 1, isGlobal());
+        tableChangeItemByNode(leftVar, 1, 0, 1, isGlobal());
     }
     if(leftVar->data->is_var == 0){
         fprintf(stderr, "ERROR_SEMANTIC: Cannot assign to function %s, on line: %d\n", err, sc_line_cnt);
@@ -80,6 +80,7 @@ void assign(t_Token left, t_Token ass){
                     }else{
                         addInst(PI_ASS_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
                     }
+                    tablePrintItem(leftVar);
                     return;
                 }else{
                     P("--assign jedne promenne");
@@ -113,15 +114,19 @@ void assign(t_Token left, t_Token ass){
                     if (rightVar->data->is_var == 0){
                         P("--assign fcall s parametry");
                         //volani funkce bez parametru
+                        //ablePrintItem(rightVar);
                         f_call(ta, tb);
-                        assNew(isNew, leftVar, stringGet(&left.attr));
                         tableChangeItemByNode(leftVar, 1, -1, 1, isGlobal());
+                        assNew(isNew, leftVar, stringGet(&left.attr));
                         if(isNew){
                             addInst(PI_ASS_DECL_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
                         }else{
                             addInst(PI_ASS_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
                         }
                         return;
+                    }else{
+                        fprintf(stderr, "ERROR_SEMANTIC: %s is var, not function, line %d\n",stringGet(rightVar->data->name), sc_line_cnt);
+                        exit(ERROR_SEMANTIC);
                     }
                 }
                 break;
@@ -139,8 +144,8 @@ void assign(t_Token left, t_Token ass){
                 /* expr */
                 P("--expr v assign");
 
-                assNew(isNew, leftVar, stringGet(&left.attr));
                 returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type));
+                assNew(isNew, leftVar, stringGet(&left.attr));
                 tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
                 //pokud je novy zaznam v tabulce symbolu
                 if (isNew){
@@ -180,10 +185,6 @@ void f_call(t_Token ta, t_Token tb){
         temp = tableInsertToken(&table, ta);
         temp->data->was_called = 1;
     }
-    if (temp->data->is_var){
-        fprintf(stderr, "ERROR_SEMANTIC: %s is var, not function, line %d\n",stringGet(temp->data->name), sc_line_cnt);
-        exit(ERROR_SEMANTIC);
-    }
     switch (tb.type){
         case T_LEFT_PAR:
             param1(&param_cnt);
@@ -200,6 +201,7 @@ void f_call(t_Token ta, t_Token tb){
         default:
             PRINT_SYNTAX_ERROR("Function parameter");
     }
+    printf("params: %d, expected: %d\n", param_cnt, temp->data->params_cnt);
     if (temp->data->defined == 1 && temp->data->params_cnt != param_cnt){
         fprintf(stderr, "PARAM_ERROR: %s called with %d params instead of %d on line: %d\n",
                 stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt);
@@ -213,7 +215,6 @@ void f_call(t_Token ta, t_Token tb){
 void param1(int *param_cnt){
     P("--param1");
     int error = 0;
-    P("--token v param1");
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     if (token.type == T_RIGHT_PAR){
@@ -241,11 +242,9 @@ void param1(int *param_cnt){
 void param11(int *param_cnt){
     P("--param11");
     int error = 0;
-    P("--token v param11 na zacatku");
     t_Token token = getNextToken(&error);
     CHECK_ERROR(error);
     if (token.type == T_COMMA){
-        P("--token po comma");
         token = getNextToken(&error);
         CHECK_ERROR(error);
         term(token);
@@ -302,6 +301,7 @@ void param22(int *param_cnt){
     P("--param22");
     int error = 0;
     t_Token token = getNextToken(&error);
+    printToken(token,error);
     CHECK_ERROR(error);
     if (token.type == T_COMMA){
         token = getNextToken(&error);
@@ -552,39 +552,39 @@ void program(){
 int main(){
 
 
-    ungetc('\n', stdin);
-    scannerInit();
-    //inicializace globalni tabulky symbolu
-    //program();
-    t_Token token;
-    do{
-        int error;
-        token = getPrintNextToken(&error);
-    }while(token.type != T_EOF);
-    scannerClean();
-
-    ungetc('\n', stdin);
+    // ungetc('\n', stdin);
+    // scannerInit();
+    // //inicializace globalni tabulky symbolu
+    // //program();
+    // t_Token token;
+    // do{
+    //     int error;
+    //     token = getPrintNextToken(&error);
+    // }while(token.type != T_EOF);
+    // scannerClean();
+    //
+    // ungetc('\n', stdin);
 
 
 
     //inicializace potrebnych veci
 
-    // scannerInit();
-	// table = tableInit();
-	// listInit();
-    //
-    //
-    // program();
-    //
-	// P("=========== TABLE PRINT ===============");
-	// tablePrint(&table, 0);
-    //
-	// printList();
-    //
-	// //uvolneni zdroju
-    // scannerClean();
-	// tableDestroy(&table);
-	// freeList();
+    scannerInit();
+	table = tableInit();
+	listInit();
+
+
+    program();
+
+	P("=========== TABLE PRINT ===============");
+	tablePrint(&table, 0);
+
+	printList();
+
+	//uvolneni zdroju
+    scannerClean();
+	tableDestroy(&table);
+	freeList();
 
     return SUCCESS;
 }

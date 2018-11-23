@@ -127,7 +127,6 @@ t_Node *tableInsertToken(t_symTable *table, t_Token token)
 
 void tableChangeItemByNode(t_Node *node, int is_var, int data_type, int defined, int global)
 {
-	fprintf(stderr, "!changing node: %s, %d\n", node->data->name->val, is_var);
 	if (node->data != NULL)
 	{
 		if (is_var != -1) node->data->is_var = is_var;
@@ -236,7 +235,10 @@ void sInsert(t_symTable *table, int itype, char *is)
 
 	stringFree(&s);
 }
-
+void tablePrintItem(t_Node *node){
+	fprintf(stderr, "NODE: %s: is_var: %d, , data_type: %d, nil: %d, defined: %d, global: %d\n",
+			stringGet(node->data->name), node->data->is_var, node->data->data_type, node->data->nil, node->data->defined, node->data->global);
+}
 void tablePrint(t_symTable *table, int local)
 {
 	if (table->root != NULL)

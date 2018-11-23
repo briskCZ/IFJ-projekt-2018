@@ -115,7 +115,6 @@ Vrati s->val (retezec se struktury string)
 */
 char * stringGet(string *s);
 
-
 /*
 Debugovaci funkce - vytiskne string
 */
