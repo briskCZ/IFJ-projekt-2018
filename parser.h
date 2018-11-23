@@ -23,7 +23,7 @@ t_Node *node; //pomocny ukazatel na data do tabulky symbolu
 */
 
 int isGlobal();
-void paramHandler(t_Token token);
+void paramHandler(t_Token token, int param_cnt);
 void code(t_Token token);
 void sec1();
 void sec2();
