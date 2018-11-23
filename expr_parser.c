@@ -39,8 +39,8 @@ int checkRule(t_IStack *s, int *type){
 		*type = resultType(type1, type3);
 		int res;
 
-		//fprintf(stderr, "-- EXPR: t1: %d | t2: %d\n", type1, type3);
-		//fprintf(stderr, "-- EXPR: res: %d\n", *type);
+		fprintf(stderr, "-- EXPR: t1: %d | t2: %d\n", type1, type3);
+		fprintf(stderr, "-- EXPR: res: %d\n", *type);
         switch (elem2)
         {
             case T_PLUS:
@@ -209,7 +209,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
 				else
 				{
                     b_token = getNextToken(&error);
-					printToken(b_token, 0);
+		//			printToken(b_token, 0);
                 }
                 if (error == ERROR_LEX) exit(ERROR_LEX);
                 break;
@@ -228,7 +228,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
 				else
 				{
                     b_token = getNextToken(&error);
-					printToken(b_token, 0);
+		//			printToken(b_token, 0);
                }
 
 				if (error == ERROR_LEX) exit(ERROR_LEX);
@@ -305,17 +305,21 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 		 //hledej v lokalni tabulce
 		if (local_table != NULL)		
 		{
+			//tablePrint(local_table, 1);
 			aux = tableSearchItem(local_table, b_token.attr);
-			if (aux != NULL) //nasli jsme
+			if (aux == NULL) //nenasli jsme
 			{
-				fprintf(stderr, "----- %s %d\n", aux->data->name->val ,aux->data->defined);
-				if (aux->data->defined != 0) //je definovana
-					found = 1;
+				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
+				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+			}
+			else // nasli jsme
+			{
+
+				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
+				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
 			}
 		}
-
-		//pokud jsme nenasli, hledej jeste v globalni tabulce symbolu
-		if (!found) //
+		else // jinak v globalni tabulce
 		{	
 			aux = tableSearchItem(&table, b_token.attr);
 			if (aux == NULL) 			//nenasli jsme ani v globalni tabulce symbolu
@@ -323,12 +327,13 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
 				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
 			}
-				fprintf(stderr, "---- %s %d\n", aux->data->name->val ,aux->data->defined);
 			if (aux->data->defined == 0) // neni definovana
 			{
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu\n");
 				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou	
 			}
+			
+			
 		}
 
 		//funkce ve vyrazu nesmi byt
@@ -338,6 +343,7 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 			exit(ERROR_SEM_COMPATIBILITY);
 		}
 
+		fprintf(stderr, "typeeeeeeE: %s | %d\n", aux->data->name->val, aux->data->data_type);
 		i_push(s, b, aux->data->data_type);
 		addInst(PI_INIT, NULL, (void*) aux, (void*)T_ID, 0); //TODO
 	}

@@ -106,6 +106,11 @@
 #define PI_FCALL 86
 #define PI_FCALL_PARAMT 87
 #define PI_FCALL_PARAMID 88
+#define PI_IF_START 89
+#define PI_IF_ELSE 90
+#define PI_IF_END 91
+#define PI_WHILE_START 92
+#define PI_WHILE_END 93
 
 typedef struct{
 	int ins_type;
