@@ -48,6 +48,20 @@ void isQmExc(t_Node *leftVar){
         exit(ERROR_LEX);
     }
 }
+
+int isEol(){
+    int error = 0;
+    t_Token token = getNextToken(&error);
+    CHECK_ERROR(error);
+    P("--token v iseol");
+    printToken(token, error);
+    if (token.type == T_EOL){
+        return 1;
+    }else{
+        PRINT_SYNTAX_ERROR("EOL za assign");
+    }
+}
+
 void assign(t_Token left){
     //otestovat levou stranu v tabulce symbolu, dale pokud je funkce
     P("--assign");
@@ -61,7 +75,6 @@ void assign(t_Token left){
         leftVar = tableInsertToken(scopeTable, left);
         isNew = 1;
         //TODO kdyz bude funkce definovana potom nemusi byt nula
-        tableChangeItemByNode(leftVar, -1, 0, 0, isGlobal());
     }else{
         leftVar = n;
     }
@@ -73,48 +86,52 @@ void assign(t_Token left){
     if (ta.type == T_ID){
         tb = getNextToken(&error);
         CHECK_ERROR(error);
-        if (tb.type == T_EOL){
+        switch (tb.type){
+            case T_EOL:{
             //pokud prirazujeme id do id
-            t_Node *rightVar = tableSearchItem(scopeTable, ta.attr);
-            if (rightVar == NULL){
-                fprintf(stderr, "ERROR_SEMANTIC: Variable not defined: %s on line %d\n", stringGet(&ta.attr), sc_line_cnt);
-                exit(ERROR_SEMANTIC);
-            }else{
-                if (rightVar->data->is_var == 0 && rightVar->data->defined){
-                    P("--assign fcall bez parametru");
-                    //volani funkce bez parametru
-                    node = rightVar;
-                    f_call(ta, tb);
-                    assNew(isNew, leftVar, stringGet(&left.attr));
-                    //TODO BACHA MUZE TU BYT KRAVINA
-                    tableChangeItemByNode(leftVar, 1, -1, 1, isGlobal());
-                    if(isNew){
-                        addInst(PI_ASS_DECL_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
-                    }else{
-                        addInst(PI_ASS_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
-                    }
-                    tablePrintItem(leftVar);
-                    return;
+                t_Node *rightVar = tableSearchItem(scopeTable, ta.attr);
+                if (rightVar == NULL){
+                    fprintf(stderr, "ERROR_SEMANTIC: Variable not defined: %s on line %d\n", stringGet(&ta.attr), sc_line_cnt);
+                    exit(ERROR_SEMANTIC);
                 }else{
-                    P("--assign jedne promenne");
-                    assNew(isNew, leftVar, stringGet(&left.attr));
-                    isQmExc(leftVar);
-                    int type = ta.type;
-                    if (stringCompare(&left.attr, &ta.attr) == 0) type = T_NIL;
-                    tableChangeItemByNode(leftVar, 1, type, 1, isGlobal());
-                    returnToken(exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type));
-                    if(isNew){
-                        addInst(PI_ASS_DECL, (void*)leftVar, NULL, NULL, 0);
+                    if (rightVar->data->is_var == 0 && rightVar->data->defined){
+                        P("--assign fcall bez parametru");
+                        //volani funkce bez parametru
+                        node = rightVar;
+                        f_call(ta, tb);
+                        assNew(isNew, leftVar, stringGet(&left.attr));
+                        tableChangeItemByNode(leftVar, 1, T_PARAM, 1, isGlobal());
+                        if(isNew){
+                            addInst(PI_ASS_DECL_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
+                        }else{
+                            addInst(PI_ASS_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
+                        }
+                        tablePrintItem(leftVar);
+                        return;
                     }else{
-                        addInst(PI_ASS, (void*)leftVar, NULL, NULL, 0);
+                        P("--assign jedne promenne");
+                        assNew(isNew, leftVar, stringGet(&left.attr));
+                        isQmExc(leftVar);
+                        int type = ta.type;
+                        //pokud je prava stejna jako leva tak vysledek by mel byt nil
+                        if (stringCompare(&left.attr, &ta.attr) == 0) ta.type = T_NIL;
+                        exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
+                        tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
+                        fprintf(stderr,"ret_: %d\n", ret_type);
+                        if(isNew){
+                            addInst(PI_ASS_DECL, (void*)leftVar, NULL, NULL, 0);
+                        }else{
+                            addInst(PI_ASS, (void*)leftVar, NULL, NULL, 0);
+                        }
+                        return;
+
                     }
-                    return;
                 }
             }
-        }
+            break;
         /*  ID = ID ID  || ID = ID ( ID = ID "test" - fcall
         */
-        switch (tb.type){
+
             case T_ID:
             case T_LEFT_PAR:
             case T_DOUBLE:
@@ -122,18 +139,21 @@ void assign(t_Token left){
             case T_STRING:{
                 /* Volani funkce v assign s parametry */
                 //TODO POKUD JE PRINT SPECIALNI S X PARAMETRAMA
-                t_Node *rightVar = tableSearchItem(scopeTable, ta.attr);
+
+                t_Node *rightVar = tableSearchItem(&table, ta.attr);
                 if (rightVar == NULL){
-                    fprintf(stderr, "ERROR_SEMANTIC: Variable not defined: %s on line %d\n", stringGet(&ta.attr), sc_line_cnt);
+                    fprintf(stderr, "ERROR_SEMANTIC: Function not defined: %s on line %d\n", stringGet(&ta.attr), sc_line_cnt);
                     exit(ERROR_SEMANTIC);
                 }else{
-                    if (rightVar->data->is_var == 0){
+                    if (rightVar->data->is_var == 0 && rightVar->data->defined){
                         P("--assign fcall s parametry");
                         //volani funkce bez parametru
                         //ablePrintItem(rightVar);
                         node = rightVar;
                         f_call(ta, tb);
-                        tableChangeItemByNode(leftVar, 1, -1, 1, isGlobal());
+                        tableChangeItemByNode(leftVar, 1, T_PARAM, 1, isGlobal());
+                        P("--po assign s parametry");
+                        tablePrintItem(leftVar);
                         assNew(isNew, leftVar, stringGet(&left.attr));
                         if(isNew){
                             addInst(PI_ASS_DECL_FUNC, (void*)leftVar, (void*)rightVar, NULL, 0);
@@ -170,6 +190,7 @@ void assign(t_Token left){
                 }else{
                     addInst(PI_ASS, (void*)leftVar, NULL, NULL, 0);
                 }
+                if (isEol()) return;
                 break;
             default:
             PRINT_SYNTAX_ERROR("Function call or expression");
@@ -192,6 +213,9 @@ void assign(t_Token left){
     }else{
         PRINT_SYNTAX_ERROR("in assign: fcall or exp");
     }
+    //kontrola zda je za prirazenim konec radku
+    if (isEol()) return;
+
 }
 void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
@@ -203,6 +227,8 @@ void f_call(t_Token ta, t_Token tb){
     if (temp == NULL){
         temp = tableInsertToken(&table, ta);
         temp->data->was_called = 1;
+        fprintf(stderr, "ERROR_SEMANTIC: TODO %d\n", sc_line_cnt);
+        exit(ERROR_SEMANTIC);
     }
     node = temp;
     //Volani printu
@@ -239,19 +265,27 @@ void f_call(t_Token ta, t_Token tb){
 }
 void paramHandler(t_Token token, int param_cnt){
     P("--tu");
+    if (node == NULL){
+        fprintf(stderr, "Error: NODE is null...\n");
+        exit(ERROR_INTERNAL);
+    }
     if (node->data->defined == 1){
         //aktualne pouzivana tabulka symbolu
         t_symTable *scopeTable = getScopeTable();
         if (token.type == T_ID){
             t_Node *param = tableSearchItem(scopeTable, token.attr);
             if (param != NULL){
-                addInst(PI_FCALL_PARAMID, (void*)param, (void*)param_cnt, param->data->data_type, 1);
+                if (stringCompareConst(node->data->name, "print") == 0){
+                    addInst(PI_FCALL_PARAMID, (void*)param, (void*)param_cnt, (void*)param->data->data_type, 1);
+                }else{
+                    addInst(PI_FCALL_PARAMID, (void*)param, (void*)param_cnt, (void*)param->data->data_type, 1);
+                }
             }else{
                 fprintf(stderr, "ERROR_SEMANTIC: Variable: %s not defined on line: %d\n", stringGet(&token.attr), sc_line_cnt);
                 exit(ERROR_SEMANTIC);
             }
         }else{
-            addInst(PI_FCALL_PARAMT, (void*)token.attr.val, (void*)param_cnt, token.type, 1);
+            addInst(PI_FCALL_PARAMT, (void*)token.attr.val, (void*)param_cnt, (void*)token.type, 1);
         }
     }
 }
@@ -503,6 +537,7 @@ void code(t_Token token){
         case T_DOUBLE:
         case T_STRING:
         case T_NIL:
+            P("--kratky random vyraz");
             returnToken(exprParse(token, token, pa_funcLocalTable, 0, &ret_type));
             break;
         case T_ID:
@@ -531,7 +566,7 @@ void code(t_Token token){
                     if (var != NULL && var->data->defined){
                         if (var->data->is_var){
                             tableChangeItemByNode(var, 1, token.type, -1, isGlobal());
-                            returnToken(exprParse(token, token, pa_funcLocalTable, 0, &token.type));
+                            returnToken(exprParse(token, tb, pa_funcLocalTable, 1, &token.type));
                         }else{
                             f_call(token, tb);
                         }
@@ -554,6 +589,7 @@ void code(t_Token token){
                 case T_NOT_EQ:
                 case T_NIL:
                     /* expr */
+                    P("--random vyraz");
                     returnToken(exprParse(token, tb, pa_funcLocalTable, 1, &ret_type));
                     break;
                 default:
@@ -604,15 +640,15 @@ void program(){
                 CHECK_ERROR(error);
                 if (token.type == T_LEFT_PAR){
                     param1(&def_params_cnt);
-                    tableChangeItemByNode(node, 0, 0, 1, 1);
                     token = getNextToken(&error);
                     CHECK_ERROR(error);
                     if (token.type != T_EOL){
                         PRINT_SYNTAX_ERROR("EOL");
                     }
 
+                    tableChangeItemByNode(node, 0, 0, 1, 1);
                     sec1();
-                    addInst(PI_ENDFUNC, NULL, NULL, NULL, 0);
+                    addInst(PI_ENDFUNC, (void*)node, NULL, NULL, 0);
                     pa_funcLocalTable = NULL;
                     program();
                 }else{
@@ -684,7 +720,7 @@ int main(){
 	P("=========== TABLE PRINT ===============");
 	tablePrint(&table, 0);
 
-	//printList();
+	printList();
 
 	//uvolneni zdroju
     //generate();
