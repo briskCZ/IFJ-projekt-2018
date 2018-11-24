@@ -325,7 +325,6 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_DIGIT: //vychozi stav pro cisla (kvuli poctu nul)
-                ////printf("DEBUG: WNZ %d | DZC %d | SYM %d \n", was_nonzero, digit_zc, symbol);
                 sc_was_eol = 0;
                 if (symbol == '0')
                     digit_zc++;
@@ -406,8 +405,6 @@ t_Token getNextToken(int *error){
                         exponent_sign = 0;
                         digits_ae = 0;
                         digit_zc = 0;
-
-
                     }
                 }else if (isdigit(symbol)){
                     digits_ae++;
@@ -517,7 +514,7 @@ int isValidHex(char c){
 
 int isNumberEnding(char c){
     if (c == '+' || c == '-' || c == '*' || c == ')' || c == '='
-        || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' ' || c == ','){
+        || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' ' || c == ',' || c == '#'){
         ungetc(c, stdin);
         return 1;
     }else{
