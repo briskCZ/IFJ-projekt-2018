@@ -18,73 +18,83 @@ char* ramec(){
 	return a;
 }
 
+//PRIDAT K LABELUM CISLO KAZDE FUNKCE
+
+
 void buildChr()
 {
 	//i - pozice v ascii
 	printf("DEFVAR LF@ascii\n");
-	printf("MOVE LF@ascii LF%1\n");
+	printf("MOVE LF@ascii LF@$P1\n");
+	
+	printf("DEFVAR LF@aux1\n");
+	printf("DEFVAR LF@aux2\n");
 	
 	//kontrola podminek
-	printf("GT LF@aux1 LF@str_i int@-1\n"); // i >=
-	printf("JUMPIFNEQ LERROR LF@aux1 bool@true\n");
-	printf("LT LF@aux2 LF@p2 int@256\n"); // i =< 255
-	printf("JUMPIFNEQ LERROR LF@aux2 bool@true\n");
+	printf("GT LF@aux1 LF@ascii int@-1\n"); // i >= 0
+	printf("JUMPIFNEQ LERROR%d LF@aux1 bool@true\n",func_cnt);
+	printf("LT LF@aux2 LF@ascii int@256\n"); // i =< 255
+	printf("JUMPIFNEQ LERROR%d LF@aux2 bool@true\n",func_cnt);
 	
-	printf("INT2CHAR LF@$RTVL%d LF@str_i\n", func_cnt);
+	printf("INT2CHAR LF@$RTVL%p LF@ascii\n", (void*)list->first->data->adr1);
 
-	printf("JUMP OK");
+	printf("JUMP OK%d\n",func_cnt);
 	//chyba
-	printf("LABEL LERROR\n");
+	printf("LABEL LERROR%d\n",func_cnt);
 	
 	printf("#ERROR index error 0-255 ascii\n");
 	printf("EXIT int@%d\n", 58); //TODO
 
-	printf("LABEL OK\n");	
+	printf("LABEL OK%d\n",func_cnt);	
+	printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
 }
 void buildinOrd()
 {
 
 	//s - string
 	printf("DEFVAR LF@str_s\n");
-	printf("MOVE LF@str_s LF%1\n");
+	printf("MOVE LF@str_s LF@$P1\n");
 	//i - na jake pozice ve stringu
 	printf("DEFVAR LF@str_i\n");
-	printf("MOVE LF@str_i LF%2\n");
+	printf("MOVE LF@str_i LF@$P2\n");
 	
 	//delka stringu
 	printf("DEFVAR LF@str_length\n");
 	printf("STRLEN LF@str_length LF@str_s\n");
-
+	
 	printf("DEFVAR LF@aux1\n");
 	printf("DEFVAR LF@aux2\n");
 
 	//kontrola podminek	
 	printf("GT LF@aux1 LF@str_i int@-1\n"); // i >= 0
-	printf("JUMPIFEQ LEND LF@aux1 bool@false\n");
-	printf("LT LF@aux2 LF@p2 LF@length\n"); // i < len(s)
-	printf("JUMPIFNEQ LEND LF@aux2 bool@false\n");
+	printf("JUMPIFEQ LEND%d LF@aux1 bool@false\n",func_cnt);
+	printf("LT LF@aux2 LF@str_i LF@str_length\n"); // i < len(s)
+	printf("JUMPIFEQ LEND%d LF@aux2 bool@false\n",func_cnt);
 		
 	/*------------------------------------------------------*/
 	/*splneny vsechny podminky --> muzeme vratit ord		*/
 	/*------------------------------------------------------*/	
-
-	printf("STRI2INT LF@$RTVL%d LF@str_s LF@str_i\n", func_cnt);
 	
-	printf("LABEL LEND\n");	
-}
+	printf("STRI2INT LF@$RTVL%p LF@str_s LF@str_i\n", (void*)list->first->data->adr1);
 
+	printf("LABEL LEND%d\n",func_cnt);	
+	printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
+}
 void builtinSubstr()
 {
 	//s - string
 	printf("DEFVAR LF@str_s\n");
-	printf("MOVE LF@str_s LF%1\n");
+	printf("MOVE LF@str_s LF@$P1\n");
 	//i - od jake pozice ve stringu
 	printf("DEFVAR LF@str_i\n");
-	printf("MOVE LF@str_i LF%2\n");
+	printf("MOVE LF@str_i LF@$P2\n");
 	//n - delka substringu
 	printf("DEFVAR LF@str_n\n");
-	printf("MOVE LF@str_n LF%3\n");
-
+	printf("MOVE LF@str_n LF@$P3\n");
+	
+	//jednotlive znaky ktere se budou concatenovat
+	printf("DEFVAR LF@tmp_concat\n");
+	
 	//delka stringu
 	printf("DEFVAR LF@str_length\n");
 	printf("STRLEN LF@str_length LF@str_s\n");
@@ -93,7 +103,7 @@ void builtinSubstr()
 	printf("DEFVAR LF@aux2\n"); // i < len(s)
 	//kontrola podminek	
 	printf("GT LF@aux1 LF@str_i int@-1\n");
-	printf("LT LF@aux2 LF@p2 LF@length\n");
+	printf("LT LF@aux2 LF@$P2 LF@str_length\n");
 	
 	printf("DEFVAR LF@aux3\n"); // i > 0 && i < len(s)
 	printf("AND LF@aux3 LF@aux1 LF@aux2\n");
@@ -101,7 +111,7 @@ void builtinSubstr()
 	printf("DEFVAR LF@aux4\n"); // n >= 0
 	printf("GT LF@aux4 LF@str_n int@-1\n");
 
-	printf("JUMPIFNEQ LEND LF@aux3 LF@aux4\n"); //i > 0 && i < len(s) && n >= 0
+	printf("JUMPIFNEQ LEND%d LF@aux3 LF@aux4\n",func_cnt); //i > 0 && i < len(s) && n >= 0
 	
 	/*------------------------------------------------------*/
 	/*splneny vsechny podminky --> muzeme vytvorit substring*/
@@ -112,27 +122,23 @@ void builtinSubstr()
 	printf("DEFVAR LF@aux5\n"); //kontroluje jestli nejsme na konci stringu
 	printf("DEFVAR LF@aux6\n"); //kontroluje jestli jsme uz neulozili n znaku
 
-	printf("LABEL LDO_WHILE\n");
+	printf("MOVE LF@$RTVL%p string@\n",(void*)list->first->data->adr1);
+	printf("LABEL LDO_WHILE%d\n",func_cnt);
 
-	printf("GETCHAR LF@$RTVL%d LF@str_s LF@str_i\n", func_cnt);
+	
+	printf("GETCHAR LF@tmp_concat LF@str_s LF@str_i\n");//maybe
+	printf("CONCAT LF@$RTVL%p LF@$RTVL%p LF@tmp_concat\n",(void*)list->first->data->adr1,(void*)list->first->data->adr1);
 	printf("ADD LF@str_i LF@str_i int@1\n");
 	printf("ADD LF@cnt LF@cnt int@1\n");
 
-	//printf("EQ LF@aux5 LF@str_i LF@str_length");
-	//printf("NOT LF@aux5 LF@aux5\n");
-	printf("JUMPIFEQ LEND LF@str_i LF@str_length\n"); //pokud nejsme na konci retezce tak delej dal
+
+	printf("JUMPIFEQ LEND%d LF@str_i LF@str_length\n",func_cnt); //pokud nejsme na konci retezce tak delej dal
 	
-	//printf("EQ LF@aux6 LF@cnt LF@str_n"); 	
-	//printf("NOT LF@aux6 LF@aux6\n");
-	printf("JUMPIF LDO_WHILE LF@cnt LF@str_n\n"); //pokud jsme nezpracovali n znaku tak delej dal
+	printf("JUMPIFNEQ LDO_WHILE%d LF@cnt LF@str_n\n",func_cnt); //pokud jsme nezpracovali n znaku tak delej dal
 
-
-	printf("LABEL LEND\n");	
+	printf("LABEL LEND%d\n",func_cnt);
+	printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
 }
-
-
-
-
 
 //potrebne veci pro zacatek definice funkce
 void genBeginFunc(){
@@ -141,13 +147,16 @@ void genBeginFunc(){
 	printf("LABEL $FNAME%p\n", (void*)list->first->data->adr1);
 	printf("PUSHFRAME\n");
 	//vytvor navratovou promennou
-	printf("DEFVAR LF@$RTVL%d\n",func_cnt); //TODO mozna menit ramec
-	printf("MOVE LF@$RTVL%d nil@nil\n",func_cnt);//TODO mozna menit ramec	
+	printf("DEFVAR LF@$RTVL%p\n",(void*)list->first->data->adr1); //TODO mozna menit ramec
+	printf("MOVE LF@$RTVL%p nil@nil\n",(void*)list->first->data->adr1);//TODO mozna menit ramec
+	//printf("PUSHS nil@nil\n");
+	
 }
 //potrebne veci pro konec definice funkce
 void genEndFunc(){
-	printf("POPS LF@$RTVL%d\n",func_cnt);
+	printf("POPS LF@$RTVL%p\n",(void*)list->first->data->adr1); //sem potrebuju predat ukazatel do symtable
 	printf("POPFRAME\n");
+	printf("CLEARS\n");
 	printf("RETURN\n");
 	printf("LABEL $FOOL%d\n", func_cnt);
 	printf("\n");
@@ -157,27 +166,31 @@ void genBuiltFunc(){
 	switch(built_func){
 		case 1:
 			genBeginFunc();
-			printf("READ LF@$RTVL%d string\n", func_cnt); //inputs
+			printf("READ LF@$RTVL%p string\n", (void*)list->first->data->adr1); //inputs - funguje
+			printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
 			genEndFunc();
 			break;
 		case 2:
 			genBeginFunc();
-			printf("READ LF@$RTVL%d int\n", func_cnt); //inputi
+			printf("READ LF@$RTVL%p int\n", (void*)list->first->data->adr1); //inputi - funguje
+			printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
 			genEndFunc();
 			break;
 		case 3:
 			genBeginFunc();
-			printf("READ LF@$RTVL%d float\n", func_cnt); //inputf
+			printf("READ LF@$RTVL%p float\n", (void*)list->first->data->adr1); //inputf - funguje
+			printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
 			genEndFunc();
 			break;
 		case 4:
 			genBeginFunc();
-			printf("READ LF@$1\n"); //print
+			printf("WRITE LF@$P1\n"); //print - funguje
 			genEndFunc();
 			break;
 		case 5:
 			genBeginFunc();
-			printf("STRLEN LF@$RTVL%d LF@$1\n", func_cnt); //length
+			printf("STRLEN LF@$RTVL%p LF@$P1\n", (void*)list->first->data->adr1); //length - funguje
+			printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
 			genEndFunc();
 			break;
 		case 6:
@@ -187,12 +200,12 @@ void genBuiltFunc(){
 			break;
 		case 7:
 			genBeginFunc();
-			buildinOrd(); //ord
+			buildinOrd(); //ord - funguje
 			genEndFunc();
 			break;
 		case 8:
 			genBeginFunc();
-			buildChr(); //chr
+			buildChr(); //chr - funguje
 			genEndFunc();
 			break;
 	}
@@ -817,14 +830,14 @@ void genAssign(){
 //prirazeni do idcka z funkce
 void genAssignFunc(){//TODO otestovat
 	printf("#prirazeni z funkce\n");
-	printf("MOVE %s@$%p TF@$RTVL%d\n",ramec(),(void*)list->first->data->adr1,func_cnt);
+	printf("MOVE %s@$%p TF@$RTVL%p\n",ramec(),(void*)list->first->data->adr1,(void*)list->first->data->adr2); //tady potrebuju ukazatel na funkci do symtable
 	printf("\n");
 }
 //prirazeni do idcka z funkce
 void genAssignDeclFunc(){//TODO otestovat
 	printf("#prirazeni s deklaraci z funkce\n");
 	printf("DEFVAR %s@$%p\n",ramec(),(void*)list->first->data->adr1);
-	printf("MOVE %s@$%p TF@$RTVL%d\n",ramec(),(void*)list->first->data->adr1,func_cnt);
+	printf("MOVE %s@$%p TF@$RTVL%p\n",ramec(),(void*)list->first->data->adr1,(void*)list->first->data->adr2); //tady potrebuju ukazatel na funkci do symtable
 	printf("\n");
 }
 
