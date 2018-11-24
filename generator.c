@@ -185,6 +185,7 @@ void genBuiltFunc(){
 		case 4:
 			genBeginFunc();
 			printf("WRITE LF@$P1\n"); //print - funguje
+			printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
 			genEndFunc();
 			break;
 		case 5:
@@ -928,7 +929,7 @@ int generate()
 		test = (void*)list->first->data->adr1; //vypis posledniho vysledku prirazeni
 		deleteFirst();
 	}
-	printf("DPRINT GF@$%p\n",test);
+	//printf("DPRINT GF@$%p\n",test);
 	printf("EXIT int@0\n");
 	return SUCCESS;
 }
