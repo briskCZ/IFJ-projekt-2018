@@ -350,11 +350,11 @@ void param1(int *param_cnt){
         }else{
             term(token);
         }
-        (*param_cnt)++;
         P("--node pred def v param1");
         tablePrintItem(node);
 		if (pa_funcLocalTable != NULL && node != NULL && !node->data->defined)
 		{
+            (*param_cnt)++;
             P("__def param11");
 			//if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
             /* pridani parametru do lokalni tabulky symbolu */
@@ -362,6 +362,7 @@ void param1(int *param_cnt){
             addInst(PI_DEF_PARAM, (void*)temp, (void*)*param_cnt, NULL , 0);
 			tableChangeItemByNode(temp, 1, T_PARAM, 1, 0);
 		}else{
+            (*param_cnt)++;
             P("call param11");
             paramHandler(token, *param_cnt);
 
@@ -381,10 +382,10 @@ void param11(int *param_cnt){
             term(token);
         }
         //dalsi mozny parametr funkce, check v tabulce symbolu
-        (*param_cnt)++;
         tablePrintItem(node);
         if (pa_funcLocalTable != NULL && node != NULL && node->data->defined == 0)
 		{
+            (*param_cnt)++;
             P("__def param11");
 			//if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
             /* pridani parametru do lokalni tabulky symbolu */
@@ -392,6 +393,7 @@ void param11(int *param_cnt){
 			tableChangeItemByNode(temp, 1, T_PARAM, 1, 0);
             addInst(PI_DEF_PARAM, (void*)temp, (void*)*param_cnt, NULL , 0);
         }else{
+            (*param_cnt)++;
             P("__fcall param11");
             paramHandler(token, *param_cnt);
 
@@ -400,7 +402,6 @@ void param11(int *param_cnt){
     }else if (token.type == T_RIGHT_PAR){
         P("--token v param11 right par");
         token = tarrGetNextToken(&token_array);
-        (*param_cnt)++;
         if (token.type == T_EOL){
             return;
         }else{
@@ -415,7 +416,6 @@ void param2(t_Token token, int *param_cnt){
     P("--param2");
     // int error = 0;
     // t_Token token = tarrGetNextToken(&token_array);
-    (*param_cnt)++;
     if (token.type == T_EOL){
         return;
     }else{
@@ -423,7 +423,7 @@ void param2(t_Token token, int *param_cnt){
         P("__fcall param2");
         //pokud je definovana , TODO pokud neni definovana ale muze byt
         paramHandler(token, *param_cnt);
-        if(param_cnt != NULL) (*param_cnt)++;
+        (*param_cnt)++;
         param22(param_cnt);
     }
 }
@@ -434,7 +434,7 @@ void param22(int *param_cnt){
         token = tarrGetNextToken(&token_array);
         term(token);
         paramHandler(token, *param_cnt);
-        if(param_cnt != NULL) (*param_cnt)++;
+        (*param_cnt)++;
         param22(param_cnt);
     }else if (token.type == T_EOL){
         return;
