@@ -124,18 +124,18 @@ t_Node *tableInsertToken(t_symTable *table, t_Token token)
 	return new;
 }
 
-void tableChangeItemByNode(t_Node *node, int is_var, int data_type, int defined, int global)
+void tableChangeItemByNode(t_Node *n, int is_var, int data_type, int defined, int global)
 {
-	if (node->data != NULL)
+	if (n->data != NULL)
 	{
-		if (is_var != -1) node->data->is_var = is_var;
-		if (data_type != -1) node->data->data_type = data_type;
-		if (defined != -1) node->data->defined = defined;
-		if (global != -1) node->data->global = global;
+		if (is_var != -1) n->data->is_var = is_var;
+		if (data_type != -1) n->data->data_type = data_type;
+		if (defined != -1) n->data->defined = defined;
+		if (global != -1) n->data->global = global;
 	}
 	else
 	{
-		; //TODO
+		fprintf(stderr, "error\n");; //TODO
 	}
 }
 
@@ -225,8 +225,8 @@ void sInsert(t_symTable *table, int itype, char *is)
 	stringFree(&s);
 }
 void tablePrintItem(t_Node *node){
-	fprintf(stderr, "NODE: %s: is_var: %d, , data_type: %d, nil: %d, defined: %d, global: %d\n",
-			stringGet(node->data->name), node->data->is_var, node->data->data_type, node->data->nil, node->data->defined, node->data->global);
+	fprintf(stderr, "NODE: %s: is_var: %d, , data_type: %d, nil: %d, defined: %d, global: %d params:%d\n",
+			stringGet(node->data->name), node->data->is_var, node->data->data_type, node->data->nil, node->data->defined, node->data->global, node->data->params_cnt);
 }
 void tablePrint(t_symTable *table, int local)
 {
@@ -241,7 +241,7 @@ void tablePrint(t_symTable *table, int local)
 		if (table->root->data->is_var == 0)
 		{
 			fprintf(stderr, "FUNKCE: %s\n", table->root->data->name->val);
-			fprintf(stderr, "- pocet parametru: %d\n", table->root->data->params_cnt);
+			tablePrintItem(table->root);
 			// for (int i = 0; i < table->root->data->params_cnt; i++)
 			// {
 			// 	fprintf(stderr, "p%d: %s\n", i, table->root->data->arr_params->string[i].val);

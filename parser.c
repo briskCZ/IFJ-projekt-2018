@@ -9,8 +9,7 @@
 */
 #include "parser.h"
 
-#define CHECK_ERROR(err) if (err == ERROR_INTERNAL) {fprintf(stderr, "INTERNAL ERROR\n"); cleanAll(); exit(ERROR_INTERNAL);}\
-                         if (err == ERROR_LEX) {fprintf(stderr, "LEXICAL ERROR: on line: %d\n", sc_line_cnt); cleanAll(); exit(ERROR_LEX);}
+//#define CHECK_ERROR(err) if (err == ERROR_INTERNAL || err == ERROR_LEX) {fprintf(stderr, "INTERNAL ERROR\n"); cleanAll(); exit(err);}
 
 #define PRINT_SYNTAX_ERROR(symbol) {fprintf(stderr, "ERROR_SYNTAX: %s expected on line %d\n", symbol, sc_line_cnt);\
                                    cleanAll(); exit(ERROR_SYNTAX);}
@@ -401,6 +400,7 @@ void param11(int *param_cnt){
     }else if (token.type == T_RIGHT_PAR){
         P("--token v param11 right par");
         token = tarrGetNextToken(&token_array);
+        (*param_cnt)++;
         if (token.type == T_EOL){
             return;
         }else{
@@ -415,6 +415,7 @@ void param2(t_Token token, int *param_cnt){
     P("--param2");
     // int error = 0;
     // t_Token token = tarrGetNextToken(&token_array);
+    (*param_cnt)++;
     if (token.type == T_EOL){
         return;
     }else{
@@ -709,11 +710,11 @@ int main(){
     scannerInit();
     table = tableInit();
     listInit();
-    addBuiltins();
     tarrInit(&token_array);
-    CHECK_ERROR(tarrFill(&token_array));
-    //tarrPrint(&token_array);
+    tarrFill(&token_array);
     tarrGetFuncInfo(&token_array);
+    addBuiltins();
+    tablePrint(&table, 0);
     program();
     P("--------------SYMTABLE-----------");
     tablePrint(&table, 0);
