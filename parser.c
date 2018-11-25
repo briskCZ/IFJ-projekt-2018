@@ -535,6 +535,7 @@ void code(t_Token token){
             token = tarrGetNextToken(&token_array);
             addInst(PI_WHILE_START, NULL, NULL, NULL, 0);
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
+            addInst(PI_WHILE_EX, NULL, NULL, NULL, 0);
             if (token.type == T_DO){
                 pa_while = 1;
                 token = tarrGetNextToken(&token_array);
