@@ -45,7 +45,7 @@ int stringUngetChar(char c, string *s){
 }
 void stringRemoveChar(string* s){
     if (s->length - 1 >= 0){
-        s->val[s->length] == '\0';
+        s->val[s->length] = '\0';
         s->length--;
     }
 }
