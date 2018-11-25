@@ -242,7 +242,7 @@ void assign(t_Token left){
 
 void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
-    int param_cnt = 0;
+    int param_cnt = 1;
     P("--fcall");
     /* pripadne vlozeni do tabulky symbolu */
     //fprintf(stderr, "funkce: %s\n", ta.attr.val);
@@ -342,12 +342,12 @@ void param1(int *param_cnt){
     P("--param1");
     t_Token token = tarrGetNextToken(&token_array);
     if (token.type == T_RIGHT_PAR){
-        return;
+        token = tarrGetNextToken(&token_array);
     }else{
         //term se postara aby se program ukoncil s chybou
         if (node != NULL && !node->data->defined){
             if (token.type != T_ID)
-                PRINT_SYNTAX_ERROR("ID in param definition");
+                PRINT_SYNTAX_ERROR("ID not");
         }else{
             term(token);
         }
@@ -400,6 +400,7 @@ void param11(int *param_cnt){
         param11(param_cnt);
     }else if (token.type == T_RIGHT_PAR){
         P("--token v param11 right par");
+        token = tarrGetNextToken(&token_array);
         if (token.type == T_EOL){
             return;
         }else{
@@ -676,15 +677,15 @@ void program(){
 }
 /* Vlozeni vestavenych funkci do tabulky symbolu */
 void addSingleBuiltin(char* name, int params_cnt){
-    t_Node *fun;
+    t_Node *n;
     t_Token toadd;
     toadd.type = T_ID;
     stringInit(&toadd.attr);
     stringInsert(&toadd.attr, name);
-    fun = tableInsertToken(&table, toadd);
-    addInst(PI_BUILTFUNC, (void*)fun, NULL, NULL, 0);
-    tableChangeItemByNode(fun, 0, 0, 1, 1);
-    fun->data->params_cnt = params_cnt;
+    n = tableInsertToken(&table, toadd);
+    tableChangeItemByNode(n, 0, 0, 1, 1);
+    addInst(PI_BUILTFUNC, (void*)n, NULL, NULL, 0);
+    n->data->params_cnt = params_cnt;
 }
 void addBuiltins(){
     addSingleBuiltin("inputs", 0);
@@ -715,7 +716,7 @@ int main(){
     tarrGetFuncInfo(&token_array);
     program();
     P("--------------SYMTABLE-----------");
-    //tablePrint(&table, 0);
+    tablePrint(&table, 0);
     //printList();
     generate();
     cleanAll();
