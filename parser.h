@@ -41,7 +41,7 @@ void param22(int *param_cnt);
 void assign(t_Token left);
 void f_call(t_Token ta, t_Token tb);
 void term(t_Token token);
-int isNextEol();
+void cleanAll();
 
 
 #endif //PARSER_H

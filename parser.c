@@ -9,11 +9,11 @@
 */
 #include "parser.h"
 
-#define CHECK_ERROR(err) if (err == ERROR_INTERNAL) {fprintf(stderr, "INTERNAL ERROR\n"); exit(ERROR_INTERNAL);}\
-                         if (err == ERROR_LEX) {fprintf(stderr, "LEXICAL ERROR: on line: %d\n", sc_line_cnt); exit(ERROR_LEX);}
+#define CHECK_ERROR(err) if (err == ERROR_INTERNAL) {fprintf(stderr, "INTERNAL ERROR\n"); cleanAll();exit(ERROR_INTERNAL);}\
+                         if (err == ERROR_LEX) {fprintf(stderr, "LEXICAL ERROR: on line: %d\n", sc_line_cnt); cleanAll(); exit(ERROR_LEX);}
 
 #define PRINT_SYNTAX_ERROR(symbol) {fprintf(stderr, "ERROR_SYNTAX: %s expected on line %d\n", symbol, sc_line_cnt);\
-                                   exit(ERROR_SYNTAX);}
+                                   cleanAll(); exit(ERROR_SYNTAX);}
 #define SAVE_ERROR(error){if (ERROR == 0) ERROR = error;}
 
 //#define P(a) fprintf(stderr, "%s\n", a);
@@ -36,6 +36,7 @@ void isQmExc(t_Token token){
     //kontrola zda neni na posledni pozici ? nebo !
     string *name = &token.attr;
     if (name->val[name->length - 1] == '?' || name->val[name->length - 1] == '!'){
+        cleanAll();
         fprintf(stderr, "ERROR_LEX: Cannot assign variable to id with ? or ! on line: %d\n", sc_line_cnt);
         exit(ERROR_LEX);
     }
@@ -47,6 +48,7 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
         *isNew = 0;
         if (tmp->data->is_var == 0){
             fprintf(stderr, "ERROR_SEMANTIC: Cannot assign to function %s on line: %d\n", node->data->name->val, sc_line_cnt);
+            cleanAll();
             exit(ERROR_SEMANTIC);
         }
     }else{
@@ -123,6 +125,7 @@ void assign(t_Token left){
                             return;
                         }else{
                             fprintf(stderr, "ERROR_SEMANTIC: Variable: %s not defined on line: %d\n", rightVar->data->name->val, sc_line_cnt);
+                            cleanAll();
                             exit(ERROR_SEMANTIC);
                         }
                     }
@@ -147,6 +150,7 @@ void assign(t_Token left){
                             return;
                         }else{
                             fprintf(stderr, "ERROR_SEMANTIC: Variable %s not defined on line: %d\n", rightVar->data->name->val, sc_line_cnt);
+                            cleanAll();
                             exit(ERROR_SEMANTIC);
                         }
                     }else{
@@ -163,6 +167,7 @@ void assign(t_Token left){
                             return;
                         }else{
                             fprintf(stderr, "ERROR_SEMANTIC: Variable not defined: %s on_line: %d\n", ta.attr.val, sc_line_cnt);
+                            cleanAll();
                             exit(ERROR_SEMANTIC);
                         }
                     }
@@ -178,12 +183,15 @@ void assign(t_Token left){
                 t_Node *rightVar = tableSearchItem(&table, ta.attr);
                 if (rightVar == NULL){
                     fprintf(stderr, "ERROR_SEMANTIC: Function not defined: %s on line %d\n", ta.attr.val, sc_line_cnt);
+                    cleanAll();
                     exit(ERROR_SEMANTIC);
                 }else if(rightVar->data->defined == 0){
                     fprintf(stderr, "ERROR_SEMANTIC: Function not defined above: %s on line %d\n", ta.attr.val, sc_line_cnt);
+                    cleanAll();
                     exit(ERROR_SEMANTIC);
                 }else if (rightVar->data->is_var){
                     fprintf(stderr, "ERROR_SEMANTIC: %s is var, not function, line %d\n", stringGet(rightVar->data->name), sc_line_cnt);
+                    cleanAll();
                     exit(ERROR_SEMANTIC);
                 }else{
                     P(">a>fcall s parametry");
@@ -241,11 +249,13 @@ void f_call(t_Token ta, t_Token tb){
     t_Node *temp = tableSearchItem(&table, ta.attr);
     if (temp == NULL){
         fprintf(stderr, "ERROR_SEMANTIC: Undefined function call %s on_line %d\n", ta.attr.val, sc_line_cnt);
+        cleanAll();
         exit(ERROR_SEMANTIC);
     }else{
         if (isGlobal()){
             if (!temp->data->defined){
                 fprintf(stderr, "ERROR_SEMANTIC: Undefined function call %s on_line %d\n", ta.attr.val, sc_line_cnt);
+                cleanAll();
                 exit(ERROR_SEMANTIC);
             }
         }
@@ -280,6 +290,7 @@ void f_call(t_Token ta, t_Token tb){
     if (temp->data->defined == 1 && temp->data->params_cnt != param_cnt){
         fprintf(stderr, "PARAM_ERROR: %s called with %d params instead of %d on line: %d\n",
                 stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt-1);
+        cleanAll();
         exit(ERROR_SEM_PARAM);
     }
 
@@ -311,6 +322,7 @@ void paramHandler(t_Token token, int param_cnt){
                 }
             }else{
                 fprintf(stderr, "ERROR_SEMANTIC: Variable: %s not defined on line: %d\n", stringGet(&token.attr), sc_line_cnt);
+                cleanAll();
                 exit(ERROR_SEMANTIC);
             }
         }else{
@@ -442,7 +454,6 @@ void term(t_Token token){
 }
 void sec1(){
     P("--sec1");
-    if (pa_funcLocalTable == NULL){ P("--global scope"); }else{P("--local scope")};
     t_Token token = tarrGetNextToken(&token_array);
     while(token.type == T_EOL){
         token = tarrGetNextToken(&token_array);
@@ -574,6 +585,7 @@ void code(t_Token token){
                         }
                     }else{
                         fprintf(stderr, "ERROR_SEMANTIC: Using not defined: %s on line: %d\n", token.attr.val, sc_line_cnt-1);
+                        cleanAll();
                         exit(ERROR_SEMANTIC);
                     }
                     break;
@@ -625,6 +637,7 @@ void program(){
                 //jedna se o redefinici funkce
                 if (find != NULL && find->data->defined == 1){
                     fprintf(stderr, "ERROR_SEMANTIC: Function redef: %s at line: %d\n", stringGet(&token.attr), sc_line_cnt);
+                    cleanAll();
                     exit(ERROR_SEMANTIC);
                 }else{
     				node = tableInsertToken(&table, token);
@@ -683,6 +696,13 @@ void addBuiltins(){
     addSingleBuiltin("ord", 2);
     addSingleBuiltin("chr", 1);
 }
+
+void cleanAll(){
+    tarrFree(&token_array);
+    tableDestroy(&table);
+    freeList();
+    scannerClean();
+}
 int main(){
 
     scannerInit();
@@ -691,15 +711,13 @@ int main(){
     addBuiltins();
     tarrInit(&token_array);
     CHECK_ERROR(tarrFill(&token_array));
-    tarrPrint(&token_array);
+    //tarrPrint(&token_array);
     tarrGetFuncInfo(&token_array);
     program();
     P("--------------SYMTABLE-----------");
     tablePrint(&table, 0);
-    tarrFree(&token_array);
-    tableDestroy(&table);
-    freeList();
-    scannerClean();
+    printList();
+    cleanAll();
 
     return SUCCESS;
 }
