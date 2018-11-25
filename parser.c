@@ -146,6 +146,7 @@ void assign(t_Token left){
                             P(">a>global_scope>a=fcall");
                             f_call(ta, tb);
                             f_callAssIns(isNew, leftVar, rightVar);
+                            tableChangeItemByNode(leftVar, 1, T_PARAM, 1, 0);
                             return;
                         }else{
                             fprintf(stderr, "ERROR_SEMANTIC: Variable %s not defined on line: %d\n", rightVar->data->name->val, sc_line_cnt);
@@ -197,6 +198,7 @@ void assign(t_Token left){
                     node = rightVar;
                     f_call(ta, tb);
                     f_callAssIns(isNew, leftVar, rightVar);
+                    tableChangeItemByNode(leftVar, 1, T_PARAM, 1, 0);
                     return;
                 }
             }
@@ -351,7 +353,6 @@ void param1(int *param_cnt){
             term(token);
         }
         P("--node pred def v param1");
-        tablePrintItem(node);
 		if (pa_funcLocalTable != NULL && node != NULL && !node->data->defined)
 		{
             (*param_cnt)++;
@@ -382,7 +383,6 @@ void param11(int *param_cnt){
             term(token);
         }
         //dalsi mozny parametr funkce, check v tabulce symbolu
-        tablePrintItem(node);
         if (pa_funcLocalTable != NULL && node != NULL && node->data->defined == 0)
 		{
             (*param_cnt)++;
@@ -515,6 +515,7 @@ void code(t_Token token){
             addInst(PI_IF_START, NULL, NULL, NULL, 0);
             if (token.type == T_THEN){
                 P("--then");
+                token = tarrGetNextToken(&token_array);
                 if (token.type == T_EOL){
                     sec2();
                     addInst(PI_IF_ELSE, NULL, NULL, NULL, 0);
@@ -532,8 +533,8 @@ void code(t_Token token){
             P("--WHILE");
             /* WHILE */
             token = tarrGetNextToken(&token_array);
-            token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
             addInst(PI_WHILE_START, NULL, NULL, NULL, 0);
+            token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
             if (token.type == T_DO){
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_EOL){
@@ -712,12 +713,13 @@ int main(){
     listInit();
     tarrInit(&token_array);
     tarrFill(&token_array);
+    //tarrPrint(&token_array);
     tarrGetFuncInfo(&token_array);
     addBuiltins();
-    tablePrint(&table, 0);
+    //tablePrint(&table, 0);
     program();
     P("--------------SYMTABLE-----------");
-    tablePrint(&table, 0);
+    //dtablePrint(&table, 0);
     //printList();
     generate();
     cleanAll();
