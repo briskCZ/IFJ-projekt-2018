@@ -17,6 +17,7 @@
 #include "generator.h"
 #include "symtable.h"
 #include "ins_list.h"
+#include "token_array.h"
 
 #define PT_SIZE 7
 #define PT_X 102

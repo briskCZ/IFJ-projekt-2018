@@ -115,10 +115,10 @@ Vrati s->val (retezec se struktury string)
 */
 char * stringGet(string *s);
 
-
 /*
 Debugovaci funkce - vytiskne string
 */
 void stringPrint(string *s);
+void stringRemoveChar(string *s);
 
 #endif

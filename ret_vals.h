@@ -7,7 +7,7 @@
  *  Popis souboru:
  *  Navratove hodnoty prekladace
 */
-
+#define debug
 #ifdef debug
     #define P(a) fprintf(stderr, "%s\n", a);
 #else

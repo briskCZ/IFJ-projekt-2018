@@ -19,8 +19,6 @@
 
 unsigned uniqueNum; //pocitadlo promennych
 unsigned func_cnt; //pocitadlo funkci
-unsigned temp_num;
-unsigned temp_label;
 
 /*
 vygeneruje kod
