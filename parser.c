@@ -61,7 +61,7 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
 /* instrukce pro generator, podle toho zda je leva strana nova a jedna se o volani funkce*/
 void f_callAssIns(int isNew, t_Node *left, t_Node *right){
     if (isNew){
-        addInst(PI_ASS_DECL_FUNC, (void*)left, (void*)right, NULL, 0);
+        addInst(PI_ASS_DECL_FUNC, (void*)left, (void*)right, NULL, pa_while);
     }else{
         addInst(PI_ASS_FUNC, (void*)left, (void*)right, NULL, 0);
     }
@@ -70,7 +70,7 @@ void f_callAssIns(int isNew, t_Node *left, t_Node *right){
 /* instrukce pro generator, podle toho zda je leva strana nova pri prirazeni*/
 void assIns(int isNew, t_Node *left){
     if(isNew){
-        addInst(PI_ASS_DECL, (void*)left, NULL, NULL, 0);
+        addInst(PI_ASS_DECL, (void*)left, NULL, NULL, pa_while);
     }else{
         addInst(PI_ASS, (void*)left, NULL, NULL, 0);
     }
@@ -536,9 +536,11 @@ void code(t_Token token){
             addInst(PI_WHILE_START, NULL, NULL, NULL, 0);
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
             if (token.type == T_DO){
+                pa_while = 1;
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_EOL){
                     sec1();
+                    pa_while = 0;
                     addInst(PI_WHILE_END, NULL, NULL, NULL, 0);
                 }else{
                     PRINT_SYNTAX_ERROR("EOL after DO");

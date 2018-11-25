@@ -18,7 +18,7 @@
 #include "token_array.h"
 
 struct table *pa_funcLocalTable; //NULL pokud je global scope, jinak v definici funkce
-
+int pa_while;
 
 /*
 t_symTable table; //globalni tabulka symbolu
