@@ -187,15 +187,6 @@ t_Node* createNode(t_Token token)
 	}
 	new->data->local_symTable->root = NULL;
 
-	//vytvorim pole pro parametry funkce
-	if (arrParamInit(new->data) == MEMORY_ERROR)
-	{
-		free(new->data->local_symTable);
-		free(new->data);
-		free(new);
-		return NULL;
-	}
-
 	//ulozim identifikator
 	new->data->name = malloc(sizeof(string));
 	if (new->data->name == NULL)
@@ -215,7 +206,6 @@ void deleteNode(t_Node *n)
 {
 	stringFree(n->data->name);
 	tableDestroy(n->data->local_symTable);
-	arrParamFree(n->data);
 	free(n->data->name);
 	free(n->data);
 	free(n);
@@ -253,10 +243,10 @@ void tablePrint(t_symTable *table, int local)
 		{
 			fprintf(stderr, "FUNKCE: %s\n", table->root->data->name->val);
 			fprintf(stderr, "- pocet parametru: %d\n", table->root->data->params_cnt);
-			for (int i = 0; i < table->root->data->params_cnt; i++)
-			{
-				fprintf(stderr, "p%d: %s\n", i, table->root->data->arr_params->string[i].val);
-			}
+			// for (int i = 0; i < table->root->data->params_cnt; i++)
+			// {
+			// 	fprintf(stderr, "p%d: %s\n", i, table->root->data->arr_params->string[i].val);
+			// }
 			//volej lokalni tabulku symbolu
 			fprintf(stderr, "OBSAH LOKALNI TABULKY SYMBOLU\n");
 			tablePrint(table->root->data->local_symTable, 1);

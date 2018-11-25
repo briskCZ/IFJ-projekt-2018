@@ -94,6 +94,7 @@ int sc_abi; //index v pomocnem bufferu
 int sc_line_cnt; //radek v souboru
 int sc_using_mem_token; //zda pouzivame vraceny token
 int sc_was_eol; //pokud byl eol
+t_Token sc_token;
 
 /* Vyprintuje token */
 void printToken(t_Token t, int error);

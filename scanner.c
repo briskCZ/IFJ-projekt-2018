@@ -19,9 +19,6 @@ t_Token getNextToken(int *error){
         sc_using_mem_token = 0;
         return sc_mem_token;
     }
-    t_Token sc_token;
-    stringInit(&sc_token.attr);
-
     *error = SUCCESS;
     stringClear(&sc_buffer);
     stringClear(&sc_token.attr);
@@ -267,10 +264,10 @@ t_Token getNextToken(int *error){
                     stringToIns(&sc_buffer);
                     sc_token.type = T_STRING; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
-                }else if (symbol != '\\'){ //znaky vetsi nez ascii 31
+                }else if (symbol != 92){ //znaky vetsi nez ascii 31
                     strAdc(&sc_buffer, symbol);
                     state = S_STRING;
-                }else if (symbol == '\\'){
+                }else if (symbol == 92){
                     //specialni znak
                     strAdc(&sc_buffer, symbol);
                     state = S_SPECIAL_SYMBOL;
@@ -543,6 +540,7 @@ int scannerInit(){
     int ret_val = stringInit(&sc_buffer);
     ret_val += stringInit(&sc_aux_buffer);
     ret_val += stringInit(&sc_mem_token.attr);
+    ret_val += stringInit(&sc_token.attr);
     // ret_val += stringInit(&sc_token.attr);
     return (ret_val == 0) ? SUCCESS : ERROR_INTERNAL;
 }
@@ -552,6 +550,7 @@ void scannerClean(){
     stringFree(&sc_buffer);
     stringFree(&sc_aux_buffer);
     stringFree(&sc_mem_token.attr);
+    stringFree(&sc_token.attr);
 }
 
 int isCmntEnd(char *sym){

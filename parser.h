@@ -15,14 +15,20 @@
 #include "scanner.h"
 #include "symtable.h"
 #include "ins_list.h"
+#include "token_array.h"
 
-struct table *pa_funcLocalTable;
+struct table *pa_funcLocalTable; //NULL pokud je global scope, jinak v definici funkce
+
+
 /*
 t_symTable table; //globalni tabulka symbolu
 t_Node *node; //pomocny ukazatel na data do tabulky symbolu
 */
 
 int isGlobal();
+t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope);
+void f_callAssIns(int isNew, t_Node *left, t_Node *right);
+void assIns(int isNew, t_Node *left);
 void paramHandler(t_Token token, int param_cnt);
 void code(t_Token token);
 void sec1();
