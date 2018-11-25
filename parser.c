@@ -242,7 +242,7 @@ void assign(t_Token left){
 
 void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
-    int param_cnt = 1;
+    int param_cnt = 0;
     P("--fcall");
     /* pripadne vlozeni do tabulky symbolu */
     //fprintf(stderr, "funkce: %s\n", ta.attr.val);
