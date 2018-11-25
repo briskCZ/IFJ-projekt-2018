@@ -264,6 +264,10 @@ t_Token getNextToken(int *error){
                     stringToIns(&sc_buffer);
                     sc_token.type = T_STRING; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
+                }else if (symbol == '\n'){
+                    fprintf(stderr, "ERROR_LEX: String must be on one line, line: %d\n", sc_line_cnt);
+                    *error = ERROR_LEX;
+                    state = S_START;
                 }else if (symbol != 92){ //znaky vetsi nez ascii 31
                     strAdc(&sc_buffer, symbol);
                     state = S_STRING;
@@ -293,6 +297,7 @@ t_Token getNextToken(int *error){
                     /*fprintf(stderr, "ERROR_LEX: Invalid escape sequence symbol\n");
                     *error = ERROR_LEX; ==podle fora ok*/
                     state = S_STRING;
+                    ungetc(symbol, stdin);
                 }
                 break;
 
@@ -451,16 +456,25 @@ t_Token getNextToken(int *error){
 }
 void stringToIns(string *s){
     string in_s;
+    for (int i = 0; i < s->length; i++){
+        fprintf(stderr, "CHAR: %c INT: %d\n", s->val[i], s->val[i]);
+    }
     stringInit(&in_s);
     stringCopy(&in_s, s);
     stringClear(s);
     int esc_len = 0;
     int length = stringGetLength(&in_s);
+    int was_esc = 0;
     for (int i = 0; i < length; i++){
         if (in_s.val[i] == 92){ // zpetne lomeno
             /* specialni znak */
+            fprintf(stderr, "taddyyy\n");
             stringAddChar(s, 92);
-            if (i + 1 < length && in_s.val[i+1] == 'x'){
+            char nextChar;
+            if (i + 1 < length){
+                nextChar = in_s.val[i+1];
+            }
+            if (nextChar == 'x'){
                 string tmp;
                 stringInit(&tmp);
                 if (i + 2 < length && isValidHex(in_s.val[i+2])){
@@ -475,13 +489,35 @@ void stringToIns(string *s){
                 //prekopirovani tmp na korektni pozici v output stringu
                 for (unsigned int j = 0; j < strlen(tmp.val); j++){
                     stringAddChar(s, tmp.val[j]);
+                    fprintf(stderr, "for: %d char %c\n", j, tmp.val[j]);
                 }
                 stringFree(&tmp);
                 i += esc_len + 1; //zvys i o prectene znaky
+            }else if(nextChar == 'n' ){
+                stringAddChar(s, '0');
+                stringAddChar(s, '1');
+                stringAddChar(s, '0');
+                was_esc = 1;
+            }else if(nextChar == 't' ){
+                stringAddChar(s, '0');
+                stringAddChar(s, '1');
+                stringAddChar(s, '0');
+                was_esc = 1;
+            }else if(nextChar == 's'){
+                stringAddChar(s, '0');
+                stringAddChar(s, '3');
+                stringAddChar(s, '2');
+                was_esc = 1;
+            }else if(nextChar == 92){
+                stringAddChar(s, '0');
+                stringAddChar(s, '9');
+                stringAddChar(s, '2');
+                was_esc = 0;
             }else{
                 stringAddChar(s, '0');
                 stringAddChar(s, '9');
                 stringAddChar(s, '2');
+                was_esc = 0;
             }
         //prevod na nutne escape sekvence
         }else if ((in_s.val[i] >= 0 && in_s.val[i] <= 32) || in_s.val[i] == 35){
@@ -493,8 +529,12 @@ void stringToIns(string *s){
             stringAddChar(s, tmp[1]);
             stringAddChar(s, tmp[2]);
         }else{
-                //prevod vstupnich escape sekvenci
+            //prevod vstupnich escape sekvenci
             stringAddChar(s, in_s.val[i]);
+            if (was_esc){
+                stringRemoveChar(s);
+                was_esc = 0;
+            }
         }
     }
     stringFree(&in_s);

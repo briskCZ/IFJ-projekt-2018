@@ -114,7 +114,6 @@ t_Node *tableInsertToken(t_symTable *table, t_Token token)
 					temp = temp->left;
 				}
 			}
-			stringPrint(temp->data->name);
 		}
 	}
 	else

@@ -111,6 +111,7 @@
 #define PI_IF_END 91
 #define PI_WHILE_START 92
 #define PI_WHILE_END 93
+#define PI_BUILTFUNC 94
 
 typedef struct{
 	int ins_type;

@@ -9,7 +9,7 @@
 */
 #include "parser.h"
 
-#define CHECK_ERROR(err) if (err == ERROR_INTERNAL) {fprintf(stderr, "INTERNAL ERROR\n"); cleanAll();exit(ERROR_INTERNAL);}\
+#define CHECK_ERROR(err) if (err == ERROR_INTERNAL) {fprintf(stderr, "INTERNAL ERROR\n"); cleanAll(); exit(ERROR_INTERNAL);}\
                          if (err == ERROR_LEX) {fprintf(stderr, "LEXICAL ERROR: on line: %d\n", sc_line_cnt); cleanAll(); exit(ERROR_LEX);}
 
 #define PRINT_SYNTAX_ERROR(symbol) {fprintf(stderr, "ERROR_SYNTAX: %s expected on line %d\n", symbol, sc_line_cnt);\
@@ -47,7 +47,7 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
     if (tmp != NULL && tmp->data->defined){
         *isNew = 0;
         if (tmp->data->is_var == 0){
-            fprintf(stderr, "ERROR_SEMANTIC: Cannot assign to function %s on line: %d\n", node->data->name->val, sc_line_cnt);
+            fprintf(stderr, "ERROR_SEMANTIC: Cannot assign to function %s on line: %d\n", left.attr.val, sc_line_cnt);
             cleanAll();
             exit(ERROR_SEMANTIC);
         }
@@ -316,7 +316,7 @@ void paramHandler(t_Token token, int param_cnt){
                     addInst(PI_FCALL, (void*)node, NULL, NULL, 0);
                     setActive(list->last);
                     addInst(INS_CREATEFRAME, (void*)node, NULL, NULL, 1);
-                    addInst(PI_FCALL_PARAMID, (void*)param, (void*)param_cnt, (void*)param->data->data_type, 1);
+                    addInst(PI_FCALL_PARAMID, (void*)param, (void*)1, (void*)param->data->data_type, 1);
                 }else{
                     addInst(PI_FCALL_PARAMID, (void*)param, (void*)param_cnt, (void*)param->data->data_type, 1);
                 }
@@ -331,7 +331,7 @@ void paramHandler(t_Token token, int param_cnt){
                 addInst(PI_FCALL, (void*)node, NULL, NULL, 0);
                 setActive(list->last);
                 addInst(INS_CREATEFRAME, (void*)node, NULL, NULL, 1);
-                addInst(PI_FCALL_PARAMT, (void*)token.attr.val, (void*)param_cnt, (void*)token.type, 1);
+                addInst(PI_FCALL_PARAMT, (void*)token.attr.val, (void*)1, (void*)token.type, 1);
             }else{
                 addInst(PI_FCALL_PARAMT, (void*)token.attr.val, (void*)param_cnt, (void*)token.type, 1);
             }
@@ -715,8 +715,9 @@ int main(){
     tarrGetFuncInfo(&token_array);
     program();
     P("--------------SYMTABLE-----------");
-    tablePrint(&table, 0);
-    printList();
+    //tablePrint(&table, 0);
+    //printList();
+    generate();
     cleanAll();
 
     return SUCCESS;
