@@ -52,9 +52,9 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
         }
     }else{
         tmp = tableInsertToken(scope, left);
+        tableChangeItemByNode(tmp, 1, type, T_NIL, isGlobal());
         *isNew = 1;
     }
-    tableChangeItemByNode(tmp, 1, type, 1, isGlobal());
     fprintf(stderr, ">ia> %s:%d\n", tmp->data->name->val, *isNew);
     return tmp;
 }
@@ -233,7 +233,7 @@ void assign(t_Token left){
         t_Node *leftVar = isAssignable(left, ta.type, &isNew, getScopeTable());
         t_Token t = exprParse(ta, ta, getScopeTable(), 0, &ret_type);
         if (t.type != T_EOL) PRINT_SYNTAX_ERROR("EOL after term assign");
-
+        fprintf(stderr, ">a>ret_Type: %d\n", ret_type);
         tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
         assIns(isNew, leftVar);
     }else{

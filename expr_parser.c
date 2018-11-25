@@ -299,12 +299,14 @@ int resultType(int t1, int t2)
 //prida instrukci do listu, ktera definuje novou promennou
 void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 {
+    printToken(b_token, 99999999999);
 	t_Node *aux;
 	int b = b_token.type;
 	int found = 0; //indikator jestli se idendifikator tokenu nasel v lokalni tabulce symbolu
 
 	if (b == T_ID)
 	{
+        fprintf(stderr, "-tttutututut\n");
 		 //hledej v lokalni tabulce
 		if (local_table != NULL)
 		{
@@ -349,7 +351,6 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 			exit(ERROR_SEM_COMPATIBILITY);
 		}
 
-		//fprintf(stderr, "typeeeeeeE: %s | %d\n", aux->data->name->val, aux->data->data_type);
 		i_push(s, b, aux->data->data_type);
 		addInst(PI_INIT, NULL, (void*) aux, (void*)T_ID, 0); //TODO
 	}
@@ -392,7 +393,7 @@ void debug_print(struct table *local_table, t_Token t, t_Token tb)
 	else
 	{
         fprintf(stderr, "--lokalni scope\n");
-        tablePrint(local_table, 1);
+        //tablePrint(local_table, 1);
     }
 	fprintf(stderr, "**** EXPR ****\n");
 	printToken(t, 0);

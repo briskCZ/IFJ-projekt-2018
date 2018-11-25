@@ -457,7 +457,7 @@ t_Token getNextToken(int *error){
 void stringToIns(string *s){
     string in_s;
     for (int i = 0; i < s->length; i++){
-        fprintf(stderr, "CHAR: %c INT: %d\n", s->val[i], s->val[i]);
+        //fprintf(stderr, "CHAR: %c INT: %d\n", s->val[i], s->val[i]);
     }
     stringInit(&in_s);
     stringCopy(&in_s, s);
