@@ -52,7 +52,9 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
         }
     }else{
         tmp = tableInsertToken(scope, left);
-        tableChangeItemByNode(tmp, 1, type, T_NIL, isGlobal());
+        if (tmp->data->data_type != T_PARAM){
+            tableChangeItemByNode(tmp, 1, type, T_NIL, isGlobal());
+        }
         *isNew = 1;
     }
     fprintf(stderr, ">ia> %s:%d\n", tmp->data->name->val, *isNew);
@@ -512,7 +514,8 @@ void code(t_Token token){
             P("--IF");
             token = tarrGetNextToken(&token_array);
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type); //TODO
-            addInst(PI_IF_START, (void*)pa_if_count++, NULL, NULL, 0);
+            addInst(PI_IF_START, (void*)pa_if_count, NULL, NULL, 0);
+            pa_if_count++;
             if (token.type == T_THEN){
                 P("--then");
                 token = tarrGetNextToken(&token_array);
@@ -520,7 +523,8 @@ void code(t_Token token){
                     sec2();
                     addInst(PI_IF_ELSE, NULL, NULL, NULL, 0);
                     sec1();
-                    addInst(PI_IF_END, (void*)pa_if_count--, NULL, NULL, 0);
+                    pa_if_count--;
+                    addInst(PI_IF_END, (void*)pa_if_count, NULL, NULL, 0);
                 }else{
                     PRINT_SYNTAX_ERROR("EOL after THEN");
                 }
@@ -536,7 +540,8 @@ void code(t_Token token){
             if (pa_while_count == 0){
                 setActive(list->last);
             }
-            addInst(PI_WHILE_START, (void*)pa_while_count++, NULL, NULL, 0);
+            addInst(PI_WHILE_START, (void*)pa_while_count, NULL, NULL, 0);
+            pa_while_count++;
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
             addInst(PI_WHILE_EX, NULL, NULL, NULL, 0);
             if (token.type == T_DO){
@@ -545,7 +550,9 @@ void code(t_Token token){
                 if (token.type == T_EOL){
                     sec1();
                     pa_while = 0;
-                    addInst(PI_WHILE_END, (void*)pa_while_count--, NULL, NULL, 0);
+                    pa_while_count--;
+                    addInst(PI_WHILE_END, (void*)pa_while_count, NULL, NULL, 0);
+
                 }else{
                     PRINT_SYNTAX_ERROR("EOL after DO");
                 }
@@ -720,15 +727,15 @@ int main(){
     listInit();
     tarrInit(&token_array);
     tarrFill(&token_array);
-    //tarrPrint(&token_array);
+    tarrPrint(&token_array);
     tarrGetFuncInfo(&token_array);
     addBuiltins();
     //tablePrint(&table, 0);
     program();
     P("--------------SYMTABLE-----------");
     //dtablePrint(&table, 0);
-    //printList();
-    generate();
+    printList();
+    //generate();
     cleanAll();
 
     return SUCCESS;

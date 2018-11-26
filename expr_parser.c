@@ -18,8 +18,8 @@ int checkRule(t_IStack *s, int *type){
     int elem1, elem2, elem3;
 	int type1, type2, type3;
 
-    elem1 = i_topPop(s, &type1);															//TODO
-	if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING || elem1 == T_NIL)
+    elem1 = i_topPop(s, &type1);																				//TODO
+	if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING || elem1 == T_NIL || elem1 == T_PARAM)
 	{
 		*type = type1;
 		return R_ID;
@@ -117,17 +117,32 @@ int checkRule(t_IStack *s, int *type){
 				fprintf(stderr, "EXPR ERROR: - * / s T_NIL nebo T_STRING on line: %d\n", sc_line_cnt);
 				exit(ERROR_SEM_COMPATIBILITY);
 			}
-            else if (*type == T_PARAM)
+            /*else if (*type == T_PARAM)
             {
-                    fprintf(stderr,"EXPR ERROR: - * / s T_PARAM on line: %d\n", sc_line_cnt);
-            }
+            	fprintf(stderr,"EXPR ERROR: - * / s T_PARAM on line: %d\n", sc_line_cnt);
+            }*/
 
+		}
+		else if (elem2 == T_LESS || elem2 == T_MORE || elem2 == T_LESS_EQ || elem2 == T_MORE_EQ)
+		{
+			if (*type == T_NIL)
+			{
+				fprintf(stderr, "EXPR ERROR: > < >= <= s T_NIL: on line: %d\n", sc_line_cnt);
+				exit(ERROR_SEM_COMPATIBILITY);
+			}
+			if (*type == NON_TYPE)
+			{
+				fprintf(stderr, "EXPR ERROR: > < >= <= s NON_TYPE on line: %d\n", sc_line_cnt);
+				exit(ERROR_SEM_COMPATIBILITY);
+			}
+			*type = NON_TYPE; //s vysledkem nelze dal pracovat
 		}
 		else
 		{
-			*type = NON_TYPE;
+			*type = NON_TYPE; //s vysledkem nelze dal pracovat
 		}
-			return res;
+
+		return res;
     }
     else
     {
@@ -290,6 +305,8 @@ int resultType(int t1, int t2)
 		return T_DOUBLE;
 	else if (t1 == T_NIL || t2 == T_NIL)
 		return T_NIL;
+	else if ((t1 == T_STRING && t2 == T_PARAM) || (t2 == T_STRING && t1 == T_PARAM)) //TODO new
+		return T_STRING;
 	else if (t1 == T_PARAM || t2 == T_PARAM)
 		return T_PARAM;
 	else
@@ -299,14 +316,12 @@ int resultType(int t1, int t2)
 //prida instrukci do listu, ktera definuje novou promennou
 void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 {
-    printToken(b_token, 99999999999);
 	t_Node *aux;
 	int b = b_token.type;
 	int found = 0; //indikator jestli se idendifikator tokenu nasel v lokalni tabulce symbolu
 
 	if (b == T_ID)
 	{
-        fprintf(stderr, "-tttutututut\n");
 		 //hledej v lokalni tabulce
 		if (local_table != NULL)
 		{
@@ -351,6 +366,7 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 			exit(ERROR_SEM_COMPATIBILITY);
 		}
 
+		//fprintf(stderr, "typeeeeeeE: %s | %d\n", aux->data->name->val, aux->data->data_type);
 		i_push(s, b, aux->data->data_type);
 		addInst(PI_INIT, NULL, (void*) aux, (void*)T_ID, 0); //TODO
 	}
@@ -393,7 +409,7 @@ void debug_print(struct table *local_table, t_Token t, t_Token tb)
 	else
 	{
         fprintf(stderr, "--lokalni scope\n");
-        //tablePrint(local_table, 1);
+        tablePrint(local_table, 1);
     }
 	fprintf(stderr, "**** EXPR ****\n");
 	printToken(t, 0);

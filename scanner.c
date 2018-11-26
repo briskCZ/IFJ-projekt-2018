@@ -468,7 +468,7 @@ void stringToIns(string *s){
     for (int i = 0; i < length; i++){
         if (in_s.val[i] == 92){ // zpetne lomeno
             /* specialni znak */
-            fprintf(stderr, "na zacatku, pridavam 92, i %d , length %d\n", i, length);
+            //fprintf(stderr, "na zacatku, pridavam 92, i %d , length %d\n", i, length);
             stringAddChar(s, 92);
             char nextChar;
             if (i + 1 < length){
@@ -489,7 +489,7 @@ void stringToIns(string *s){
                 //prekopirovani tmp na korektni pozici v output stringu
                 for (unsigned int j = 0; j < strlen(tmp.val); j++){
                     stringAddChar(s, tmp.val[j]);
-                    fprintf(stderr, "for: %d char %c\n", j, tmp.val[j]);
+                    //fprintf(stderr, "for: %d char %c\n", j, tmp.val[j]);
                 }
                 stringFree(&tmp);
                 i += esc_len + 1; //zvys i o prectene znaky
@@ -535,7 +535,7 @@ void stringToIns(string *s){
             stringAddChar(s, tmp[2]);
         }else{
             //prevod vstupnich escape sekvenci
-            fprintf(stderr, "na konci, else, pridavam 92 a %c \n", in_s.val[i]);
+            //fprintf(stderr, "na konci, else, pridavam 92 a %c \n", in_s.val[i]);
             stringAddChar(s, in_s.val[i]);
             was_esc = 0;
         }
