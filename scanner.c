@@ -56,7 +56,7 @@ t_Token getNextToken(int *error){
                 if (isspace(symbol)){
                     if (symbol == '\n'){
                         sc_line_cnt++;
-                        fprintf(stderr,"Line: %d\n", sc_line_cnt);
+                        //fprintf(stderr,"Line: %d\n", sc_line_cnt);
                         sc_was_eol = 1;
                         sc_token.type = T_EOL;
                         return sc_token;
@@ -511,6 +511,11 @@ void stringToIns(string *s){
                 stringAddChar(s, '0');
                 stringAddChar(s, '9');
                 stringAddChar(s, '2');
+                i++;
+            }else if(nextChar == '"'){
+                stringAddChar(s, '0');
+                stringAddChar(s, '3');
+                stringAddChar(s, '4');
                 i++;
             }else{
                 stringAddChar(s, '0');

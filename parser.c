@@ -246,6 +246,9 @@ void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
     int param_cnt = 0;
     P("--fcall");
+    if (!isGlobal()){
+        fprintf(stderr, "Rekurzivni volani %s \n", ta.attr.val);
+    }
     /* pripadne vlozeni do tabulky symbolu */
     //fprintf(stderr, "funkce: %s\n", ta.attr.val);
     t_Node *temp = tableSearchItem(&table, ta.attr);
@@ -638,6 +641,7 @@ void code(t_Token token){
 void program(){
     P("--program");
     t_Token token = tarrGetNextToken(&token_array);
+    t_Node *funcNode = NULL;
     switch (token.type){
         case T_EOF:
             return;
@@ -656,6 +660,7 @@ void program(){
                     exit(ERROR_SEMANTIC);
                 }else{
     				node = tableInsertToken(&table, token);
+                    funcNode = node;
     				if (node != NULL){
                         //fprintf(stderr, "--fce: %s, %d\n", node->data->name->val, node->data->is_var);
                         pa_funcLocalTable = node->data->local_symTable;
@@ -664,12 +669,18 @@ void program(){
                     }
                 }
                 addInst(PI_BEGINFUNC, (void*)node, NULL, NULL, 0);
+                pa_node_cnt++;
+                fprintf(stderr, "NODE: %p def_cnt %d\n", node, pa_node_cnt);
+                tablePrintItem(node);
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_LEFT_PAR){
                     //param11 pohlida eol za )
                     param1(&def_params_cnt);
                     tableChangeItemByNode(node, 0, 0, 1, 1);
                     sec1();
+                    fprintf(stderr, "NODE2: %p\n", node);
+                    tablePrintItem(node);
+                    node = funcNode;
                     addInst(PI_ENDFUNC, (void*)node, NULL, NULL, 0);
                     pa_funcLocalTable = NULL;
                     program();
@@ -727,14 +738,14 @@ int main(){
     listInit();
     tarrInit(&token_array);
     tarrFill(&token_array);
-    tarrPrint(&token_array);
+    //tarrPrint(&token_array);
     tarrGetFuncInfo(&token_array);
     addBuiltins();
     //tablePrint(&table, 0);
     program();
     P("--------------SYMTABLE-----------");
     //dtablePrint(&table, 0);
-    printList();
+    //printList();
     generate();
     cleanAll();
 

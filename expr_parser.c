@@ -25,7 +25,7 @@ int checkRule(t_IStack *s, int *type){
 		return R_ID;
 	}
 
-	i_display(s);
+	//i_display(s);
     elem2 = i_topPop(s, &type2);
     elem3 = i_topPop(s, &type3);
     if (elem1 == T_RIGHT_PAR && elem2 == PT_E_RULE && elem3 == T_LEFT_PAR)
@@ -39,8 +39,8 @@ int checkRule(t_IStack *s, int *type){
 		*type = resultType(type1, type3);
 		int res;
 
-		fprintf(stderr, "-- EXPR: t1: %d | t2: %d\n", type1, type3);
-		fprintf(stderr, "-- EXPR: res: %d\n", *type);
+		//fprintf(stderr, "-- EXPR: t1: %d | t2: %d\n", type1, type3);
+		//fprintf(stderr, "-- EXPR: res: %d\n", *type);
         switch (elem2)
         {
             case T_PLUS:
@@ -284,7 +284,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
                     if (i_topPop(&s, &temp) == PT_L)
                     {
 			             i_push(&s, PT_E_RULE, type);
-                        fprintf(stderr, "expr_parser: RULE: %d | %d\n", r, type);
+                        //fprintf(stderr, "expr_parser: RULE: %d | %d\n", r, type);
                     }
                 }
                 else
@@ -303,7 +303,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
         }
     } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));
 
-	fprintf(stderr, "datovy typ vyrazu: %d\n", *return_type);
+	//fprintf(stderr, "datovy typ vyrazu: %d\n", *return_type);
     i_stackDestroy(&s);
 	return b_token;
 }
@@ -434,14 +434,14 @@ void debug_print(struct table *local_table, t_Token t, t_Token tb)
 {
     if (local_table == NULL)
 	{
-        fprintf(stderr, "--globalni scope\n");
+        //fprintf(stderr, "--globalni scope\n");
     }
 	else
 	{
-        fprintf(stderr, "--lokalni scope\n");
+        //fprintf(stderr, "--lokalni scope\n");
         tablePrint(local_table, 1);
     }
-	fprintf(stderr, "**** EXPR ****\n");
+	//fprintf(stderr, "**** EXPR ****\n");
 	printToken(t, 0);
 	printToken(tb, 0);
 }
