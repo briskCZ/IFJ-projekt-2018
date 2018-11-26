@@ -468,7 +468,7 @@ void stringToIns(string *s){
     for (int i = 0; i < length; i++){
         if (in_s.val[i] == 92){ // zpetne lomeno
             /* specialni znak */
-            fprintf(stderr, "taddyyy\n");
+            fprintf(stderr, "na zacatku, pridavam 92, i %d , length %d\n", i, length);
             stringAddChar(s, 92);
             char nextChar;
             if (i + 1 < length){
@@ -497,26 +497,31 @@ void stringToIns(string *s){
                 stringAddChar(s, '0');
                 stringAddChar(s, '1');
                 stringAddChar(s, '0');
+                i++;
                 was_esc = 1;
             }else if(nextChar == 't' ){
                 stringAddChar(s, '0');
                 stringAddChar(s, '1');
                 stringAddChar(s, '0');
+                i++;
                 was_esc = 1;
             }else if(nextChar == 's'){
                 stringAddChar(s, '0');
                 stringAddChar(s, '3');
                 stringAddChar(s, '2');
+                i++;
                 was_esc = 1;
             }else if(nextChar == 92){
                 stringAddChar(s, '0');
                 stringAddChar(s, '9');
                 stringAddChar(s, '2');
+                i++;
                 was_esc = 0;
             }else{
                 stringAddChar(s, '0');
                 stringAddChar(s, '9');
                 stringAddChar(s, '2');
+                i++;
                 was_esc = 0;
             }
         //prevod na nutne escape sekvence
@@ -530,11 +535,9 @@ void stringToIns(string *s){
             stringAddChar(s, tmp[2]);
         }else{
             //prevod vstupnich escape sekvenci
+            fprintf(stderr, "na konci, else, pridavam 92 a %c \n", in_s.val[i]);
             stringAddChar(s, in_s.val[i]);
-            if (was_esc){
-                stringRemoveChar(s);
-                was_esc = 0;
-            }
+            was_esc = 0;
         }
     }
     stringFree(&in_s);

@@ -512,7 +512,7 @@ void code(t_Token token){
             P("--IF");
             token = tarrGetNextToken(&token_array);
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type); //TODO
-            addInst(PI_IF_START, NULL, NULL, NULL, 0);
+            addInst(PI_IF_START, (void*)pa_if_count++, NULL, NULL, 0);
             if (token.type == T_THEN){
                 P("--then");
                 token = tarrGetNextToken(&token_array);
@@ -520,7 +520,7 @@ void code(t_Token token){
                     sec2();
                     addInst(PI_IF_ELSE, NULL, NULL, NULL, 0);
                     sec1();
-                    addInst(PI_IF_END, NULL, NULL, NULL, 0);
+                    addInst(PI_IF_END, (void*)pa_if_count--, NULL, NULL, 0);
                 }else{
                     PRINT_SYNTAX_ERROR("EOL after THEN");
                 }
@@ -533,7 +533,10 @@ void code(t_Token token){
             P("--WHILE");
             /* WHILE */
             token = tarrGetNextToken(&token_array);
-            addInst(PI_WHILE_START, NULL, NULL, NULL, 0);
+            if (pa_while_count == 0){
+                setActive(list->last);
+            }
+            addInst(PI_WHILE_START, (void*)pa_while_count++, NULL, NULL, 0);
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
             addInst(PI_WHILE_EX, NULL, NULL, NULL, 0);
             if (token.type == T_DO){
@@ -542,7 +545,7 @@ void code(t_Token token){
                 if (token.type == T_EOL){
                     sec1();
                     pa_while = 0;
-                    addInst(PI_WHILE_END, NULL, NULL, NULL, 0);
+                    addInst(PI_WHILE_END, (void*)pa_while_count--, NULL, NULL, 0);
                 }else{
                     PRINT_SYNTAX_ERROR("EOL after DO");
                 }
@@ -710,7 +713,8 @@ void cleanAll(){
     scannerClean();
 }
 int main(){
-
+    pa_if_count = 0;
+    pa_while_count = 0;
     scannerInit();
     table = tableInit();
     listInit();
