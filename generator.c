@@ -18,9 +18,6 @@ char* ramec(){
 	return a;
 }
 
-//PRIDAT K LABELUM CISLO KAZDE FUNKCE
-
-
 void buildChr()
 {
 	//i - pozice v ascii
@@ -196,7 +193,7 @@ void genBuiltFunc(){
 			break;
 		case 6:
 			genBeginFunc();
-			builtinSubstr(); //substr
+			builtinSubstr(); //substr - funguje
 			genEndFunc();
 			break;
 		case 7:
@@ -239,7 +236,7 @@ void genFcallParT(){
 		break;
 		case T_DOUBLE:
 			f = strtod((void*)list->first->data->adr1, NULL);
-			printf("MOVE TF@$P%d floatg@%a\n",(void*)list->first->data->adr2,f);
+			printf("MOVE TF@$P%d float@%a\n",(void*)list->first->data->adr2,f);
 		break;
 		case T_STRING:
 			printf("MOVE TF@$P%d string@%s\n",(void*)list->first->data->adr2,(char*)list->first->data->adr1);
@@ -701,7 +698,7 @@ void genAddStr(){
 	printf("POPS %s@$STR%d\n",ramec(),only_in_gen++);
 	//vysledek scitani
 	printf("DEFVAR %s@$STR%d\n",ramec(),only_in_gen);
-	printf("CONCAT %s@$STR%d %s@$STR%d %s@$STR%d\n",ramec(),only_in_gen,ramec(),only_in_gen-1,ramec(),uniqueNum-2);
+	printf("CONCAT %s@$STR%d %s@$STR%d %s@$STR%d\n",ramec(),only_in_gen,ramec(),only_in_gen-1,ramec(),only_in_gen-2);
 	
 	printf("PUSHS %s@$STR%d\n",ramec(),only_in_gen);
 	only_in_gen++;
@@ -842,6 +839,250 @@ void genAssignDeclFunc(){//TODO otestovat
 	printf("\n");
 }
 
+// > >= < <=
+void convertTypeLtGtLteGte()
+{
+	int aux = temp_label;
+
+	printf("#jsme tu\n");
+	printf("DEFVAR %s@$%d\n", ramec(), temp_num++);
+	printf("DEFVAR %s@$%d\n", ramec(), temp_num);
+
+	//typ un1 je ulozen v temp_num-1
+	printf("DEFVAR %s@$t%d\n", ramec(), uniqueNum);
+	printf("POPS %s@$t%d\n", ramec(), uniqueNum++);
+	//typ un2 je ulozen v temp_num
+	printf("DEFVAR %s@$t%d\n", ramec(), uniqueNum);
+	printf("POPS %s@$t%d\n", ramec(), uniqueNum);
+
+	//printf("DPRINT %s@$t%d\n", ramec(), 0); DEBUG
+	//printf("DPRINT %s@$t%d\n", ramec(), 1); DEBUG
+
+	printf("TYPE %s@$%d %s@$t%d\n", ramec(), temp_num-1, ramec(), uniqueNum-1);
+	printf("TYPE %s@$%d %s@$t%d\n", ramec(), temp_num, ramec(), uniqueNum);
+
+	/* 				kontrola typu */
+	printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label++, ramec(), temp_num-1);
+		printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label, ramec(), temp_num);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+				//int tmp = uniqueNum;
+				//genAddStr(); //upravuje hodnotu uniqueNum
+				//uniqueNum = tmp;
+			printf("JUMP $LEND%d\n", aux); // oba string
+		printf("LABEL $L%d\n", temp_label--);
+			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni
+
+	printf("LABEL $L%d\n", temp_label); //prvni neni string
+	temp_label += 2;
+		printf("JUMPIFNEQ $L%d string@int %s@$%d\n", temp_label++, ramec(), temp_num-1);
+			printf("JUMPIFNEQ $L%d string@int %s@$%d\n", temp_label, ramec(), temp_num);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+				//genAddS();
+				printf("JUMP $LEND%d\n", aux); //oba int
+			printf("LABEL $L%d\n", temp_label++); //prvni int | druhy neni int
+				printf("JUMPIFNEQ $L%d string@float %s@$%d\n", temp_label, ramec(), temp_num);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+					printf("INT2FLOATS\n");
+					//genAddS();
+					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
+				printf("LABEL $L%d\n", temp_label);
+					printf("EXIT int@2\n"); //ERROR prvni int | druhy string
+
+		temp_label -= 2;
+		printf("LABEL $L%d\n", temp_label); //prvni je float
+		temp_label += 3;
+			printf("JUMPIFNEQ $L%d string@float %s@$%d\n", temp_label++, ramec(), temp_num-1);
+				printf("JUMPIFNEQ $L%d string@float %s@$%d\n", temp_label, ramec(), temp_num);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+					//genAddS();
+					printf("JUMP $LEND%d\n", aux); //prvni float |  druhy float
+				printf("LABEL $L%d\n", temp_label++);
+					printf("JUMPIFNEQ $L%d string@int %s@$%d\n", temp_label, ramec(), temp_num);
+						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+						printf("INT2FLOATS\n");
+						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+						genAddS();
+						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
+					printf("LABEL $L%d\n", temp_label);
+					temp_label -= 2;
+						printf("EXIT int@3\n"); //ERROR prvni float | druhy string
+			printf("LABEL $L%d\n", temp_label);
+			temp_label += 3;
+				printf("EXIT int@4\n"); //ERROR oba nejsou int nebo float
+
+	temp_num++;
+	uniqueNum++;
+	printf("LABEL $LEND%d\n", aux);
+}
+
+// == !=
+void convertTypeEqNeq()
+{
+	int aux = temp_label;
+
+	printf("#jsme tu\n");
+	printf("DEFVAR %s@$%d\n", ramec(), temp_num++);
+	printf("DEFVAR %s@$%d\n", ramec(), temp_num);
+
+	//typ un1 je ulozen v temp_num-1
+	printf("DEFVAR %s@$t%d\n", ramec(), uniqueNum);
+	printf("POPS %s@$t%d\n", ramec(), uniqueNum++);
+	//typ un2 je ulozen v temp_num
+	printf("DEFVAR %s@$t%d\n", ramec(), uniqueNum);
+	printf("POPS %s@$t%d\n", ramec(), uniqueNum);
+
+	//printf("DPRINT %s@$t%d\n", ramec(), 0); DEBUG
+	//printf("DPRINT %s@$t%d\n", ramec(), 1); DEBUG
+
+	printf("TYPE %s@$%d %s@$t%d\n", ramec(), temp_num-1, ramec(), uniqueNum-1);
+	printf("TYPE %s@$%d %s@$t%d\n", ramec(), temp_num, ramec(), uniqueNum);
+
+	/* 				kontrola typu */
+	printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label++, ramec(), temp_num-1);
+		printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label, ramec(), temp_num);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+				//int tmp = uniqueNum;
+				//genAddStr(); //upravuje hodnotu uniqueNum
+				//uniqueNum = tmp;
+			printf("JUMP $LEND%d\n", aux); // oba string
+		printf("LABEL $L%d\n", temp_label--);
+			printf("PUSHS nil@nil"); //nespravne typy
+
+	printf("LABEL $L%d\n", temp_label); //prvni neni string
+	temp_label += 2;
+		printf("JUMPIFNEQ $L%d string@int %s@$%d\n", temp_label++, ramec(), temp_num-1);
+			printf("JUMPIFNEQ $L%d string@int %s@$%d\n", temp_label, ramec(), temp_num);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+				//genAddS();
+				printf("JUMP $LEND%d\n", aux); //oba int
+			printf("LABEL $L%d\n", temp_label++); //prvni int | druhy neni int
+				printf("JUMPIFNEQ $L%d string@float %s@$%d\n", temp_label, ramec(), temp_num);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+					printf("INT2FLOATS\n");
+					//genAddS();
+					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
+				printf("LABEL $L%d\n", temp_label);
+					printf("PUSHS nil@nil"); //nespravne typy
+
+		temp_label -= 2;
+		printf("LABEL $L%d\n", temp_label); //prvni je float
+		temp_label += 3;
+			printf("JUMPIFNEQ $L%d string@float %s@$%d\n", temp_label++, ramec(), temp_num-1);
+				printf("JUMPIFNEQ $L%d string@float %s@$%d\n", temp_label, ramec(), temp_num);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+					//genAddS();
+					printf("JUMP $LEND%d\n", aux); //prvni float |  druhy float
+				printf("LABEL $L%d\n", temp_label++);
+					printf("JUMPIFNEQ $L%d string@int %s@$%d\n", temp_label, ramec(), temp_num);
+						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+						printf("INT2FLOATS\n");
+						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+						genAddS();
+						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
+					printf("LABEL $L%d\n", temp_label);
+					temp_label -= 2;
+						printf("PUSHS nil@nil"); //nespravne typy
+			printf("LABEL $L%d\n", temp_label);
+			temp_label += 3;
+				printf("PUSHS nil@nil"); //nespravne typy
+
+	temp_num++;
+	uniqueNum++;
+	printf("LABEL $LEND%d\n", aux);
+}
+
+void genIfStart(){
+	
+	printf("DEFVAR %s@$podminka%d\n",ramec(),uniqueNum);
+	printf("POPS %s@$podminka%d\n",ramec(),uniqueNum);
+
+	printf("#if start\n");	
+
+	printf("JUMPIFNEQ $IFL%d %s@$podminka%d bool@true\n",temp_label,ramec(),uniqueNum++); //todo	
+	
+	printf("\n");	
+}
+void genIfElse(){
+	printf("#if else\n");	
+	printf("JUMP $IFEND%d\n",++temp_label);
+	printf("LABEL $IFL%d\n",temp_label-1);	
+	
+	printf("\n");	
+}
+void genIfEnd(){
+	printf("LABEL $IFEND%d\n",temp_label++);
+}
+
+void genWhileStart(){
+	printf("#while start\n");
+	printf("DEFVAR %s@$podminka%d\n",ramec(),temp_num);
+	printf("LABEL $WHILE%d\n",temp_label++);
+}
+void genWhileEx(){
+	printf("#while ex\n");
+	printf("POPS %s@$podminka%d\n",ramec(),temp_num);
+	printf("JUMPIFNEQ $WHILEEND%d %s@$podminka%d bool@true\n",temp_label,ramec(),temp_num++); //todo
+}
+void genWhileEnd(){
+	printf("#while end\n");
+	printf("JUMP $WHILE%d\n",temp_label-1);
+	printf("LABEL $WHILEEND%d\n",temp_label++);
+}
+
+void genGte(){
+	printf("#Gte\n");
+	
+	printf("DEFVAR %s@$GTE%d\n",ramec(),only_in_gen);
+	printf("POPS %s@$GTE%d\n",ramec(),only_in_gen++);
+	printf("DEFVAR %s@$GTE%d\n",ramec(),only_in_gen);
+	printf("POPS %s@$GTE%d\n",ramec(),only_in_gen++);
+	
+	printf("DEFVAR %s@$GTE%d\n",ramec(),only_in_gen++);
+	printf("GT %s@$GTE%d %s@$GTE%d %s@$GTE%d\n",ramec(),only_in_gen-1,ramec(),only_in_gen-2,ramec(),only_in_gen-3);	
+	printf("PUSHS %s@$GTE%d\n",ramec(),only_in_gen-1);
+	
+	printf("DEFVAR %s@$GTE%d\n",ramec(),only_in_gen++);
+	printf("EQ %s@$GTE%d %s@$GTE%d %s@$GTE%d\n",ramec(),only_in_gen-1,ramec(),only_in_gen-3,ramec(),only_in_gen-4);	
+	printf("PUSHS %s@$GTE%d\n",ramec(),only_in_gen-1);
+	
+	printf("ORS\n");
+}
+
+void genLte(){
+	printf("#Lte\n");
+
+	printf("DEFVAR %s@$LTE%d\n",ramec(),only_in_gen);
+	printf("POPS %s@$LTE%d\n",ramec(),only_in_gen++);
+	printf("DEFVAR %s@$LTE%d\n",ramec(),only_in_gen);
+	printf("POPS %s@$LTE%d\n",ramec(),only_in_gen++);
+	
+	printf("DEFVAR %s@$LTE%d\n",ramec(),only_in_gen++);
+	printf("LT %s@$LTE%d %s@$LTE%d %s@$LTE%d\n",ramec(),only_in_gen-1,ramec(),only_in_gen-2,ramec(),only_in_gen-3);	
+	printf("PUSHS %s@$LTE%d\n",ramec(),only_in_gen-1);
+	
+	printf("DEFVAR %s@$LTE%d\n",ramec(),only_in_gen++);
+	printf("EQ %s@$LTE%d %s@$LTE%d %s@$LTE%d\n",ramec(),only_in_gen-1,ramec(),only_in_gen-3,ramec(),only_in_gen-4);	
+	printf("PUSHS %s@$LTE%d\n",ramec(),only_in_gen-1);
+	
+	printf("ORS\n");	
+	
+	
+	
+	
+}
+
+
+
+
+
 //vypis na merlinovi
 // ./main < test2 1> out.ass ; ../rubyset/ic18int ./out.ass
 
@@ -891,7 +1132,7 @@ int generate()
 				genDefVar();
 				break;
 			case PI_ADD:
-				convertTypesAdd(); //asdasdasdasd
+				convertTypesAdd();
 				break;
 			case INS_ADD:
 				convertTypesAdd();
@@ -923,13 +1164,51 @@ int generate()
 			case PI_ASS_DECL_FUNC:
 				genAssignDeclFunc();
 				break;
+			case PI_IF_START:
+				genIfStart();
+				break;
+			case PI_IF_ELSE:
+				genIfElse();
+				break;
+			case PI_IF_END:
+				genIfEnd();
+				break;
+			case PI_WHILE_START:
+				genWhileStart();
+				break;
+			case PI_WHILE_EX:
+				genWhileEx();
+				break;
+			case PI_WHILE_END:
+				genWhileEnd();
+				break;
+			case INS_EQ:
+				printf("EQS\n");
+				break;
+			case INS_GT:
+				printf("GTS\n");
+				break;
+			case INS_LT:
+				printf("LTS\n");
+				break;
+			case PI_NEQ:
+				printf("EQS\n");
+				printf("NOTS\n");
+				break;
+			case PI_GTE:
+				genGte();
+				break;
+			case PI_LTE:
+				genLte();
+				break;			
+
+				
 			default:
 				break;
 		}
 		test = (void*)list->first->data->adr1; //vypis posledniho vysledku prirazeni
 		deleteFirst();
 	}
-	//printf("DPRINT GF@$%p\n",test);
 	printf("EXIT int@0\n");
 	return SUCCESS;
 }
