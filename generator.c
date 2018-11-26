@@ -951,7 +951,10 @@ void convertTypeEqNeq()
 				//uniqueNum = tmp;
 			printf("JUMP $LEND%d\n", aux); // oba string
 		printf("LABEL $L%d\n", temp_label--);
-			printf("PUSHS nil@nil"); //nespravne typy
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+				printf("PUSHS nil@nil\n"); //nespravne typy
+				printf("JUMP $LEND%d\n", aux);
 
 	printf("LABEL $L%d\n", temp_label); //prvni neni string
 	temp_label += 2;
@@ -969,7 +972,10 @@ void convertTypeEqNeq()
 					//genAddS();
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
-					printf("PUSHS nil@nil"); //nespravne typy
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+					printf("PUSHS nil@nil\n"); //nespravne typy
+					printf("JUMP $LEND%d\n", aux);
 
 		temp_label -= 2;
 		printf("LABEL $L%d\n", temp_label); //prvni je float
@@ -989,10 +995,16 @@ void convertTypeEqNeq()
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
 					temp_label -= 2;
-						printf("PUSHS nil@nil"); //nespravne typy
+						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+						printf("PUSHS nil@nil\n"); //nespravne typy
+						printf("JUMP $LEND%d\n", aux);
 			printf("LABEL $L%d\n", temp_label);
 			temp_label += 3;
-				printf("PUSHS nil@nil"); //nespravne typy
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
+				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+				printf("PUSHS nil@nil\n"); //nespravne typy
+				printf("JUMP $LEND%d\n", aux);
 
 	temp_num++;
 	uniqueNum++;
@@ -1079,7 +1091,50 @@ void genLte(){
 	
 }
 
+void genEq(){
+	printf("DEFVAR %s@$ISNIL%d\n",ramec(),temp_num);
+	printf("POPS %s@$ISNIL%d\n",ramec(),temp_num++);
+	
+	printf("JUMPIFEQ $LISNIL%d %s@$ISNIL%d nil@nil\n",temp_label,ramec(),temp_num-1);
+	
 
+	printf("EQS\n");
+	printf("JUMP $LENDISNIL%d\n",temp_label);
+	
+	printf("LABEL $LISNIL%d\n",temp_label++);
+	
+	printf("POPS %s@$ISNIL%d\n",ramec(),temp_num-1);
+	printf("POPS %s@$ISNIL%d\n",ramec(),temp_num-1);
+	
+	printf("PUSHS bool@false\n");
+	
+	printf("LABEL $LENDISNIL%d\n",temp_label-1);
+	temp_label++;
+	
+}
+
+void genNeq(){
+		printf("DEFVAR %s@$ISNIL%d\n",ramec(),temp_num);
+	printf("POPS %s@$ISNIL%d\n",ramec(),temp_num++);
+	
+	printf("JUMPIFEQ $LISNIL%d %s@$ISNIL%d nil@nil\n",temp_label,ramec(),temp_num-1);
+	
+
+	printf("EQS\n");
+	printf("NOTS\n");
+	
+	printf("JUMP $LENDISNIL%d\n",temp_label);
+	
+	printf("LABEL $LISNIL%d\n",temp_label++);
+	
+	printf("POPS %s@$ISNIL%d\n",ramec(),temp_num-1);
+	printf("POPS %s@$ISNIL%d\n",ramec(),temp_num-1);
+	
+	printf("PUSHS bool@false\n");
+	
+	printf("LABEL $LENDISNIL%d\n",temp_label-1);
+	temp_label++;
+}
 
 
 
@@ -1183,22 +1238,27 @@ int generate()
 				genWhileEnd();
 				break;
 			case INS_EQ:
-				printf("EQS\n");
+				convertTypeEqNeq(); //
+				genEq();
 				break;
 			case INS_GT:
+				convertTypeLtGtLteGte();
 				printf("GTS\n");
 				break;
 			case INS_LT:
+				convertTypeLtGtLteGte();
 				printf("LTS\n");
 				break;
 			case PI_NEQ:
-				printf("EQS\n");
-				printf("NOTS\n");
+				convertTypeEqNeq(); //
+				genNeq();
 				break;
 			case PI_GTE:
+				convertTypeLtGtLteGte();
 				genGte();
 				break;
 			case PI_LTE:
+				convertTypeLtGtLteGte();
 				genLte();
 				break;			
 
