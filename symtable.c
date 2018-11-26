@@ -196,7 +196,12 @@ t_Node* createNode(t_Token token)
 	}
 	stringInit(new->data->name);
 	stringInsert(new->data->name, token.attr.val);
-
+	new->data->is_var = -1;
+	new->data->data_type = -1;
+	new->data->defined = -1;
+	new->data->global = -1;
+	new->data->params_cnt = -1;
+	new->data->was_found = -1;
 	return new;
 }
 
@@ -205,6 +210,7 @@ void deleteNode(t_Node *n)
 {
 	stringFree(n->data->name);
 	tableDestroy(n->data->local_symTable);
+	free(n->data->local_symTable);
 	free(n->data->name);
 	free(n->data);
 	free(n);
@@ -225,8 +231,8 @@ void sInsert(t_symTable *table, int itype, char *is)
 	stringFree(&s);
 }
 void tablePrintItem(t_Node *node){
-	fprintf(stderr, "NODE: %s: is_var: %d, , data_type: %d, nil: %d, defined: %d, global: %d params:%d\n",
-			stringGet(node->data->name), node->data->is_var, node->data->data_type, node->data->nil, node->data->defined, node->data->global, node->data->params_cnt);
+	fprintf(stderr, "NODE: %s: is_var: %d, , data_type: %d, defined: %d, global: %d params:%d\n",
+			stringGet(node->data->name), node->data->is_var, node->data->data_type, node->data->defined, node->data->global, node->data->params_cnt);
 }
 void tablePrint(t_symTable *table, int local)
 {

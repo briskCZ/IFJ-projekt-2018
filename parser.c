@@ -57,7 +57,6 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
         }
         *isNew = 1;
     }
-    fprintf(stderr, ">ia> %s:%d\n", tmp->data->name->val, *isNew);
     return tmp;
 }
 /* instrukce pro generator, podle toho zda je leva strana nova a jedna se o volani funkce*/
@@ -521,9 +520,9 @@ void code(t_Token token){
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_EOL){
                     sec2();
-                    addInst(PI_IF_ELSE, NULL, NULL, NULL, 0);
-                    sec1();
                     pa_if_count--;
+                    addInst(PI_IF_ELSE, (void*)pa_if_count, NULL, NULL, 0);
+                    sec1();
                     addInst(PI_IF_END, (void*)pa_if_count, NULL, NULL, 0);
                 }else{
                     PRINT_SYNTAX_ERROR("EOL after THEN");
@@ -701,6 +700,7 @@ void addSingleBuiltin(char* name, int params_cnt){
     tableChangeItemByNode(n, 0, 0, 1, 1);
     addInst(PI_BUILTFUNC, (void*)n, NULL, NULL, 0);
     n->data->params_cnt = params_cnt;
+    stringFree(&toadd.attr);
 }
 void addBuiltins(){
     addSingleBuiltin("inputs", 0);
@@ -735,7 +735,7 @@ int main(){
     P("--------------SYMTABLE-----------");
     //dtablePrint(&table, 0);
     printList();
-    //generate();
+    generate();
     cleanAll();
 
     return SUCCESS;
