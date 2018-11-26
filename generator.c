@@ -1012,41 +1012,62 @@ void convertTypeEqNeq()
 }
 
 void genIfStart(){
-	
+	int odZdeny = list->first->data->adr1;
+	fprintf(stderr, "kokoty if %d\n", odZdeny);
 	printf("DEFVAR %s@$podminka%d\n",ramec(),podminka_num);
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
 
 	printf("#if start\n");	
 
-	printf("JUMPIFNEQ $IFL%d %s@$podminka%d bool@true\n",temp_label,ramec(),podminka_num++); //todo	
-	
+	printf("JUMPIFNEQ $IFL%d %s@$podminka%d bool@true\n",if_label + odZdeny ,ramec(),podminka_num++); //todo	
+	if_max++;
 	printf("\n");	
 }
 void genIfElse(){
+	int odZdeny = list->first->data->adr1;
+	fprintf(stderr, "kokoty else %d\n", odZdeny);
 	printf("#if else\n");	
-	printf("JUMP $IFEND%d\n",++temp_label);
-	printf("LABEL $IFL%d\n",temp_label-1);	
+	printf("JUMP $IFEND%d\n",if_label + odZdeny);
+	printf("LABEL $IFL%d\n",if_label + odZdeny);	
 	
 	printf("\n");	
 }
 void genIfEnd(){
-	printf("LABEL $IFEND%d\n",temp_label++);
+	int odZdeny = list->first->data->adr1;
+	fprintf(stderr, "kokoty end %d\n", odZdeny);
+	printf("LABEL $IFEND%d\n",if_label + odZdeny);
+	if (odZdeny == 0){
+		if_label += if_max;
+		if_max = 0;
+	}
 }
 
 void genWhileStart(){
+	int odZdeny = list->first->data->adr1;
+	fprintf(stderr,"kokoty %d\n",odZdeny);
 	printf("#while start\n");
 	printf("DEFVAR %s@$podminka%d\n",ramec(),podminka_num);
-	printf("LABEL $WHILE%d\n",temp_label++);
+	printf("LABEL $WHILE%d\n",(while_label + odZdeny));
+	while_max++;
 }
 void genWhileEx(){
+	int odZdeny = list->first->data->adr1;
+	
 	printf("#while ex\n");
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
-	printf("JUMPIFNEQ $WHILEEND%d %s@$podminka%d bool@true\n",while_label,ramec(),podminka_num++); //todo
+	printf("JUMPIFNEQ $WHILEEND%d %s@$podminka%d bool@true\n",while_label ,ramec(),podminka_num++); //todo
 }
 void genWhileEnd(){
+	int odZdeny = list->first->data->adr1;
+	fprintf(stderr,"kokoty vzjebane %d\n",odZdeny);
 	printf("#while end\n");
-	printf("JUMP $WHILE%d\n",while_label);
-	printf("LABEL $WHILEEND%d\n",while_label++);
+	printf("JUMP $WHILE%d\n",while_label + odZdeny);
+	printf("LABEL $WHILEEND%d\n",while_label + odZdeny);
+	
+	if (odZdeny == 0){
+		while_label += while_max;
+		while_max = 0;
+	}
 }
 
 void genGte(){
@@ -1151,6 +1172,13 @@ int generate()
 	temp_num = 0;
 	temp_label = 0;
 	only_in_gen = 0;
+	while_label = 0;
+	podminka_num = 0;
+	while_max = 0;
+	if_max = 0;
+	if_label = 0;
+	
+	
 	//printList();
 	while (list->first != NULL)
 	{
