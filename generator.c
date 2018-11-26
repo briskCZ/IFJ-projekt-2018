@@ -141,19 +141,20 @@ void builtinSubstr()
 void genBeginFunc(){
 
 	printf("JUMP $FOOL%d\n", ++func_cnt);
-	printf("LABEL $FNAME%p\n", (void*)list->first->data->adr1);
+	printf("LABEL $FNAME%p\n", /*(void*)*/list->first->data->adr1);
 	printf("PUSHFRAME\n");
 	//vytvor navratovou promennou
-	printf("DEFVAR LF@$RTVL%p\n",(void*)list->first->data->adr1); //TODO mozna menit ramec
-	printf("MOVE LF@$RTVL%p nil@nil\n",(void*)list->first->data->adr1);//TODO mozna menit ramec
-	//printf("PUSHS nil@nil\n");
+	printf("DEFVAR LF@$RTVL%p\n",/*(void*)*/list->first->data->adr1); //TODO mozna menit ramec
+	printf("MOVE LF@$RTVL%p string@nil\n",/*(void*)*/list->first->data->adr1);//TODO mozna menit ramec
 	
 }
 //potrebne veci pro konec definice funkce
 void genEndFunc(){
-	printf("POPS LF@$RTVL%p\n",(void*)list->first->data->adr1); //sem potrebuju predat ukazatel do symtable
+	
+	printf("POPS LF@$RTVL%p\n",/*(void*)*/list->first->data->adr1);
 	printf("POPFRAME\n");
-	printf("CLEARS\n");
+
+	//printf("CLEARS\n");
 	printf("RETURN\n");
 	printf("LABEL $FOOL%d\n", func_cnt);
 	printf("\n");
@@ -217,7 +218,7 @@ void genFdefPar(){
 //volani fuckne
 void genFcall(){
 	printf("#fcall\n");
-	printf("CALL $FNAME%p\n",(void*)list->first->data->adr1);
+	printf("CALL $FNAME%p\n",/*(void*)*/list->first->data->adr1);
 }
 //CREATEFRAME
 void genFcallCreateFrame(){
@@ -228,21 +229,21 @@ void genFcallParT(){
 	printf("#genFcallParT \n");
 	int i; double f;
 	int a = (void*)list->first->data->adr3;
-	printf("DEFVAR TF@$P%d\n",(void*)list->first->data->adr2);
+	printf("DEFVAR TF@$P%d\n",/*(void*)*/list->first->data->adr2);
 	switch(a){
 		case T_INT:
 			i = strtol((char*)list->first->data->adr1, NULL, 10);
-			printf("MOVE TF@$P%d int@%d\n",(void*)list->first->data->adr2,i);
+			printf("MOVE TF@$P%d int@%d\n",/*(void*)*/list->first->data->adr2,i);
 		break;
 		case T_DOUBLE:
 			f = strtod((void*)list->first->data->adr1, NULL);
-			printf("MOVE TF@$P%d float@%a\n",(void*)list->first->data->adr2,f);
+			printf("MOVE TF@$P%d float@%a\n",/*(void*)*/list->first->data->adr2,f);
 		break;
 		case T_STRING:
-			printf("MOVE TF@$P%d string@%s\n",(void*)list->first->data->adr2,(char*)list->first->data->adr1);
+			printf("MOVE TF@$P%d string@%s\n",/*(void*)*/list->first->data->adr2,/*(char*)*/list->first->data->adr1);
 		break;		
 		case T_NIL: //todo
-			printf("MOVE TF@$P%d nil@nil\n",(void*)list->first->data->adr2);
+			printf("MOVE TF@$P%d nil@nil\n",/*(void*)*/list->first->data->adr2);
 		break;
 		default:
 			printf("WTF %d\n",a);
@@ -254,12 +255,17 @@ void genFcallParT(){
 void genFcallParID(){
 	printf("#genFcallParID \n");
 	
-	printf("DEFVAR TF@$P%d\n",(void*)list->first->data->adr2);
-	printf("MOVE TF@$P%d %s@$%p\n",(void*)list->first->data->adr2,ramec(),(void*)list->first->data->adr1);
+	printf("DEFVAR TF@$P%d\n",/*(void*)*/list->first->data->adr2);
+	printf("MOVE TF@$P%d %s@$%p\n",/*(void*)*/list->first->data->adr2,ramec(),/*(void*)*/list->first->data->adr1);
 }
 
 //konverze typu pro scitani
 void convertTypesAdd(){
+	
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+ 
 	int aux = temp_label;
 
 	printf("#jsme tu add\n");
@@ -289,7 +295,7 @@ void convertTypesAdd(){
 				//uniqueNum = tmp;
 			printf("JUMP $LEND%d\n", aux); // oba string
 		printf("LABEL $L%d\n", temp_label--);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni
 
 	printf("LABEL $L%d\n", temp_label); //prvni neni string
 	temp_label += 2;
@@ -307,7 +313,7 @@ void convertTypesAdd(){
 					genAddS();
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
-					printf("EXIT int@2\n"); //ERROR prvni int | druhy string
+					printf("EXIT int@4\n"); //ERROR prvni int | druhy string
 
 		temp_label -= 2;
 		printf("LABEL $L%d\n", temp_label); //prvni je float
@@ -327,17 +333,26 @@ void convertTypesAdd(){
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
 					temp_label -= 2;
-						printf("EXIT int@3\n"); //ERROR prvni float | druhy string
+						printf("EXIT int@4\n"); //ERROR prvni float | druhy string
 			printf("LABEL $L%d\n", temp_label);
 			temp_label += 3;
 				printf("EXIT int@4\n"); //ERROR oba nejsou int nebo float
 
 	temp_num++;
 	uniqueNum++;
-printf("LABEL $LEND%d\n", aux);
+	
+	printf("LABEL $LEND%d\n", aux);
+
+	printf("POPFRAME\n");
+	is_in_func = 0;
 }
 
 void convertTypesSub(){
+
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+
 	int aux = temp_label;
 
 	printf("#jsme tu sub\n");
@@ -362,7 +377,7 @@ void convertTypesSub(){
 		printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label, ramec(), temp_num);
 			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni		
 		printf("LABEL $L%d\n", temp_label--);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni	
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni	
 
 	printf("LABEL $L%d\n", temp_label); //prvni neni string
 	temp_label += 2;
@@ -380,7 +395,7 @@ void convertTypesSub(){
 					genSubS();
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
-					printf("EXIT int@2\n"); //ERROR prvni int | druhy string
+					printf("EXIT int@4\n"); //ERROR prvni int | druhy string
 
 		temp_label -= 2;
 		printf("LABEL $L%d\n", temp_label); //prvni je float
@@ -400,17 +415,25 @@ void convertTypesSub(){
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
 					temp_label -= 2;
-						printf("EXIT int@3\n"); //ERROR prvni float | druhy string
+						printf("EXIT int@4\n"); //ERROR prvni float | druhy string
 			printf("LABEL $L%d\n", temp_label);
 			temp_label += 3;
 				printf("EXIT int@4\n"); //ERROR oba nejsou int nebo float
 
 	temp_num++;
 	uniqueNum++;
-printf("LABEL $LEND%d\n", aux);
+	printf("LABEL $LEND%d\n", aux);
+	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 void convertTypesMul(){
+
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+
 	int aux = temp_label;
 
 	printf("#jsme tu mul\n");
@@ -433,9 +456,9 @@ void convertTypesMul(){
 	/* 				kontrola typu */
 	printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label++, ramec(), temp_num-1);
 		printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label, ramec(), temp_num);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni		
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni		
 		printf("LABEL $L%d\n", temp_label--);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni	
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni	
 
 	printf("LABEL $L%d\n", temp_label); //prvni neni string
 	temp_label += 2;
@@ -453,7 +476,7 @@ void convertTypesMul(){
 					genMulS();
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
-					printf("EXIT int@2\n"); //ERROR prvni int | druhy string
+					printf("EXIT int@4\n"); //ERROR prvni int | druhy string
 
 		temp_label -= 2;
 		printf("LABEL $L%d\n", temp_label); //prvni je float
@@ -473,17 +496,25 @@ void convertTypesMul(){
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
 					temp_label -= 2;
-						printf("EXIT int@3\n"); //ERROR prvni float | druhy string
+						printf("EXIT int@4\n"); //ERROR prvni float | druhy string
 			printf("LABEL $L%d\n", temp_label);
 			temp_label += 3;
 				printf("EXIT int@4\n"); //ERROR oba nejsou int nebo float
 
 	temp_num++;
 	uniqueNum++;
-printf("LABEL $LEND%d\n", aux);
+	printf("LABEL $LEND%d\n", aux);
+	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 void convertTypesDiv(){
+	
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+
 	int aux = temp_label;
 	//int tmp, tmpl;
 
@@ -507,9 +538,9 @@ void convertTypesDiv(){
 	/* 				kontrola typu */
 	printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label++, ramec(), temp_num-1);
 		printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label, ramec(), temp_num);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni		
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni		
 		printf("LABEL $L%d\n", temp_label--);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni	
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni	
 
 	printf("LABEL $L%d\n", temp_label); //prvni neni string
 	temp_label += 2;
@@ -539,7 +570,7 @@ void convertTypesDiv(){
 					
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
-					printf("EXIT int@2\n"); //ERROR prvni int | druhy string
+					printf("EXIT int@4\n"); //ERROR prvni int | druhy string
 
 		temp_label -= 2;
 		printf("LABEL $L%d\n", temp_label); //prvni je float
@@ -571,17 +602,25 @@ void convertTypesDiv(){
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
 					temp_label -= 2;
-						printf("EXIT int@3\n"); //ERROR prvni float | druhy string
+						printf("EXIT int@4\n"); //ERROR prvni float | druhy string
 			printf("LABEL $L%d\n", temp_label);
 			temp_label += 3;
 				printf("EXIT int@4\n"); //ERROR oba nejsou int nebo float
 
 	temp_num++;
 	uniqueNum++;
-printf("LABEL $LEND%d\n", aux);
+	printf("LABEL $LEND%d\n", aux);
+	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 void convertTypesIdiv(){
+	
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+	
 	int aux = temp_label;
 	//int tmp, tmpl;
 
@@ -605,9 +644,9 @@ void convertTypesIdiv(){
 	/* 				kontrola typu */
 	printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label++, ramec(), temp_num-1);
 		printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label, ramec(), temp_num);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni		
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni		
 		printf("LABEL $L%d\n", temp_label--);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni	
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni	
 
 	printf("LABEL $L%d\n", temp_label); //prvni neni string
 	temp_label += 2;
@@ -637,7 +676,7 @@ void convertTypesIdiv(){
 					
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
-					printf("EXIT int@2\n"); //ERROR prvni int | druhy string
+					printf("EXIT int@4\n"); //ERROR prvni int | druhy string
 
 		temp_label -= 2;
 		printf("LABEL $L%d\n", temp_label); //prvni je float
@@ -669,14 +708,17 @@ void convertTypesIdiv(){
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
 					temp_label -= 2;
-						printf("EXIT int@3\n"); //ERROR prvni float | druhy string
+						printf("EXIT int@4\n"); //ERROR prvni float | druhy string
 			printf("LABEL $L%d\n", temp_label);
 			temp_label += 3;
 				printf("EXIT int@4\n"); //ERROR oba nejsou int nebo float
 
 	temp_num++;
 	uniqueNum++;
-printf("LABEL $LEND%d\n", aux);
+	printf("LABEL $LEND%d\n", aux);
+	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 
@@ -780,24 +822,23 @@ void genDefVar(){
 	printf("#defvar\n");	
 	int i; double f;
 		int a = (void*)list->first->data->adr3;
-
 		switch(a){
 			case T_INT:
-				i = strtol((char*)list->first->data->adr2, NULL, 10);
+				i = strtol(/*(char*)*/list->first->data->adr2, NULL, 10);
 				printf("PUSHS int@%d\n",i);
 			break;
 
 			case T_DOUBLE:
-				f = strtod((void*)list->first->data->adr2, NULL);
+				f = strtod(/*(void*)*/list->first->data->adr2, NULL);
 				printf("PUSHS float@%a\n",f);
 			break;
 			
 			case T_STRING:
-				printf("PUSHS string@%s\n",(void*)list->first->data->adr2);
+				printf("PUSHS string@%s\n",/*(void*)*/list->first->data->adr2);
 			break;
 			
 			case T_ID:
-				printf("PUSHS %s@$%p\n",ramec(),(void*)list->first->data->adr2);				
+				printf("PUSHS %s@$%p\n",ramec(),/*(void*)*/list->first->data->adr2);				
 			break;
 			
 			case T_NIL:
@@ -815,33 +856,37 @@ void genDefVar(){
 //deklarace a prirazeni do idcka
 void genAssignDecl(){
 	printf("#prirazeni s declaraci\n");
-	printf("DEFVAR %s@$%p\n",ramec(),(void*)list->first->data->adr1);
-	printf("POPS %s@$%p",ramec(),(void*)list->first->data->adr1);
+	printf("DEFVAR %s@$%p\n",ramec(),/*(void*)*/list->first->data->adr1);
+	printf("POPS %s@$%p",ramec(),/*(void*)*/list->first->data->adr1);
 	printf("\n");
 }
 //prirazeni do idcka
 void genAssign(){
 	printf("#prirazeni\n");
-	printf("POPS %s@$%p",ramec(),(void*)list->first->data->adr1);
+	printf("POPS %s@$%p",ramec(),/*(void*)*/list->first->data->adr1);
 	printf("\n");
 }
 //prirazeni do idcka z funkce
 void genAssignFunc(){//TODO otestovat
 	printf("#prirazeni z funkce\n");
-	printf("MOVE %s@$%p TF@$RTVL%p\n",ramec(),(void*)list->first->data->adr1,(void*)list->first->data->adr2); //tady potrebuju ukazatel na funkci do symtable
+	printf("MOVE %s@$%p TF@$RTVL%p\n",ramec(),/*(void*)*/list->first->data->adr1,/*(void*)*/list->first->data->adr2); //tady potrebuju ukazatel na funkci do symtable
 	printf("\n");
 }
 //prirazeni do idcka z funkce
 void genAssignDeclFunc(){//TODO otestovat
 	printf("#prirazeni s deklaraci z funkce\n");
-	printf("DEFVAR %s@$%p\n",ramec(),(void*)list->first->data->adr1);
-	printf("MOVE %s@$%p TF@$RTVL%p\n",ramec(),(void*)list->first->data->adr1,(void*)list->first->data->adr2); //tady potrebuju ukazatel na funkci do symtable
+	printf("DEFVAR %s@$%p\n",ramec(),/*(void*)*/list->first->data->adr1);
+	printf("MOVE %s@$%p TF@$RTVL%p\n",ramec(),/*(void*)*/list->first->data->adr1,/*(void*)*/list->first->data->adr2); //tady potrebuju ukazatel na funkci do symtable
 	printf("\n");
 }
 
 // > >= < <=
 void convertTypeLtGtLteGte()
 {
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+	
 	int aux = temp_label;
 
 	printf("#jsme tu LtGtLteGte\n");
@@ -871,7 +916,7 @@ void convertTypeLtGtLteGte()
 				//uniqueNum = tmp;
 			printf("JUMP $LEND%d\n", aux); // oba string
 		printf("LABEL $L%d\n", temp_label--);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni
 
 	printf("LABEL $L%d\n", temp_label); //prvni neni string
 	temp_label += 2;
@@ -889,7 +934,7 @@ void convertTypeLtGtLteGte()
 					//genAddS();
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
-					printf("EXIT int@2\n"); //ERROR prvni int | druhy string
+					printf("EXIT int@4\n"); //ERROR prvni int | druhy string
 
 		temp_label -= 2;
 		printf("LABEL $L%d\n", temp_label); //prvni je float
@@ -905,11 +950,11 @@ void convertTypeLtGtLteGte()
 						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 						printf("INT2FLOATS\n");
 						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
-						genAddS();
+						//genAddS();
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
 					temp_label -= 2;
-						printf("EXIT int@3\n"); //ERROR prvni float | druhy string
+						printf("EXIT int@4\n"); //ERROR prvni float | druhy string
 			printf("LABEL $L%d\n", temp_label);
 			temp_label += 3;
 				printf("EXIT int@4\n"); //ERROR oba nejsou int nebo float
@@ -917,11 +962,18 @@ void convertTypeLtGtLteGte()
 	temp_num++;
 	uniqueNum++;
 	printf("LABEL $LEND%d\n", aux);
+	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 // == !=
 void convertTypeEqNeq()
 {
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+	
 	int aux = temp_label;
 
 	printf("#jsme tu EqNeq\n");
@@ -944,6 +996,8 @@ void convertTypeEqNeq()
 	/* 				kontrola typu */
 	printf("JUMPIFNEQ $L%d string@string %s@$ene%d\n", temp_label++, ramec(), temp_num-1);
 		printf("JUMPIFNEQ $L%d string@string %s@$ene%d\n", temp_label, ramec(), temp_num);
+				//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+				//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
 				//int tmp = uniqueNum;
@@ -951,6 +1005,8 @@ void convertTypeEqNeq()
 				//uniqueNum = tmp;
 			printf("JUMP $LEND%d\n", aux); // oba string
 		printf("LABEL $L%d\n", temp_label--);
+				//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+				//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
 				printf("PUSHS nil@nil\n"); //nespravne typy
@@ -960,18 +1016,25 @@ void convertTypeEqNeq()
 	temp_label += 2;
 		printf("JUMPIFNEQ $L%d string@int %s@$ene%d\n", temp_label++, ramec(), temp_num-1);
 			printf("JUMPIFNEQ $L%d string@int %s@$ene%d\n", temp_label, ramec(), temp_num);
+				//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+				//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
+				//printf("BREAK\n");
 				//genAddS();
 				printf("JUMP $LEND%d\n", aux); //oba int
 			printf("LABEL $L%d\n", temp_label++); //prvni int | druhy neni int
 				printf("JUMPIFNEQ $L%d string@float %s@$ene%d\n", temp_label, ramec(), temp_num);
+					//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+					//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
 					printf("INT2FLOATS\n");
 					//genAddS();
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
+					//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+					//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
 					printf("PUSHS nil@nil\n"); //nespravne typy
@@ -982,12 +1045,16 @@ void convertTypeEqNeq()
 		temp_label += 3;
 			printf("JUMPIFNEQ $L%d string@float %s@$ene%d\n", temp_label++, ramec(), temp_num-1);
 				printf("JUMPIFNEQ $L%d string@float %s@$ene%d\n", temp_label, ramec(), temp_num);
+					//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+					//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 					printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
 					//genAddS();
 					printf("JUMP $LEND%d\n", aux); //prvni float |  druhy float
 				printf("LABEL $L%d\n", temp_label++);
 					printf("JUMPIFNEQ $L%d string@int %s@$ene%d\n", temp_label, ramec(), temp_num);
+						//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+						//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 						printf("INT2FLOATS\n");
 						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
@@ -995,12 +1062,16 @@ void convertTypeEqNeq()
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
 					temp_label -= 2;
+						//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+						//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 						printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
 						printf("PUSHS nil@nil\n"); //nespravne typy
 						printf("JUMP $LEND%d\n", aux);
 			printf("LABEL $L%d\n", temp_label);
 			temp_label += 3;
+				//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum);
+				//printf("DPRINT %s@$t%d\n", ramec(), uniqueNum-1);
 				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum);
 				printf("PUSHS %s@$t%d\n", ramec(), uniqueNum-1);
 				printf("PUSHS nil@nil\n"); //nespravne typy
@@ -1009,11 +1080,14 @@ void convertTypeEqNeq()
 	temp_num++;
 	uniqueNum++;
 	printf("LABEL $LEND%d\n", aux);
+	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 void genIfStart(){
 	int odZdeny = list->first->data->adr1;
-	fprintf(stderr, "kokoty if %d\n", odZdeny);
+	//fprintf(stderr, "kokoty if %d\n", odZdeny);
 	printf("DEFVAR %s@$podminka%d\n",ramec(),podminka_num);
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
 
@@ -1025,7 +1099,7 @@ void genIfStart(){
 }
 void genIfElse(){
 	int odZdeny = list->first->data->adr1;
-	fprintf(stderr, "kokoty else %d\n", odZdeny);
+	//fprintf(stderr, "kokoty else %d\n", odZdeny);
 	printf("#if else\n");	
 	printf("JUMP $IFEND%d\n",if_label + odZdeny);
 	printf("LABEL $IFL%d\n",if_label + odZdeny);	
@@ -1059,7 +1133,7 @@ void genWhileEx(){
 }
 void genWhileEnd(){
 	int odZdeny = list->first->data->adr1;
-	fprintf(stderr,"kokoty vzjebane %d\n",odZdeny);
+	//fprintf(stderr,"kokoty vzjebane %d\n",odZdeny);
 	printf("#while end\n");
 	printf("JUMP $WHILE%d\n",while_label + odZdeny);
 	printf("LABEL $WHILEEND%d\n",while_label + odZdeny);
@@ -1072,6 +1146,10 @@ void genWhileEnd(){
 
 void genGte(){
 	printf("#Gte\n");
+	
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
 	
 	printf("DEFVAR %s@$GTE%d\n",ramec(),only_in_gen);
 	printf("POPS %s@$GTE%d\n",ramec(),only_in_gen++);
@@ -1087,11 +1165,18 @@ void genGte(){
 	printf("PUSHS %s@$GTE%d\n",ramec(),only_in_gen-1);
 	
 	printf("ORS\n");
+	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 void genLte(){
 	printf("#Lte\n");
 
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+	
 	printf("DEFVAR %s@$LTE%d\n",ramec(),only_in_gen);
 	printf("POPS %s@$LTE%d\n",ramec(),only_in_gen++);
 	printf("DEFVAR %s@$LTE%d\n",ramec(),only_in_gen);
@@ -1107,18 +1192,27 @@ void genLte(){
 	
 	printf("ORS\n");	
 	
-	
-	
-	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 void genEq(){
+	//printf("BREAK\n");
+	
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+
 	printf("DEFVAR %s@$ISNIL%d\n",ramec(),temp_num);
 	printf("POPS %s@$ISNIL%d\n",ramec(),temp_num++);
 	
-	printf("JUMPIFEQ $LISNIL%d %s@$ISNIL%d nil@nil\n",temp_label,ramec(),temp_num-1);
+	printf("DEFVAR %s@$type%d\n",ramec(),temp_num);
+	printf("TYPE %s@$type%d %s@$ISNIL%d\n", ramec(),temp_num, ramec(),temp_num-1);
 	
 
+	printf("JUMPIFEQ $LISNIL%d %s@$type%d string@nil\n",temp_label,ramec(),temp_num);
+	
+	printf("PUSHS %s@$ISNIL%d\n",ramec(),temp_num-1);
 	printf("EQS\n");
 	printf("JUMP $LENDISNIL%d\n",temp_label);
 	
@@ -1131,16 +1225,27 @@ void genEq(){
 	
 	printf("LABEL $LENDISNIL%d\n",temp_label-1);
 	temp_label++;
-	
+	temp_num++;
+
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 void genNeq(){
-		printf("DEFVAR %s@$ISNIL%d\n",ramec(),temp_num);
+	is_in_func = 1;
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
+
+	printf("DEFVAR %s@$ISNIL%d\n",ramec(),temp_num);
 	printf("POPS %s@$ISNIL%d\n",ramec(),temp_num++);
 	
-	printf("JUMPIFEQ $LISNIL%d %s@$ISNIL%d nil@nil\n",temp_label,ramec(),temp_num-1);
+	printf("DEFVAR %s@$type%d\n",ramec(),temp_num);
+	printf("TYPE %s@$type%d %s@$ISNIL%d\n", ramec(),temp_num, ramec(),temp_num-1);
 	
-
+	
+	printf("JUMPIFEQ $LISNIL%d %s@$type%d string@nil\n",temp_label,ramec(),temp_num);
+	
+	printf("PUSHS %s@$ISNIL%d\n",ramec(),temp_num-1);
 	printf("EQS\n");
 	printf("NOTS\n");
 	
@@ -1155,6 +1260,10 @@ void genNeq(){
 	
 	printf("LABEL $LENDISNIL%d\n",temp_label-1);
 	temp_label++;
+	temp_num++;
+	
+	is_in_func = 0;
+	printf("POPFRAME\n");
 }
 
 
@@ -1166,7 +1275,9 @@ void genNeq(){
 int generate()
 {
 	int test;
-	printf(".IFJcode18\n");
+	
+	printf(".IFJcode18\n");	
+
 	uniqueNum = 0;
 	func_cnt = 0; //pocitadlo funkci
 	temp_num = 0;
@@ -1215,28 +1326,22 @@ int generate()
 				genDefVar();
 				break;
 			case PI_ADD:
-				//convertTypesAdd();
-				genAddS();
+				convertTypesAdd();
 				break;
 			case INS_ADD:
-				genAddS();
-				//convertTypesAdd();
+				convertTypesAdd();
 				break;
 			case INS_SUB:
-				genSubS();
-				//convertTypesSub();
+				convertTypesSub();
 				break;
 			case INS_MUL:
-				genMulS();
-				//convertTypesMul();
+				convertTypesMul();
 				break;
 			case INS_DIV:
-				genDivS();
-				//convertTypesDiv();
+				convertTypesDiv();
 				break;
 			case INS_IDIV:
-				genIdivS();
-				//convertTypesIdiv();
+				convertTypesIdiv();
 				break;
 			case PI_ADDSTR:
 				genAddStr();
@@ -1272,27 +1377,27 @@ int generate()
 				genWhileEnd();
 				break;
 			case INS_EQ:
-				//convertTypeEqNeq(); //
+				convertTypeEqNeq(); 
 				genEq();
 				break;
 			case INS_GT:
-				//convertTypeLtGtLteGte();
+				convertTypeLtGtLteGte();
 				printf("GTS\n");
 				break;
 			case INS_LT:
-				//convertTypeLtGtLteGte();
+				convertTypeLtGtLteGte();
 				printf("LTS\n");
 				break;
 			case PI_NEQ:
-				//convertTypeEqNeq(); //
+				convertTypeEqNeq(); 
 				genNeq();
 				break;
 			case PI_GTE:
-				//convertTypeLtGtLteGte();
+				convertTypeLtGtLteGte();
 				genGte();
 				break;
 			case PI_LTE:
-				//convertTypeLtGtLteGte();
+				convertTypeLtGtLteGte();
 				genLte();
 				break;			
 
