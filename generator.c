@@ -1095,10 +1095,11 @@ void genIfStart(){
 	printf("#if start\n");
 	
 	//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
-	printf("DEFVAR %s@$Tpodminka%d\n",ramec(),temp_num);
-	printf("TYPE %s@$Tpodminka%d %s@$podminka%d\n",ramec(),temp_num,ramec(),podminka_num);
+	printf("DEFVAR %s@$Tpodminka%d\n",ramec(),podminka_num);
+	printf("TYPE %s@$Tpodminka%d %s@$podminka%d\n",ramec(),podminka_num,ramec(),podminka_num);
 	
-	printf("JUMPIFEQ $LTEST%d %s@$Tpodminka%d string@nil\n",temp_label,ramec(),temp_num++);
+	printf("JUMPIFEQ $LTESTEND%d %s@$Tpodminka%d string@bool\n",temp_label,ramec(),podminka_num);
+	printf("JUMPIFEQ $LTEST%d %s@$Tpodminka%d string@nil\n",temp_label,ramec(),podminka_num);
 	
 	printf("MOVE %s@$podminka%d bool@true\n",ramec(),podminka_num);
 	printf("JUMP $LTESTEND%d\n",temp_label);
@@ -1149,9 +1150,10 @@ void genWhileEx(){
 	printf("#while ex\n");
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
 	
-		//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
+	//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
 	printf("TYPE %s@$Tpodminka%d %s@$podminka%d\n",ramec(),podminka_num,ramec(),podminka_num);
 	
+	printf("JUMPIFEQ $LTESTEND%d %s@$Tpodminka%d string@bool\n",temp_label,ramec(),podminka_num);
 	printf("JUMPIFEQ $LTEST%d %s@$Tpodminka%d string@nil\n",temp_label,ramec(),podminka_num);
 	
 	printf("MOVE %s@$podminka%d bool@true\n",ramec(),podminka_num);
