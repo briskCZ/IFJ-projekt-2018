@@ -53,7 +53,7 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
     }else{
         tmp = tableInsertToken(scope, left);
         if (tmp->data->data_type != T_PARAM){
-            tableChangeItemByNode(tmp, 1, type, T_NIL, isGlobal());
+            tableChangeItemByNode(tmp, 1, -1, 1, isGlobal());
         }
         *isNew = 1;
     }
@@ -352,7 +352,7 @@ void param1(int *param_cnt){
         //term se postara aby se program ukoncil s chybou
         if (node != NULL && !node->data->defined){
             if (token.type != T_ID)
-                PRINT_SYNTAX_ERROR("ID not");
+                PRINT_SYNTAX_ERROR("ID");
         }else{
             term(token);
         }
@@ -426,8 +426,8 @@ void param2(t_Token token, int *param_cnt){
         term(token);
         P("__fcall param2");
         //pokud je definovana , TODO pokud neni definovana ale muze byt
-        paramHandler(token, *param_cnt);
         (*param_cnt)++;
+        paramHandler(token, *param_cnt);
         param22(param_cnt);
     }
 }
@@ -437,8 +437,8 @@ void param22(int *param_cnt){
     if (token.type == T_COMMA){
         token = tarrGetNextToken(&token_array);
         term(token);
-        paramHandler(token, *param_cnt);
         (*param_cnt)++;
+        paramHandler(token, *param_cnt);
         param22(param_cnt);
     }else if (token.type == T_EOL){
         return;
@@ -670,15 +670,12 @@ void program(){
                 }
                 addInst(PI_BEGINFUNC, (void*)node, NULL, NULL, 0);
                 pa_node_cnt++;
-                fprintf(stderr, "NODE: %p def_cnt %d\n", node, pa_node_cnt);
-                tablePrintItem(node);
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_LEFT_PAR){
                     //param11 pohlida eol za )
                     param1(&def_params_cnt);
                     tableChangeItemByNode(node, 0, 0, 1, 1);
                     sec1();
-                    fprintf(stderr, "NODE2: %p\n", node);
                     tablePrintItem(node);
                     node = funcNode;
                     addInst(PI_ENDFUNC, (void*)node, NULL, NULL, 0);

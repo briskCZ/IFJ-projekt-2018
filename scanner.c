@@ -112,6 +112,7 @@ t_Token getNextToken(int *error){
                     *error = ERROR_LEX;
                     stringClear(&sc_buffer);
                     fprintf(stderr, "ERROR_LEX: Unexpected symbol, line: %d.\n", sc_line_cnt);
+                    return sc_token;
                 }
                 break;
             case S_LINE_COMMENT: // #radkovy komentar
@@ -281,6 +282,7 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
+                    return sc_token;
                 }
                 break;
 
@@ -322,6 +324,8 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
+                        return sc_token;
+
                     }
                 }
                 break;
@@ -341,7 +345,8 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    digit_zc = 0;
+                    return sc_token;
+
                 //naschval tady
                 }else if (symbol == '.' && digit_zc <= 1){
                     strAdc(&sc_buffer, symbol);
@@ -375,6 +380,8 @@ t_Token getNextToken(int *error){
                         state = S_START;
                         double_sad = 0;
                         digit_zc = 0;
+                        return sc_token;
+
                     }
                 }else{
                     fprintf(stderr, "ERROR_LEX: Wrong number format!, line: %d.\n", sc_line_cnt);
@@ -383,6 +390,8 @@ t_Token getNextToken(int *error){
                     state = S_START;
                     double_sad = 0;
                     digit_zc = 0;
+                    return sc_token;
+
 
                 }
                 break;
@@ -407,6 +416,8 @@ t_Token getNextToken(int *error){
                         exponent_sign = 0;
                         digits_ae = 0;
                         digit_zc = 0;
+                        return sc_token;
+
                     }
                 }else if (isdigit(symbol)){
                     digits_ae++;
@@ -424,7 +435,7 @@ t_Token getNextToken(int *error){
                     exponent_sign = 0;
                     digits_ae = 0;
                     digit_zc = 0;
-
+                    return sc_token;
                 }
                 break;
 
@@ -446,8 +457,7 @@ t_Token getNextToken(int *error){
                     state = S_START;
                     double_sad = 0;
                     digit_zc = 0;
-
-
+                    return sc_token;
                 }
                 break;
         }
@@ -456,9 +466,6 @@ t_Token getNextToken(int *error){
 }
 void stringToIns(string *s){
     string in_s;
-    for (int i = 0; i < s->length; i++){
-        //fprintf(stderr, "CHAR: %c INT: %d\n", s->val[i], s->val[i]);
-    }
     stringInit(&in_s);
     stringCopy(&in_s, s);
     stringClear(s);
@@ -467,7 +474,6 @@ void stringToIns(string *s){
     for (int i = 0; i < length; i++){
         if (in_s.val[i] == 92){ // zpetne lomeno
             /* specialni znak */
-            //fprintf(stderr, "na zacatku, pridavam 92, i %d , length %d\n", i, length);
             stringAddChar(s, 92);
             char nextChar;
             if (i + 1 < length){
@@ -488,7 +494,6 @@ void stringToIns(string *s){
                 //prekopirovani tmp na korektni pozici v output stringu
                 for (unsigned int j = 0; j < strlen(tmp.val); j++){
                     stringAddChar(s, tmp.val[j]);
-                    //fprintf(stderr, "for: %d char %c\n", j, tmp.val[j]);
                 }
                 stringFree(&tmp);
                 i += esc_len + 1; //zvys i o prectene znaky
@@ -534,7 +539,6 @@ void stringToIns(string *s){
             stringAddChar(s, tmp[2]);
         }else{
             //prevod vstupnich escape sekvenci
-            //fprintf(stderr, "na konci, else, pridavam 92 a %c \n", in_s.val[i]);
             stringAddChar(s, in_s.val[i]);
         }
     }
