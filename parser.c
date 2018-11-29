@@ -22,13 +22,6 @@ int isGlobal(){
 }
 t_symTable* getScopeTable(){
     return (isGlobal()) ? &table : pa_funcLocalTable;
-    // t_symTable *scopeTable;
-    // if (isGlobal()){
-    //     scopeTable = &table;
-    // }else{
-    //     scopeTable = pa_funcLocalTable;
-    // }
-    // return scopeTable;
 }
 
 void isQmExc(t_Token token){
@@ -51,11 +44,16 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
             exit(ERROR_SEMANTIC);
         }
     }else{
-        tmp = tableInsertToken(scope, left);
-        if (tmp->data->data_type != T_PARAM){
-            tableChangeItemByNode(tmp, 1, -1, 1, isGlobal());
+        tmp = tableSearchItem(scope, left.attr);
+        if (tmp == NULL){
+            tmp = tableInsertToken(scope, left);
+            if (tmp->data->data_type != T_PARAM){
+                tableChangeItemByNode(tmp, 1, -1, 1, isGlobal());
+            }
+            *isNew = 1;
+        }else{
+            *isNew = 0;
         }
-        *isNew = 1;
     }
     return tmp;
 }
@@ -186,7 +184,7 @@ void assign(t_Token left){
                     fprintf(stderr, "ERROR_SEMANTIC: Function not defined: %s on line %d\n", ta.attr.val, sc_line_cnt);
                     cleanAll();
                     exit(ERROR_SEMANTIC);
-                }else if(rightVar->data->defined == 0){
+                }else if(isGlobal() && rightVar->data->defined == 0){
                     fprintf(stderr, "ERROR_SEMANTIC: Function not defined above: %s on line %d\n", ta.attr.val, sc_line_cnt);
                     cleanAll();
                     exit(ERROR_SEMANTIC);
@@ -216,8 +214,12 @@ void assign(t_Token left){
             case T_EQ_REL:
             case T_NOT_EQ:{
                 P(">a>expr");
+                t_symTable *tablet = getScopeTable();
+                fprintf(stderr, "PA: %p\n", pa_funcLocalTable);
+                tablePrint(tablet, 0);
                 t_Node *leftVar = isAssignable(left, ta.type, &isNew, getScopeTable());
                 t_Token t = exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
+                fprintf(stderr, ">a>expr ret_val %d, isNew %d\n", ret_type, isNew);
                 if (t.type != T_EOL) PRINT_SYNTAX_ERROR("EOL after expr assign");
                 tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
                 assIns(isNew, leftVar);
@@ -742,7 +744,7 @@ int main(){
     program();
     P("--------------SYMTABLE-----------");
     //dtablePrint(&table, 0);
-    //printList();
+    printList();
     generate();
     cleanAll();
 
