@@ -46,7 +46,7 @@ t_Token getNextToken(int *error){
             }
         }
         //fprintf(stderr, "Symbol: %d line: %d\n", symbol, sc_line_cnt);
-        //printf("DEBUG: S: %d |SYM: %d | UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
+        //fprintf(stderr,"DEBUG: S: %d |SYM: %d %c| UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
         if (symbol == EOF){
             sc_token.type = T_EOF;
             return sc_token;
@@ -378,8 +378,6 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
-                        double_sad = 0;
-                        digit_zc = 0;
                         return sc_token;
 
                     }
@@ -388,8 +386,6 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    double_sad = 0;
-                    digit_zc = 0;
                     return sc_token;
 
 
@@ -413,9 +409,6 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
-                        exponent_sign = 0;
-                        digits_ae = 0;
-                        digit_zc = 0;
                         return sc_token;
 
                     }
@@ -432,9 +425,6 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    exponent_sign = 0;
-                    digits_ae = 0;
-                    digit_zc = 0;
                     return sc_token;
                 }
                 break;
@@ -555,7 +545,7 @@ int isValidHex(char c){
 
 
 int isNumberEnding(char c){
-    if (c == '+' || c == '-' || c == '*' || c == ')' || c == '='
+    if (c == '+' || c == '-' || c == '*' || c == ')' || c == '=' || c == '/'
         || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' ' || c == ',' || c == '#'){
         ungetc(c, stdin);
         return 1;
