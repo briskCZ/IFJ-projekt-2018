@@ -734,17 +734,22 @@ void genAddS(){
 //scitani stringu
 void genAddStr(){
 	printf("#addStr\n");
+	
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
 
-	printf("DEFVAR %s@$STR%d\n",ramec(),only_in_gen);
-	printf("POPS %s@$STR%d\n",ramec(),only_in_gen++);
-	printf("DEFVAR %s@$STR%d\n",ramec(),only_in_gen);
-	printf("POPS %s@$STR%d\n",ramec(),only_in_gen++);
+	printf("DEFVAR %s@$STR%d\n","LF",only_in_gen);
+	printf("POPS %s@$STR%d\n","LF",only_in_gen++);
+	printf("DEFVAR %s@$STR%d\n","LF",only_in_gen);
+	printf("POPS %s@$STR%d\n","LF",only_in_gen++);
 	//vysledek scitani
-	printf("DEFVAR %s@$STR%d\n",ramec(),only_in_gen);
-	printf("CONCAT %s@$STR%d %s@$STR%d %s@$STR%d\n",ramec(),only_in_gen,ramec(),only_in_gen-1,ramec(),only_in_gen-2);
+	printf("DEFVAR %s@$STR%d\n","LF",only_in_gen);
+	printf("CONCAT %s@$STR%d %s@$STR%d %s@$STR%d\n","LF",only_in_gen,"LF",only_in_gen-1,"LF",only_in_gen-2);
 
-	printf("PUSHS %s@$STR%d\n",ramec(),only_in_gen);
+	printf("PUSHS %s@$STR%d\n","LF",only_in_gen);
 	only_in_gen++;
+	
+	printf("POPFRAME\n");
 
 	printf("\n");
 }
@@ -859,14 +864,19 @@ void genAssignDecl(){
 	printf("#prirazeni s declaraci\n");
 	printf("DEFVAR %s@$%p\n",ramec(),list->first->data->adr1);
 	printf("POPS %s@$%p\n",ramec(),list->first->data->adr1);
-	printf("PUSHS %s@$%p\n",ramec(),list->first->data->adr1); //kvuli navratove hodnotě fce
+	if(is_in_func == 1){
+		printf("PUSHS %s@$%p\n",ramec(),list->first->data->adr1); //kvuli navratove hodnotě fce
+	}
 	printf("\n");
 }
 //prirazeni do idcka
 void genAssign(){
 	printf("#prirazeni\n");
 	printf("POPS %s@$%p\n",ramec(),list->first->data->adr1);
-	printf("PUSHS %s@$%p\n",ramec(),list->first->data->adr1); //kvuli navratove hodnotě fce
+	if(is_in_func == 1){
+		printf("PUSHS %s@$%p\n",ramec(),list->first->data->adr1); //kvuli navratove hodnotě fce
+	}
+	
 	printf("\n");
 }
 //prirazeni do idcka z funkce
@@ -1157,7 +1167,10 @@ void genWhileEnd(){
 	printf("#while end\n");
 	printf("JUMP $WHILE%d\n",while_label + odZdeny);
 	printf("LABEL $WHILEEND%d\n",while_label + odZdeny);
-	printf("PUSHS nil@nil\n"); // while vzdycky vraci nil
+	if(is_in_func == 1){
+		printf("PUSHS nil@nil\n"); // while vzdycky vraci nil
+	}
+	
 
 	if (odZdeny == 0){
 		while_label += while_max;
