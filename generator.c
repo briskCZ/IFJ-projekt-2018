@@ -139,11 +139,11 @@ void builtinSubstr()
 
 //potrebne veci pro zacatek definice funkce
 void genBeginFunc(){
-	fprintf(stderr, "pri vytvareni beg: %p\n", list->first->data->adr1);
+	//fprintf(stderr, "pri vytvareni beg: %p\n", list->first->data->adr1);
 	printf("JUMP $FOOL%d\n", ++func_cnt);
 	printf("LABEL $FNAME%p\n", list->first->data->adr1);
 	printf("PUSHFRAME\n");
-	
+
 	//vytvor navratovou promennou
 	printf("DEFVAR LF@$RTVL%p\n",list->first->data->adr1); //TODO mozna menit ramec
 	printf("MOVE LF@$RTVL%p nil@nil\n",list->first->data->adr1);//TODO mozna menit ramec
@@ -152,7 +152,7 @@ void genBeginFunc(){
 }
 //potrebne veci pro konec definice funkce
 void genEndFunc(){
-	fprintf(stderr, "pri vytvareni end: %p\n", list->first->data->adr1);
+	//fprintf(stderr, "pri vytvareni end: %p\n", list->first->data->adr1);
 	printf("POPS LF@$RTVL%p\n",list->first->data->adr1);
 	printf("POPFRAME\n");
 
@@ -734,7 +734,7 @@ void genAddS(){
 //scitani stringu
 void genAddStr(){
 	printf("#addStr\n");
-	
+
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -748,7 +748,7 @@ void genAddStr(){
 
 	printf("PUSHS %s@$STR%d\n","LF",only_in_gen);
 	only_in_gen++;
-	
+
 	printf("POPFRAME\n");
 
 	printf("\n");
@@ -876,7 +876,7 @@ void genAssign(){
 	if(is_in_func == 1){
 		printf("PUSHS %s@$%p\n",ramec(),list->first->data->adr1); //kvuli navratove hodnotě fce
 	}
-	
+
 	printf("\n");
 }
 //prirazeni do idcka z funkce
@@ -1089,25 +1089,25 @@ void genIfStart(){
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
 
 	printf("#if start\n");
-	
+
 	//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
 	printf("DEFVAR %s@$Tpodminka%d\n",ramec(),podminka_num);
 	printf("TYPE %s@$Tpodminka%d %s@$podminka%d\n",ramec(),podminka_num,ramec(),podminka_num);
-	
+
 	printf("JUMPIFEQ $LTESTEND%d %s@$Tpodminka%d string@bool\n",temp_label,ramec(),podminka_num);
 	printf("JUMPIFEQ $LTEST%d %s@$Tpodminka%d string@nil\n",temp_label,ramec(),podminka_num);
-	
+
 	printf("MOVE %s@$podminka%d bool@true\n",ramec(),podminka_num);
 	printf("JUMP $LTESTEND%d\n",temp_label);
-	
+
 	printf("LABEL $LTEST%d\n",temp_label);
-	
+
 	printf("MOVE %s@$podminka%d bool@false\n",ramec(),podminka_num);
 	printf("LABEL $LTESTEND%d\n",temp_label++);
 	//konec kontroly
-	
-	
-	
+
+
+
 	printf("JUMPIFNEQ $IFL%d %s@$podminka%d bool@true\n",if_label + odZdeny ,ramec(),podminka_num++); //todo
 	if_max++;
 	printf("\n");
@@ -1144,22 +1144,22 @@ void genWhileEx(){
 
 	printf("#while ex\n");
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
-	
+
 	//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
 	printf("TYPE %s@$Tpodminka%d %s@$podminka%d\n",ramec(),podminka_num,ramec(),podminka_num);
-	
+
 	printf("JUMPIFEQ $LTESTEND%d %s@$Tpodminka%d string@bool\n",temp_label,ramec(),podminka_num);
 	printf("JUMPIFEQ $LTEST%d %s@$Tpodminka%d string@nil\n",temp_label,ramec(),podminka_num);
-	
+
 	printf("MOVE %s@$podminka%d bool@true\n",ramec(),podminka_num);
 	printf("JUMP $LTESTEND%d\n",temp_label);
-	
+
 	printf("LABEL $LTEST%d\n",temp_label);
-	
+
 	printf("MOVE %s@$podminka%d bool@false\n",ramec(),podminka_num);
 	printf("LABEL $LTESTEND%d\n",temp_label++);
 	//konec kontroly
-	
+
 	printf("JUMPIFNEQ $WHILEEND%d %s@$podminka%d bool@true\n",while_label ,ramec(),podminka_num++); //todo
 }
 void genWhileEnd(){
@@ -1170,7 +1170,7 @@ void genWhileEnd(){
 	if(is_in_func == 1){
 		printf("PUSHS nil@nil\n"); // while vzdycky vraci nil
 	}
-	
+
 
 	if (odZdeny == 0){
 		while_label += while_max;

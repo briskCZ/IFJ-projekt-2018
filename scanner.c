@@ -147,9 +147,8 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
-                fprintf(stderr, "sc_eol : %d\n", sc_was_eol);
+                //fprintf(stderr, "sc_eol : %d\n", sc_was_eol);
                 if (sc_was_eol && symbol == '=' && isCmntEnd(&symbol)){
-                    fprintf(stderr, "toz koncim dalsi symb %c\n", symbol);
                     //pokud symbol po end byl \n
                     if (symbol == '\n'){
                         sc_line_cnt++;
@@ -315,10 +314,10 @@ t_Token getNextToken(int *error){
 
             case S_SPECIAL_HEX: //\xhh
                 sc_was_eol = 0;
+                // fprintf(stderr, "symb: %d, %c | SHC: %d |  isVH %d\n", symbol, symbol, string_hex_count, isValidHex(symbol));
                 if (isValidHex(symbol) && string_hex_count <= 2){ //max hex
                     string_hex_count++;
                     strAdc(&sc_buffer, symbol);
-                    // strAdc(&sc_buffer, symbol);
                     if (string_hex_count == 2){
                         state = S_STRING;
                     }else{
@@ -546,7 +545,7 @@ void stringToIns(string *s){
 }
 int isValidHex(char c){
     //if ((C >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
-    if ((c >= 47 && c <= 57) || (c >= 65 && c <= 70)){
+    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')){
         return 1;
     }else{
         return 0;

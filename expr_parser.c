@@ -160,7 +160,7 @@ int checkRule(t_IStack *s, int *type){
     }
     else
     {
-        fprintf(stderr, "ERROR SYNTAX\n");
+        fprintf(stderr, "ERROR SYNTAX: unexpected symbol in expression on line: %d\n", sc_line_cnt);
         i_stackDestroy(s);
         cleanAll();
         exit(ERROR_SYNTAX);
