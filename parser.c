@@ -317,7 +317,7 @@ void paramHandler(t_Token token, int param_cnt){
         if (token.type == T_ID){
             t_Node *param = tableSearchItem(scopeTable, token.attr);
             /* zda je prametr definovany v localnim scope*/
-            if (param != NULL){
+            if (param != NULL && param->data->is_var){
                 /* pokud je print, volam funkci pro kazdy parametr */
                 if (stringCompareConst(node->data->name, "print") == 0){
                     addInst(PI_FCALL, (void*)node, NULL, NULL, 0);
@@ -499,8 +499,6 @@ void sec2(){
         }else{
             PRINT_SYNTAX_ERROR("EOL after ELSE");
         }
-    }else if (token.type == T_DEF){
-        PRINT_SYNTAX_ERROR("DEF not");
     }else if (token.type != T_EOF && token.type != T_END){
         P("--dostal jsem se sem");
         code(token);
@@ -737,15 +735,15 @@ int main(){
     listInit();
     tarrInit(&token_array);
     tarrFill(&token_array);
-    //tarrPrint(&token_array);
+    tarrPrint(&token_array);
     tarrGetFuncInfo(&token_array);
     addBuiltins();
     //tablePrint(&table, 0);
     program();
     P("--------------SYMTABLE-----------");
     //dtablePrint(&table, 0);
-    printList();
-    generate();
+    //printList();
+    //generate();
     cleanAll();
 
     return SUCCESS;

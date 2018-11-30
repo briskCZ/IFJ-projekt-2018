@@ -46,7 +46,7 @@ t_Token getNextToken(int *error){
             }
         }
         //fprintf(stderr, "Symbol: %d line: %d\n", symbol, sc_line_cnt);
-        //fprintf(stderr,"DEBUG: S: %d |SYM: %d %c| UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
+        // fprintf(stderr,"DEBUG: S: %d |SYM: %d %c| UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
         if (symbol == EOF){
             sc_token.type = T_EOF;
             return sc_token;
@@ -61,6 +61,7 @@ t_Token getNextToken(int *error){
                         sc_token.type = T_EOL;
                         return sc_token;
                     }else{
+                        sc_was_eol = 0;
                         state = S_START;
                     }
                 }else if (symbol == '#'){ //
@@ -146,18 +147,23 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
-                if (symbol == '=' && isCmntEnd(&symbol)){
+                fprintf(stderr, "sc_eol : %d\n", sc_was_eol);
+                if (sc_was_eol && symbol == '=' && isCmntEnd(&symbol)){
+                    fprintf(stderr, "toz koncim dalsi symb %c\n", symbol);
                     //pokud symbol po end byl \n
                     if (symbol == '\n'){
                         sc_line_cnt++;
-                        sc_was_eol = 0;
-                        sc_token.type = T_EOL;
-                        return sc_token;
+                        sc_was_eol = 1;
+                        state = S_START;
                     //pokud byl jiny whitespace znak, dokonci radek
                     }else{
                         state = S_BC_END;
                     }
+                }else if (symbol == '\n'){
+                    sc_was_eol = 1;
+                    state = S_BLOCK_COMMENT;
                 }else{
+                    sc_was_eol = 0;
                     state = S_BLOCK_COMMENT;
                 }
                 break;
@@ -210,10 +216,12 @@ t_Token getNextToken(int *error){
                     }
                 }else if (symbol == '?' || symbol == '!'){
                     strAdc(&sc_buffer, symbol);
+                    sc_was_eol = 0;
                     sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else{
                     ungetc(symbol, stdin);
+                    sc_was_eol = 0;
                     sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }
@@ -256,6 +264,7 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
+                    return sc_token;
                 }
                 break;
 
@@ -269,6 +278,7 @@ t_Token getNextToken(int *error){
                     fprintf(stderr, "ERROR_LEX: String must be on one line, line: %d\n", sc_line_cnt);
                     *error = ERROR_LEX;
                     state = S_START;
+                    return sc_token;
                 }else if (symbol != 92){ //znaky vetsi nez ascii 31
                     strAdc(&sc_buffer, symbol);
                     state = S_STRING;
