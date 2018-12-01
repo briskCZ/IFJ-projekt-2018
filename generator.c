@@ -770,16 +770,19 @@ void genMulS(){
 //deleni
 void genDivS(){
 	printf("#div\n");
+	
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
 
-	printf("DEFVAR %s@$DIV%d\n",ramec(),only_in_gen);
-	printf("POPS %s@$DIV%d\n",ramec(),only_in_gen++);
-	printf("DEFVAR %s@$DIV%d\n",ramec(),only_in_gen);
-	printf("POPS %s@$DIV%d\n",ramec(),only_in_gen++);
+	printf("DEFVAR %s@$DIV%d\n","LF",only_in_gen);
+	printf("POPS %s@$DIV%d\n","LF",only_in_gen++);
+	printf("DEFVAR %s@$DIV%d\n","LF",only_in_gen);
+	printf("POPS %s@$DIV%d\n","LF",only_in_gen++);
 
-	printf("PUSHS %s@$DIV%d\n",ramec(),only_in_gen - 1);
-	printf("PUSHS %s@$DIV%d\n",ramec(),only_in_gen - 2);
+	printf("PUSHS %s@$DIV%d\n","LF",only_in_gen - 1);
+	printf("PUSHS %s@$DIV%d\n","LF",only_in_gen - 2);
 
-	printf("JUMPIFEQ $DIVL%d float@%a %s@$DIV%d\n", label_in_gen + 1, 0.0, ramec(), only_in_gen - 2); //osetrit ramce
+	printf("JUMPIFEQ $DIVL%d float@%a %s@$DIV%d\n", label_in_gen + 1, 0.0, "LF", only_in_gen - 2); //osetrit ramce
 
 	printf("DIVS\n");
 	printf("JUMP $DIVL%d\n", label_in_gen++);
@@ -792,22 +795,27 @@ void genDivS(){
 
 	printf("LABEL $DIVL%d\n",label_in_gen);
 	label_in_gen += 2;
+	
+	printf("POPFRAME\n");
 
 	printf("\n");
 }
 //deleni
 void genIdivS(){
 	printf("#idiv\n");
+	
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
 
-	printf("DEFVAR %s@IDIV$%d\n",ramec(),only_in_gen);
-	printf("POPS %s@IDIV$%d\n",ramec(),only_in_gen++);
-	printf("DEFVAR %s@IDIV$%d\n",ramec(),only_in_gen);
-	printf("POPS %s@IDIV$%d\n",ramec(),only_in_gen++);
+	printf("DEFVAR %s@IDIV$%d\n","LF",only_in_gen);
+	printf("POPS %s@IDIV$%d\n","LF",only_in_gen++);
+	printf("DEFVAR %s@IDIV$%d\n","LF",only_in_gen);
+	printf("POPS %s@IDIV$%d\n","LF",only_in_gen++);
 
-	printf("PUSHS %s@IDIV$%d\n",ramec(),only_in_gen - 1);
-	printf("PUSHS %s@IDIV$%d\n",ramec(),only_in_gen - 2);
+	printf("PUSHS %s@IDIV$%d\n","LF",only_in_gen - 1);
+	printf("PUSHS %s@IDIV$%d\n","LF",only_in_gen - 2);
 
-	printf("JUMPIFEQ $IDIVL%d int@0 %s@IDIV$%d\n", label_in_gen+1, ramec(), only_in_gen - 2); //osetrit ramce
+	printf("JUMPIFEQ $IDIVL%d int@0 %s@IDIV$%d\n", label_in_gen+1, "LF", only_in_gen - 2); //osetrit ramce
 
 	printf("IDIVS\n");
 	printf("JUMP $IDIVL%d\n", label_in_gen++);
@@ -820,6 +828,9 @@ void genIdivS(){
 
 	printf("LABEL $IDIVL%d\n",label_in_gen);
 	label_in_gen += 2;
+	
+	printf("POPFRAME\n");
+	
 	printf("\n");
 }
 //definice a inicializace promenne
