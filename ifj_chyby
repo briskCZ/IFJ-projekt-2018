@@ -1,0 +1,6 @@
+*id = 5			//vraci chuby 2, ???
+def aaa/ ()		//vraci chybu 2, spis 1 protoze spatny id funkce --> lexikalni chyba
+			//pro vsechny znamenka +-/* ...
+def aa/a ()		//stejna chyba
+print "k\ts\\5\n"	//\t by mel byt tabulator ne ?
+if nil == nil then	//podminka je false ale ma byt true
