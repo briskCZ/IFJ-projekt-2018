@@ -21,6 +21,8 @@ def boo(str, max)
     ret
 end
 
+def hoo(a, a)
+end
 max = inputi
 string = "ah"
 boo string, max

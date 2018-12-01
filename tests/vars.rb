@@ -7,3 +7,4 @@ end
 print(a, "\n")
 foo
 print("\n")
+print("ahoj\griperis")

@@ -157,7 +157,15 @@ void printList()
 
 	while (temp != NULL)
 	{
-		fprintf(stderr, "%d:", temp->data->ins_type);
+		fprintf(stderr, "Act: %d | ID: %d: ", (temp == list->act) ? 1 : 0, temp->data->ins_type);
+		/*if (temp->data->adr1 != NULL){
+			t_Node *n = temp->data->adr1;
+			if (n != NULL){
+				if (n > 1000){
+					fprintf(stderr, " VAL: %s | ", n->data->name->val);
+				}
+			}
+		}*/
 		switch (temp->data->ins_type){
 			case INS_MOVE: fprintf(stderr, "INS_MOVE\n"); break;
 			case INS_CREATEFRAME: fprintf(stderr, "INS_CREATEFRAME\n"); break;
@@ -256,6 +264,7 @@ void printList()
 			case PI_WHILE_EX: fprintf(stderr, "PI_WHILE_EX\n"); break;
 			case PI_WHILE_END: fprintf(stderr, "PI_WHILE_END\n"); break;
 			case PI_BUILTFUNC: fprintf(stderr, "PI_BUILTFUNC\n"); break;
+			case PI_WHILE_DECL: fprintf(stderr, "PI_WHILE_DECL\n"); break;
 		}
 
 		temp = temp->next;

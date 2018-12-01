@@ -522,10 +522,8 @@ void stringToIns(string *s){
                 stringAddChar(s, '4');
                 i++;
             }else{
-                stringAddChar(s, '0');
-                stringAddChar(s, '9');
-                stringAddChar(s, '2');
-                i++;
+                //odstrani vlozene zpetne lomitko a necha znak znakem
+                stringRemoveChar(s);
             }
         //prevod na nutne escape sekvence
         }else if ((in_s.val[i] >= 0 && in_s.val[i] <= 32) || in_s.val[i] == 35){
