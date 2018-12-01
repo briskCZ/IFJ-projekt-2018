@@ -59,8 +59,14 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
 }
 /* instrukce pro generator, podle toho zda je leva strana nova a jedna se o volani funkce*/
 void f_callAssIns(int isNew, t_Node *left, t_Node *right){
+    // fprintf(stderr, "DEBUG: func %s isNew %d wh %d, line %d\n", left->data->name->val, isNew, pa_while, sc_line_cnt);
     if (isNew){
-        addInst(PI_ASS_DECL_FUNC, (void*)left, (void*)right, NULL, pa_while);
+        if (pa_while){
+            addInst(PI_WHILE_DECL_FUNC, (void*)left, (void*)right, NULL, pa_while);
+            addInst(PI_ASS_FUNC, (void*)left, (void*)right, NULL, 0);
+        }else{
+            addInst(PI_ASS_DECL_FUNC, (void*)left, (void*)right, NULL, 0);
+        }
     }else{
         addInst(PI_ASS_FUNC, (void*)left, (void*)right, NULL, 0);
     }
@@ -68,8 +74,14 @@ void f_callAssIns(int isNew, t_Node *left, t_Node *right){
 
 /* instrukce pro generator, podle toho zda je leva strana nova pri prirazeni*/
 void assIns(int isNew, t_Node *left){
+    // fprintf(stderr, "DEBUG: var %s isNew %d wh %d, line %d\n", left->data->name->val, isNew, pa_while, sc_line_cnt);
     if(isNew){
-        addInst(PI_ASS_DECL, (void*)left, NULL, NULL, pa_while);
+        if (pa_while){
+            addInst(PI_WHILE_DECL, (void*)left, NULL, NULL, pa_while);
+            addInst(PI_ASS, (void*)left, NULL, NULL, 0);
+        }else{
+            addInst(PI_ASS_DECL, (void*)left, NULL, NULL, 0);
+        }
     }else{
         addInst(PI_ASS, (void*)left, NULL, NULL, 0);
     }
@@ -106,7 +118,7 @@ void assign(t_Token left){
                             /* promenan je parametr a nebo lokalni */
                             P(">a>local_scope>param|locvar");
                             exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
-                            // fprintf(stderr, ">>a>local_scope>param|locvar>navrTypExpr: %d\n", ret_type);
+                            // fprintf(stderr, "DEBUG: >>a>local_scope>param|locvar>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 0);
                             assIns(isNew, leftVar);
                             return;
@@ -115,7 +127,7 @@ void assign(t_Token left){
                             P(">a>local_scope>a=a");
                             ta.type = T_NIL;
                             exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
-                            // sfprintf(stderr, ">>a>local_scope>a=a>navrTypExpr: %d\n", ret_type);
+                            // sfprintf(stderr, "DEBUG: >>a>local_scope>a=a>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 0);
                             assIns(isNew, leftVar);
                             return;
@@ -134,7 +146,7 @@ void assign(t_Token left){
                             /* promenna */
                             P(">a>global_scope>a=var");
                             exprParse(ta, tb, NULL, 1, &ret_type);
-                            // fprintf(stderr, ">a>global_scope>a=var>navrTypExpr: %d\n", ret_type);
+                            // fprintf(stderr, "DEBUG: >a>global_scope>a=var>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 1);
                             assIns(isNew, leftVar);
                             return;
@@ -245,6 +257,7 @@ void assign(t_Token left){
 void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
     int param_cnt = 0;
+    t_Elem *prevActive = list->act;
     P("--fcall");
     if (!isGlobal() && !stringCompare(&ta.attr, node->data->name)){
         fprintf(stderr, "Rekurzivni volani %s \n", ta.attr.val);
@@ -293,11 +306,11 @@ void f_call(t_Token ta, t_Token tb){
     if(stringCompareConst(&ta.attr, "print") == 0) param_cnt = -1;
     if (temp->data->defined == 1 && temp->data->params_cnt != param_cnt){
         fprintf(stderr, "PARAM_ERROR: %s called with %d params instead of %d on line: %d\n",
-                stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt-1);
+                    stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt-1);
         cleanAll();
         exit(ERROR_SEM_PARAM);
     }
-
+    setActive(prevActive);
     //////////////////////
     //JESTE NEBYLA DEFINOVANA, ale byla zavolana
     //GENERACE FCALL INSTRUKCI
@@ -342,6 +355,20 @@ void paramHandler(t_Token token, int param_cnt){
         }
     }
 }
+/* pridani parametru do lokalni tabulky symbolu v definici*/
+void paramDefHandler(t_Token token, int param_cnt){
+
+    t_Node *temp = tableSearchItem(pa_funcLocalTable, token.attr);
+    if (temp == NULL){
+        temp = tableInsertToken(pa_funcLocalTable, token);
+        addInst(PI_DEF_PARAM, (void*)temp, (void*)param_cnt, NULL , 0);
+        tableChangeItemByNode(temp, 1, T_PARAM, 1, 0);
+    }else{
+        fprintf(stderr, "ERROR_SEMANTIC: Duplicate parameter name %s on line: %d\n", token.attr.val, sc_line_cnt);
+        cleanAll();
+        exit(ERROR_SEMANTIC);
+    }
+}
 void param1(int *param_cnt){
     P("--param1");
     t_Token token = tarrGetNextToken(&token_array);
@@ -358,16 +385,13 @@ void param1(int *param_cnt){
         P("--node pred def v param1");
 		if (pa_funcLocalTable != NULL && node != NULL && !node->data->defined)
 		{
-            (*param_cnt)++;
             P("__def param11");
-			//if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
-            /* pridani parametru do lokalni tabulky symbolu */
-			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
-            addInst(PI_DEF_PARAM, (void*)temp, (void*)*param_cnt, NULL , 0);
-			tableChangeItemByNode(temp, 1, T_PARAM, 1, 0);
-		}else{
             (*param_cnt)++;
+            paramDefHandler(token, param_cnt);
+
+		}else{
             P("call param11");
+            (*param_cnt)++;
             paramHandler(token, *param_cnt);
 
         }
@@ -386,18 +410,14 @@ void param11(int *param_cnt){
             term(token);
         }
         //dalsi mozny parametr funkce, check v tabulce symbolu
-        if (pa_funcLocalTable != NULL && node != NULL && node->data->defined == 0)
+        if (pa_funcLocalTable != NULL && node != NULL && !node->data->defined)
 		{
-            (*param_cnt)++;
             P("__def param11");
-			//if (arrParamAdd(node->data, token.attr) == MEMORY_ERROR) exit(ERROR_INTERNAL);
-            /* pridani parametru do lokalni tabulky symbolu */
-			t_Node *temp = tableInsertToken(node->data->local_symTable, token);
-			tableChangeItemByNode(temp, 1, T_PARAM, 1, 0);
-            addInst(PI_DEF_PARAM, (void*)temp, (void*)*param_cnt, NULL , 0);
-        }else{
             (*param_cnt)++;
+            paramDefHandler(token, param_cnt);
+        }else{
             P("__fcall param11");
+            (*param_cnt)++;
             paramHandler(token, *param_cnt);
 
         }
@@ -422,8 +442,8 @@ void param2(t_Token token, int *param_cnt){
     if (token.type == T_EOL){
         return;
     }else{
-        term(token);
         P("__fcall param2");
+        term(token);
         //pokud je definovana , TODO pokud neni definovana ale muze byt
         (*param_cnt)++;
         paramHandler(token, *param_cnt);

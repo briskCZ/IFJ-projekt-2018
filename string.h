@@ -119,6 +119,10 @@ char * stringGet(string *s);
 Debugovaci funkce - vytiskne string
 */
 void stringPrint(string *s);
+/*
+Odstrani posledni znak ze stringu
+@param s - string ze ktereho se ma odstranit
+*/
 void stringRemoveChar(string *s);
 
 #endif
