@@ -46,7 +46,7 @@ t_Token getNextToken(int *error){
             }
         }
         //fprintf(stderr, "Symbol: %d line: %d\n", symbol, sc_line_cnt);
-        //printf("DEBUG: S: %d |SYM: %d | UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
+        // fprintf(stderr,"DEBUG: S: %d |SYM: %d %c| UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
         if (symbol == EOF){
             sc_token.type = T_EOF;
             return sc_token;
@@ -56,11 +56,12 @@ t_Token getNextToken(int *error){
                 if (isspace(symbol)){
                     if (symbol == '\n'){
                         sc_line_cnt++;
-                        fprintf(stderr,"Line: %d\n", sc_line_cnt);
+                        //fprintf(stderr,"Line: %d\n", sc_line_cnt);
                         sc_was_eol = 1;
                         sc_token.type = T_EOL;
                         return sc_token;
                     }else{
+                        sc_was_eol = 0;
                         state = S_START;
                     }
                 }else if (symbol == '#'){ //
@@ -112,6 +113,7 @@ t_Token getNextToken(int *error){
                     *error = ERROR_LEX;
                     stringClear(&sc_buffer);
                     fprintf(stderr, "ERROR_LEX: Unexpected symbol, line: %d.\n", sc_line_cnt);
+                    return sc_token;
                 }
                 break;
             case S_LINE_COMMENT: // #radkovy komentar
@@ -145,18 +147,22 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
-                if (symbol == '=' && isCmntEnd(&symbol)){
+                //fprintf(stderr, "sc_eol : %d\n", sc_was_eol);
+                if (sc_was_eol && symbol == '=' && isCmntEnd(&symbol)){
                     //pokud symbol po end byl \n
                     if (symbol == '\n'){
                         sc_line_cnt++;
-                        sc_was_eol = 0;
-                        sc_token.type = T_EOL;
-                        return sc_token;
+                        sc_was_eol = 1;
+                        state = S_START;
                     //pokud byl jiny whitespace znak, dokonci radek
                     }else{
                         state = S_BC_END;
                     }
+                }else if (symbol == '\n'){
+                    sc_was_eol = 1;
+                    state = S_BLOCK_COMMENT;
                 }else{
+                    sc_was_eol = 0;
                     state = S_BLOCK_COMMENT;
                 }
                 break;
@@ -209,10 +215,12 @@ t_Token getNextToken(int *error){
                     }
                 }else if (symbol == '?' || symbol == '!'){
                     strAdc(&sc_buffer, symbol);
+                    sc_was_eol = 0;
                     sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else{
                     ungetc(symbol, stdin);
+                    sc_was_eol = 0;
                     sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }
@@ -255,6 +263,7 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
+                    return sc_token;
                 }
                 break;
 
@@ -268,6 +277,7 @@ t_Token getNextToken(int *error){
                     fprintf(stderr, "ERROR_LEX: String must be on one line, line: %d\n", sc_line_cnt);
                     *error = ERROR_LEX;
                     state = S_START;
+                    return sc_token;
                 }else if (symbol != 92){ //znaky vetsi nez ascii 31
                     strAdc(&sc_buffer, symbol);
                     state = S_STRING;
@@ -281,6 +291,7 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
+                    return sc_token;
                 }
                 break;
 
@@ -303,10 +314,10 @@ t_Token getNextToken(int *error){
 
             case S_SPECIAL_HEX: //\xhh
                 sc_was_eol = 0;
+                // fprintf(stderr, "symb: %d, %c | SHC: %d |  isVH %d\n", symbol, symbol, string_hex_count, isValidHex(symbol));
                 if (isValidHex(symbol) && string_hex_count <= 2){ //max hex
                     string_hex_count++;
                     strAdc(&sc_buffer, symbol);
-                    // strAdc(&sc_buffer, symbol);
                     if (string_hex_count == 2){
                         state = S_STRING;
                     }else{
@@ -322,6 +333,8 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
+                        return sc_token;
+
                     }
                 }
                 break;
@@ -341,7 +354,8 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    digit_zc = 0;
+                    return sc_token;
+
                 //naschval tady
                 }else if (symbol == '.' && digit_zc <= 1){
                     strAdc(&sc_buffer, symbol);
@@ -373,16 +387,16 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
-                        double_sad = 0;
-                        digit_zc = 0;
+                        return sc_token;
+
                     }
                 }else{
                     fprintf(stderr, "ERROR_LEX: Wrong number format!, line: %d.\n", sc_line_cnt);
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    double_sad = 0;
-                    digit_zc = 0;
+                    return sc_token;
+
 
                 }
                 break;
@@ -404,9 +418,8 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
-                        exponent_sign = 0;
-                        digits_ae = 0;
-                        digit_zc = 0;
+                        return sc_token;
+
                     }
                 }else if (isdigit(symbol)){
                     digits_ae++;
@@ -421,10 +434,7 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    exponent_sign = 0;
-                    digits_ae = 0;
-                    digit_zc = 0;
-
+                    return sc_token;
                 }
                 break;
 
@@ -446,8 +456,7 @@ t_Token getNextToken(int *error){
                     state = S_START;
                     double_sad = 0;
                     digit_zc = 0;
-
-
+                    return sc_token;
                 }
                 break;
         }
@@ -456,19 +465,14 @@ t_Token getNextToken(int *error){
 }
 void stringToIns(string *s){
     string in_s;
-    for (int i = 0; i < s->length; i++){
-        fprintf(stderr, "CHAR: %c INT: %d\n", s->val[i], s->val[i]);
-    }
     stringInit(&in_s);
     stringCopy(&in_s, s);
     stringClear(s);
     int esc_len = 0;
     int length = stringGetLength(&in_s);
-    int was_esc = 0;
     for (int i = 0; i < length; i++){
         if (in_s.val[i] == 92){ // zpetne lomeno
             /* specialni znak */
-            fprintf(stderr, "taddyyy\n");
             stringAddChar(s, 92);
             char nextChar;
             if (i + 1 < length){
@@ -489,7 +493,6 @@ void stringToIns(string *s){
                 //prekopirovani tmp na korektni pozici v output stringu
                 for (unsigned int j = 0; j < strlen(tmp.val); j++){
                     stringAddChar(s, tmp.val[j]);
-                    fprintf(stderr, "for: %d char %c\n", j, tmp.val[j]);
                 }
                 stringFree(&tmp);
                 i += esc_len + 1; //zvys i o prectene znaky
@@ -497,27 +500,32 @@ void stringToIns(string *s){
                 stringAddChar(s, '0');
                 stringAddChar(s, '1');
                 stringAddChar(s, '0');
-                was_esc = 1;
+                i++;
             }else if(nextChar == 't' ){
                 stringAddChar(s, '0');
                 stringAddChar(s, '1');
                 stringAddChar(s, '0');
-                was_esc = 1;
+                i++;
             }else if(nextChar == 's'){
                 stringAddChar(s, '0');
                 stringAddChar(s, '3');
                 stringAddChar(s, '2');
-                was_esc = 1;
+                i++;
             }else if(nextChar == 92){
                 stringAddChar(s, '0');
                 stringAddChar(s, '9');
                 stringAddChar(s, '2');
-                was_esc = 0;
+                i++;
+            }else if(nextChar == '"'){
+                stringAddChar(s, '0');
+                stringAddChar(s, '3');
+                stringAddChar(s, '4');
+                i++;
             }else{
                 stringAddChar(s, '0');
                 stringAddChar(s, '9');
                 stringAddChar(s, '2');
-                was_esc = 0;
+                i++;
             }
         //prevod na nutne escape sekvence
         }else if ((in_s.val[i] >= 0 && in_s.val[i] <= 32) || in_s.val[i] == 35){
@@ -531,17 +539,13 @@ void stringToIns(string *s){
         }else{
             //prevod vstupnich escape sekvenci
             stringAddChar(s, in_s.val[i]);
-            if (was_esc){
-                stringRemoveChar(s);
-                was_esc = 0;
-            }
         }
     }
     stringFree(&in_s);
 }
 int isValidHex(char c){
     //if ((C >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
-    if ((c >= 47 && c <= 57) || (c >= 65 && c <= 70)){
+    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')){
         return 1;
     }else{
         return 0;
@@ -550,7 +554,7 @@ int isValidHex(char c){
 
 
 int isNumberEnding(char c){
-    if (c == '+' || c == '-' || c == '*' || c == ')' || c == '='
+    if (c == '+' || c == '-' || c == '*' || c == ')' || c == '=' || c == '/'
         || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' ' || c == ',' || c == '#'){
         ungetc(c, stdin);
         return 1;

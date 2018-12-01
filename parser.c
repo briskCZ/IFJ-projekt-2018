@@ -22,13 +22,6 @@ int isGlobal(){
 }
 t_symTable* getScopeTable(){
     return (isGlobal()) ? &table : pa_funcLocalTable;
-    // t_symTable *scopeTable;
-    // if (isGlobal()){
-    //     scopeTable = &table;
-    // }else{
-    //     scopeTable = pa_funcLocalTable;
-    // }
-    // return scopeTable;
 }
 
 void isQmExc(t_Token token){
@@ -51,17 +44,23 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
             exit(ERROR_SEMANTIC);
         }
     }else{
-        tmp = tableInsertToken(scope, left);
-        *isNew = 1;
+        tmp = tableSearchItem(scope, left.attr);
+        if (tmp == NULL){
+            tmp = tableInsertToken(scope, left);
+            if (tmp->data->data_type != T_PARAM){
+                tableChangeItemByNode(tmp, 1, -1, 1, isGlobal());
+            }
+            *isNew = 1;
+        }else{
+            *isNew = 0;
+        }
     }
-    tableChangeItemByNode(tmp, 1, type, 1, isGlobal());
-    fprintf(stderr, ">ia> %s:%d\n", tmp->data->name->val, *isNew);
     return tmp;
 }
 /* instrukce pro generator, podle toho zda je leva strana nova a jedna se o volani funkce*/
 void f_callAssIns(int isNew, t_Node *left, t_Node *right){
     if (isNew){
-        addInst(PI_ASS_DECL_FUNC, (void*)left, (void*)right, NULL, 0);
+        addInst(PI_ASS_DECL_FUNC, (void*)left, (void*)right, NULL, pa_while);
     }else{
         addInst(PI_ASS_FUNC, (void*)left, (void*)right, NULL, 0);
     }
@@ -70,7 +69,7 @@ void f_callAssIns(int isNew, t_Node *left, t_Node *right){
 /* instrukce pro generator, podle toho zda je leva strana nova pri prirazeni*/
 void assIns(int isNew, t_Node *left){
     if(isNew){
-        addInst(PI_ASS_DECL, (void*)left, NULL, NULL, 0);
+        addInst(PI_ASS_DECL, (void*)left, NULL, NULL, pa_while);
     }else{
         addInst(PI_ASS, (void*)left, NULL, NULL, 0);
     }
@@ -92,16 +91,14 @@ void assign(t_Token left){
                     P(">a>local_scope");
                     t_Node *leftVar = isAssignable(left, ta.type, &isNew, pa_funcLocalTable);
                     t_Node *rightVar = tableSearchItem(&table, ta.attr);
-                    if (rightVar != NULL){
+                    if (rightVar != NULL && rightVar->data->is_var == 0){
                         //byla nalezena a je funkce
                         P(">a>local_scope>func_call");
-                        if (rightVar->data->is_var == 0){
-                            node = rightVar;
-                            f_call(ta, tb);
-                            f_callAssIns(isNew, leftVar, rightVar);
-                            tableChangeItemByNode(leftVar, 1, T_PARAM, 1, 0);
-                            return;
-                        }
+                        node = rightVar;
+                        f_call(ta, tb);
+                        f_callAssIns(isNew, leftVar, rightVar);
+                        tableChangeItemByNode(leftVar, 1, T_PARAM, 1, 0);
+                        return;
                     }else{
                     /* polozka nebyla nalezena v globalni tabulce - neni funkce*/
                         rightVar = tableSearchItem(pa_funcLocalTable, ta.attr);
@@ -109,7 +106,7 @@ void assign(t_Token left){
                             /* promenan je parametr a nebo lokalni */
                             P(">a>local_scope>param|locvar");
                             exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
-                            fprintf(stderr, ">>a>local_scope>param|locvar>navrTypExpr: %d\n", ret_type);
+                            // fprintf(stderr, ">>a>local_scope>param|locvar>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 0);
                             assIns(isNew, leftVar);
                             return;
@@ -118,12 +115,12 @@ void assign(t_Token left){
                             P(">a>local_scope>a=a");
                             ta.type = T_NIL;
                             exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
-                            fprintf(stderr, ">>a>local_scope>a=a>navrTypExpr: %d\n", ret_type);
+                            // sfprintf(stderr, ">>a>local_scope>a=a>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 0);
                             assIns(isNew, leftVar);
                             return;
                         }else{
-                            fprintf(stderr, "ERROR_SEMANTIC: Variable: %s not defined on line: %d\n", rightVar->data->name->val, sc_line_cnt);
+                            fprintf(stderr, "ERROR_SEMANTIC: Variable: %s not defined on line: %d\n",  ta.attr.val, sc_line_cnt);
                             cleanAll();
                             exit(ERROR_SEMANTIC);
                         }
@@ -137,7 +134,7 @@ void assign(t_Token left){
                             /* promenna */
                             P(">a>global_scope>a=var");
                             exprParse(ta, tb, NULL, 1, &ret_type);
-                            fprintf(stderr, ">a>global_scope>a=var>navrTypExpr: %d\n", ret_type);
+                            // fprintf(stderr, ">a>global_scope>a=var>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 1);
                             assIns(isNew, leftVar);
                             return;
@@ -161,7 +158,7 @@ void assign(t_Token left){
                             //promenna je urcite nova, nebyla v tabulce symbolu
                             t_Node *leftVar = isAssignable(left, ta.type, &isNew, &table);
                             exprParse(ta, tb, NULL, 1, &ret_type);
-                            fprintf(stderr, ">a>global_scope>navrTypExpr: %d\n", ret_type);
+                            // fprintf(stderr, ">a>global_scope>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 1);
                             assIns(isNew, leftVar);
                             return;
@@ -185,7 +182,7 @@ void assign(t_Token left){
                     fprintf(stderr, "ERROR_SEMANTIC: Function not defined: %s on line %d\n", ta.attr.val, sc_line_cnt);
                     cleanAll();
                     exit(ERROR_SEMANTIC);
-                }else if(rightVar->data->defined == 0){
+                }else if(isGlobal() && rightVar->data->defined == 0){
                     fprintf(stderr, "ERROR_SEMANTIC: Function not defined above: %s on line %d\n", ta.attr.val, sc_line_cnt);
                     cleanAll();
                     exit(ERROR_SEMANTIC);
@@ -215,8 +212,12 @@ void assign(t_Token left){
             case T_EQ_REL:
             case T_NOT_EQ:{
                 P(">a>expr");
+                t_symTable *tablet = getScopeTable();
+                //fprintf(stderr, "PA: %p\n", pa_funcLocalTable);
+                tablePrint(tablet, 0);
                 t_Node *leftVar = isAssignable(left, ta.type, &isNew, getScopeTable());
                 t_Token t = exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
+                //fprintf(stderr, ">a>expr ret_val %d, isNew %d\n", ret_type, isNew);
                 if (t.type != T_EOL) PRINT_SYNTAX_ERROR("EOL after expr assign");
                 tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
                 assIns(isNew, leftVar);
@@ -233,7 +234,7 @@ void assign(t_Token left){
         t_Node *leftVar = isAssignable(left, ta.type, &isNew, getScopeTable());
         t_Token t = exprParse(ta, ta, getScopeTable(), 0, &ret_type);
         if (t.type != T_EOL) PRINT_SYNTAX_ERROR("EOL after term assign");
-
+        //fprintf(stderr, ">a>ret_Type: %d\n", ret_type);
         tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
         assIns(isNew, leftVar);
     }else{
@@ -245,6 +246,9 @@ void f_call(t_Token ta, t_Token tb){
     //ta a tb jenom pro informaci o ID a dalsim tokenu nactenem po volani funkce
     int param_cnt = 0;
     P("--fcall");
+    if (!isGlobal() && !stringCompare(&ta.attr, node->data->name)){
+        fprintf(stderr, "Rekurzivni volani %s \n", ta.attr.val);
+    }
     /* pripadne vlozeni do tabulky symbolu */
     //fprintf(stderr, "funkce: %s\n", ta.attr.val);
     t_Node *temp = tableSearchItem(&table, ta.attr);
@@ -287,7 +291,6 @@ void f_call(t_Token ta, t_Token tb){
     /* TODO znova pokud je funkce volana poprve a jeste neni definovana */
 
     if(stringCompareConst(&ta.attr, "print") == 0) param_cnt = -1;
-    fprintf(stderr,"params: %d, expected: %d\n", param_cnt, temp->data->params_cnt);
     if (temp->data->defined == 1 && temp->data->params_cnt != param_cnt){
         fprintf(stderr, "PARAM_ERROR: %s called with %d params instead of %d on line: %d\n",
                 stringGet(temp->data->name), param_cnt, temp->data->params_cnt, sc_line_cnt-1);
@@ -311,7 +314,7 @@ void paramHandler(t_Token token, int param_cnt){
         if (token.type == T_ID){
             t_Node *param = tableSearchItem(scopeTable, token.attr);
             /* zda je prametr definovany v localnim scope*/
-            if (param != NULL){
+            if (param != NULL && param->data->is_var){
                 /* pokud je print, volam funkci pro kazdy parametr */
                 if (stringCompareConst(node->data->name, "print") == 0){
                     addInst(PI_FCALL, (void*)node, NULL, NULL, 0);
@@ -348,7 +351,7 @@ void param1(int *param_cnt){
         //term se postara aby se program ukoncil s chybou
         if (node != NULL && !node->data->defined){
             if (token.type != T_ID)
-                PRINT_SYNTAX_ERROR("ID not");
+                PRINT_SYNTAX_ERROR("ID");
         }else{
             term(token);
         }
@@ -422,8 +425,8 @@ void param2(t_Token token, int *param_cnt){
         term(token);
         P("__fcall param2");
         //pokud je definovana , TODO pokud neni definovana ale muze byt
-        paramHandler(token, *param_cnt);
         (*param_cnt)++;
+        paramHandler(token, *param_cnt);
         param22(param_cnt);
     }
 }
@@ -433,8 +436,8 @@ void param22(int *param_cnt){
     if (token.type == T_COMMA){
         token = tarrGetNextToken(&token_array);
         term(token);
-        paramHandler(token, *param_cnt);
         (*param_cnt)++;
+        paramHandler(token, *param_cnt);
         param22(param_cnt);
     }else if (token.type == T_EOL){
         return;
@@ -493,8 +496,6 @@ void sec2(){
         }else{
             PRINT_SYNTAX_ERROR("EOL after ELSE");
         }
-    }else if (token.type == T_DEF){
-        PRINT_SYNTAX_ERROR("DEF not");
     }else if (token.type != T_EOF && token.type != T_END){
         P("--dostal jsem se sem");
         code(token);
@@ -512,15 +513,19 @@ void code(t_Token token){
             P("--IF");
             token = tarrGetNextToken(&token_array);
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type); //TODO
-            addInst(PI_IF_START, NULL, NULL, NULL, 0);
+            addInst(PI_IF_START, (void*)pa_if_count, NULL, NULL, 0);
+            pa_if_count++;
             if (token.type == T_THEN){
                 P("--then");
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_EOL){
                     sec2();
-                    addInst(PI_IF_ELSE, NULL, NULL, NULL, 0);
+                    pa_if_count--;
+                    addInst(PI_IF_ELSE, (void*)pa_if_count, NULL, NULL, 0);
+                    pa_if_count++;
                     sec1();
-                    addInst(PI_IF_END, NULL, NULL, NULL, 0);
+                    pa_if_count--;
+                    addInst(PI_IF_END, (void*)pa_if_count, NULL, NULL, 0);
                 }else{
                     PRINT_SYNTAX_ERROR("EOL after THEN");
                 }
@@ -533,13 +538,22 @@ void code(t_Token token){
             P("--WHILE");
             /* WHILE */
             token = tarrGetNextToken(&token_array);
-            addInst(PI_WHILE_START, NULL, NULL, NULL, 0);
+            if (pa_while_count == 0){
+                setActive(list->last);
+            }
+            addInst(PI_WHILE_START, (void*)pa_while_count, NULL, NULL, 0);
+            pa_while_count++;
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type);
+            addInst(PI_WHILE_EX, NULL, NULL, NULL, 0);
             if (token.type == T_DO){
+                pa_while = 1;
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_EOL){
                     sec1();
-                    addInst(PI_WHILE_END, NULL, NULL, NULL, 0);
+                    pa_while = 0;
+                    pa_while_count--;
+                    addInst(PI_WHILE_END, (void*)pa_while_count, NULL, NULL, 0);
+
                 }else{
                     PRINT_SYNTAX_ERROR("EOL after DO");
                 }
@@ -626,6 +640,7 @@ void code(t_Token token){
 void program(){
     P("--program");
     t_Token token = tarrGetNextToken(&token_array);
+    t_Node *funcNode = NULL;
     switch (token.type){
         case T_EOF:
             return;
@@ -644,6 +659,7 @@ void program(){
                     exit(ERROR_SEMANTIC);
                 }else{
     				node = tableInsertToken(&table, token);
+                    funcNode = node;
     				if (node != NULL){
                         //fprintf(stderr, "--fce: %s, %d\n", node->data->name->val, node->data->is_var);
                         pa_funcLocalTable = node->data->local_symTable;
@@ -652,12 +668,14 @@ void program(){
                     }
                 }
                 addInst(PI_BEGINFUNC, (void*)node, NULL, NULL, 0);
+                pa_node_cnt++;
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_LEFT_PAR){
                     //param11 pohlida eol za )
                     param1(&def_params_cnt);
                     tableChangeItemByNode(node, 0, 0, 1, 1);
                     sec1();
+                    node = funcNode;
                     addInst(PI_ENDFUNC, (void*)node, NULL, NULL, 0);
                     pa_funcLocalTable = NULL;
                     program();
@@ -688,6 +706,7 @@ void addSingleBuiltin(char* name, int params_cnt){
     tableChangeItemByNode(n, 0, 0, 1, 1);
     addInst(PI_BUILTFUNC, (void*)n, NULL, NULL, 0);
     n->data->params_cnt = params_cnt;
+    stringFree(&toadd.attr);
 }
 void addBuiltins(){
     addSingleBuiltin("inputs", 0);
@@ -707,13 +726,14 @@ void cleanAll(){
     scannerClean();
 }
 int main(){
-
+    pa_if_count = 0;
+    pa_while_count = 0;
     scannerInit();
     table = tableInit();
     listInit();
     tarrInit(&token_array);
     tarrFill(&token_array);
-    //tarrPrint(&token_array);
+    // tarrPrint(&token_array);
     tarrGetFuncInfo(&token_array);
     addBuiltins();
     //tablePrint(&table, 0);

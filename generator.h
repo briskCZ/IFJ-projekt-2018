@@ -19,6 +19,15 @@
 
 unsigned uniqueNum; //pocitadlo promennych
 unsigned func_cnt; //pocitadlo funkci
+unsigned temp_num;
+unsigned temp_label;
+unsigned only_in_gen;
+unsigned label_in_gen;
+unsigned while_label;
+unsigned podminka_num;
+unsigned while_max;
+unsigned if_max;
+unsigned if_label;
 
 /*
 vygeneruje kod

@@ -27,10 +27,8 @@ int tarrFill(t_TokenArr *ta){
     do {
         token = getNextToken(&error);
         if (error == ERROR_LEX || error == ERROR_INTERNAL){
-            fprintf(stderr, "LEXICAL ERROR: on line: %d\n", sc_line_cnt);
             cleanAll();
             exit(error);
-            return error;
         }else{
             tarrAddToken(ta, token);
         }

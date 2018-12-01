@@ -27,6 +27,7 @@ t_TokenArr token_array;  //pole pro ulozeni tokenu pro druhy pruchod
 
 int tarrInit(t_TokenArr *ta);
 int tarrAddToken(t_TokenArr *ta, t_Token token);
+void tarrGetFuncInfo(t_TokenArr *ta);
 t_Token tarrGetNextToken(t_TokenArr *ta);
 t_Token tarrGetPrintNextToken(t_TokenArr *ta);
 int tarrReturnToken(t_TokenArr *ta);

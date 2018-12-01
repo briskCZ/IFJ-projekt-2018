@@ -25,7 +25,7 @@ int checkRule(t_IStack *s, int *type){
 		return R_ID;
 	}
 
-	i_display(s);
+	//i_display(s);
     elem2 = i_topPop(s, &type2);
     elem3 = i_topPop(s, &type3);
     if (elem1 == T_RIGHT_PAR && elem2 == PT_E_RULE && elem3 == T_LEFT_PAR)
@@ -39,8 +39,8 @@ int checkRule(t_IStack *s, int *type){
 		*type = resultType(type1, type3);
 		int res;
 
-		fprintf(stderr, "-- EXPR: t1: %d | t2: %d\n", type1, type3);
-		fprintf(stderr, "-- EXPR: res: %d\n", *type);
+		//fprintf(stderr, "-- EXPR: t1: %d | t2: %d\n", type1, type3);
+		//fprintf(stderr, "-- EXPR: res: %d\n", *type);
         switch (elem2)
         {
             case T_PLUS:
@@ -53,7 +53,9 @@ int checkRule(t_IStack *s, int *type){
 				else
 				{
 					fprintf(stderr, "EXPR ERROR: scitani dvou cisle alespon jedno z nich je T_NIL nebo T_STRING on line: %d\n", sc_line_cnt);
-					exit(ERROR_SEM_COMPATIBILITY);
+                    i_stackDestroy(s);
+                    cleanAll();
+                    exit(ERROR_SEM_COMPATIBILITY);
 				}
 				return R_PLUS;
             case T_MINUS:
@@ -97,7 +99,9 @@ int checkRule(t_IStack *s, int *type){
 				break;
             default:
                 fprintf(stderr, "EXPR ERROR: ERROR SYNTAX on line: %d\n", sc_line_cnt);
-                return ERROR_SYNTAX;
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SYNTAX);
 		}
 
 		if(elem2 == T_MINUS || elem2 == T_MUL || elem2 == T_DIV)
@@ -105,17 +109,23 @@ int checkRule(t_IStack *s, int *type){
 			if (*type == T_STRING)
 			{
 				fprintf(stderr, "EXPR ERROR: - * / S T_STRING on line: %d\n", sc_line_cnt);
-				exit(ERROR_SEM_COMPATIBILITY);
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SEM_COMPATIBILITY);
 			}
 			else if (*type == T_NIL)
 			{
 				fprintf(stderr, "EXPR ERROR: - * / s T_NIL on line: %d\n", sc_line_cnt);
-				exit(ERROR_SEM_COMPATIBILITY);
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SEM_COMPATIBILITY);
 			}
 			else if (*type == NON_TYPE)
 			{
 				fprintf(stderr, "EXPR ERROR: - * / s T_NIL nebo T_STRING on line: %d\n", sc_line_cnt);
-				exit(ERROR_SEM_COMPATIBILITY);
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SEM_COMPATIBILITY);
 			}
             /*else if (*type == T_PARAM)
             {
@@ -128,12 +138,16 @@ int checkRule(t_IStack *s, int *type){
 			if (*type == T_NIL)
 			{
 				fprintf(stderr, "EXPR ERROR: > < >= <= s T_NIL: on line: %d\n", sc_line_cnt);
-				exit(ERROR_SEM_COMPATIBILITY);
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SEM_COMPATIBILITY);
 			}
 			if (*type == NON_TYPE)
 			{
 				fprintf(stderr, "EXPR ERROR: > < >= <= s NON_TYPE on line: %d\n", sc_line_cnt);
-				exit(ERROR_SEM_COMPATIBILITY);
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SEM_COMPATIBILITY);
 			}
 			*type = NON_TYPE; //s vysledkem nelze dal pracovat
 		}
@@ -146,8 +160,10 @@ int checkRule(t_IStack *s, int *type){
     }
     else
     {
-        fprintf(stderr, "ERROR SYNTAX\n");
-        return ERROR_SYNTAX;
+        fprintf(stderr, "ERROR SYNTAX: unexpected symbol in expression on line: %d\n", sc_line_cnt);
+        i_stackDestroy(s);
+        cleanAll();
+        exit(ERROR_SYNTAX);
     }
 }
 
@@ -191,7 +207,7 @@ int tokenToIndex(int type){
 
 t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb, int *return_type){
     /* Precedencni tabulka */
-	debug_print(local_table, t, tb); //DEBUG PRINT TODO
+	//debug_print(local_table, t, tb); //DEBUG PRINT TODO
 
     int prec_table[PT_SIZE][PT_SIZE] = {
         {PT_R, PT_L, PT_R, PT_L, PT_R, PT_L, PT_R},
@@ -268,22 +284,26 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
                     if (i_topPop(&s, &temp) == PT_L)
                     {
 			             i_push(&s, PT_E_RULE, type);
-                        fprintf(stderr, "expr_parser: RULE: %d | %d\n", r, type);
+                        //fprintf(stderr, "expr_parser: RULE: %d | %d\n", r, type);
                     }
                 }
                 else
                 {
 					fprintf(stderr, "EXPR ERROR: spatny symbol na zasobniku on line: %d\n", sc_line_cnt);
-                    exit(ERROR_SYNTAX);
+                    i_stackDestroy(&s);
+                    cleanAll();
+                    exit(ERROR_SEM_OTHER);
                 }
                 break;
             default:
 				fprintf(stderr, "EXPR ERROR: prazdne misto v tabulce on line: %d\n", sc_line_cnt);
-                exit(ERROR_SYNTAX);
+                i_stackDestroy(&s);
+                cleanAll();
+                exit(ERROR_SEM_COMPATIBILITY);
         }
     } while(!isEnd(b) || !isEnd(i_termTop(&s, &type)));
 
-	fprintf(stderr, "datovy typ vyrazu: %d\n", *return_type);
+	//fprintf(stderr, "datovy typ vyrazu: %d\n", *return_type);
     i_stackDestroy(&s);
 	return b_token;
 }
@@ -330,7 +350,9 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 			if (aux == NULL) //nenasli jsme
 			{
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu on line: %d\n", sc_line_cnt);
-				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
 			}
 			else // nasli jsme
 			{
@@ -339,7 +361,9 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 					if (aux->data->defined == 0)
 					{
 						fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu on line: %d\n", sc_line_cnt);
-						exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+                        i_stackDestroy(s);
+                        cleanAll();
+                        exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
 					}
 				}
 			}
@@ -350,12 +374,16 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 			if (aux == NULL) 			//nenasli jsme ani v globalni tabulce symbolu
 			{
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu on line: %d\n", sc_line_cnt);
-				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
 			}
 			if (aux->data->defined == 0) // neni definovana
 			{
 				fprintf(stderr, "EXPR ERROR: nedefinovana promenna ve vyrazu on line: %d\n", sc_line_cnt);
-				exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
+                i_stackDestroy(s);
+                cleanAll();
+                exit(ERROR_SEMANTIC);	// ---> chyba: prace s nedefinovanou promennou
 			}
 		}
 
@@ -363,7 +391,9 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 		if (aux->data->is_var == 0)
 		{
 			fprintf(stderr, "EXPR ERROR: funkce ve vyrazu on line: %d\n", sc_line_cnt);
-			exit(ERROR_SEM_COMPATIBILITY);
+            i_stackDestroy(s);
+            cleanAll();
+            exit(ERROR_SEM_COMPATIBILITY);
 		}
 
 		//fprintf(stderr, "typeeeeeeE: %s | %d\n", aux->data->name->val, aux->data->data_type);
@@ -404,14 +434,14 @@ void debug_print(struct table *local_table, t_Token t, t_Token tb)
 {
     if (local_table == NULL)
 	{
-        fprintf(stderr, "--globalni scope\n");
+        //fprintf(stderr, "--globalni scope\n");
     }
 	else
 	{
-        fprintf(stderr, "--lokalni scope\n");
+        //fprintf(stderr, "--lokalni scope\n");
         tablePrint(local_table, 1);
     }
-	fprintf(stderr, "**** EXPR ****\n");
+	//fprintf(stderr, "**** EXPR ****\n");
 	printToken(t, 0);
 	printToken(tb, 0);
 }
