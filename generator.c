@@ -1310,7 +1310,10 @@ void genNeq(){
 	printf("POPFRAME\n");
 }
 
-
+void genDekl(){
+	printf("#decklarace pred whilem\n");
+	printf("DEFVAR %s@$%p\n",ramec(),list->first->data->adr1);
+}
 
 //vypis na merlinovi
 // ./main < test2 1> out.ass ; ../rubyset/ic18int ./out.ass
@@ -1443,6 +1446,10 @@ int generate()
 			case PI_LTE:
 				convertTypeLtGtLteGte();
 				genLte();
+				break;
+				
+			case PI_WHILE_DECL:
+				genDekl();
 				break;
 
 
