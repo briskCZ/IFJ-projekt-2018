@@ -1089,7 +1089,6 @@ void convertTypeEqNeq(){
 	uniqueNum++;
 	printf("LABEL $LEND%d\n", aux);
 
-
 	printf("POPFRAME\n");
 }
 
@@ -1242,37 +1241,52 @@ void genLte(){
 }
 
 void genEq(){
-
-
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
 	printf("DEFVAR %s@$ISNIL%d\n","LF",temp_num);
-	printf("POPS %s@$ISNIL%d\n","LF",temp_num++);
+	printf("POPS %s@$ISNIL%d\n","LF",temp_num);
 
 	printf("DEFVAR %s@$type%d\n","LF",temp_num);
-	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num, "LF",temp_num-1);
+	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num, "LF",temp_num);
+	temp_num++;
 
-
-	printf("JUMPIFEQ $LISNIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num);
+	printf("JUMPIFEQ $LISNIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num-1);
 
 	printf("PUSHS %s@$ISNIL%d\n","LF",temp_num-1);
 	printf("EQS\n");
 	printf("JUMP $LENDISNIL%d\n",temp_label);
 
 	printf("LABEL $LISNIL%d\n",temp_label++);
-
-	printf("POPS %s@$ISNIL%d\n","LF",temp_num-1);
-	printf("POPS %s@$ISNIL%d\n","LF",temp_num-1);
-
-	printf("PUSHS bool@false\n");
+	temp_num++;
+	
+	printf("DEFVAR %s@$ISNIL%d\n","LF",temp_num);
+	printf("POPS %s@$ISNIL%d\n","LF",temp_num);
+	printf("DEFVAR %s@$type%d\n","LF",temp_num);
+	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num-1, "LF",temp_num++);
+	
+	printf("DEFVAR %s@$ISNIL%d\n","LF",temp_num);
+	printf("POPS %s@$ISNIL%d\n","LF",temp_num);
+	printf("DEFVAR %s@$type%d\n","LF",temp_num);
+	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num-1, "LF",temp_num++);
+	
+	printf("JUMPIFEQ $LONENIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num-2);//jeden je nil
+	printf("JUMP $FALSENIL%d\n",temp_label);
+	
+	printf("LABEL $LONENIL%d\n",temp_label);
+	printf("JUMPIFNEQ $FALSENIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num-1);//druhy je nil
+	printf("PUSHS bool@true\n");//jsou to dva nily
+	printf("JUMP $LENDISNIL%d\n",temp_label-1);
+	
+	printf("LABEL $FALSENIL%d\n",temp_label);
+	printf("PUSHS bool@false\n");//nejsou to stejne typy
 
 	printf("LABEL $LENDISNIL%d\n",temp_label-1);
 	temp_label++;
 	temp_num++;
 
-
 	printf("POPFRAME\n");
+
 }
 
 void genNeq(){
