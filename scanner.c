@@ -19,9 +19,6 @@ t_Token getNextToken(int *error){
         sc_using_mem_token = 0;
         return sc_mem_token;
     }
-    t_Token sc_token;
-    stringInit(&sc_token.attr);
-
     *error = SUCCESS;
     stringClear(&sc_buffer);
     stringClear(&sc_token.attr);
@@ -45,10 +42,11 @@ t_Token getNextToken(int *error){
             if (sc_abi == stringGetLength(&sc_aux_buffer)){
                 sc_uab = 0;
                 sc_abi = 0;
-                stringClear(&sc_aux_buffer);    }
+                stringClear(&sc_aux_buffer);
+            }
         }
         //fprintf(stderr, "Symbol: %d line: %d\n", symbol, sc_line_cnt);
-        //printf("DEBUG: S: %d |SYM: %d | UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
+        // fprintf(stderr,"DEBUG: S: %d |SYM: %d %c| UAB: %d | AB: %s | ABI: %d| B: %s | LC: %d\n", state, symbol, symbol, sc_uab, stringGet(&sc_aux_buffer), sc_abi, stringGet(&sc_buffer), sc_line_cnt);
         if (symbol == EOF){
             sc_token.type = T_EOF;
             return sc_token;
@@ -58,11 +56,12 @@ t_Token getNextToken(int *error){
                 if (isspace(symbol)){
                     if (symbol == '\n'){
                         sc_line_cnt++;
-                        fprintf(stderr,"Line: %d\n", sc_line_cnt);
+                        //fprintf(stderr,"Line: %d\n", sc_line_cnt);
                         sc_was_eol = 1;
                         sc_token.type = T_EOL;
                         return sc_token;
                     }else{
+                        sc_was_eol = 0;
                         state = S_START;
                     }
                 }else if (symbol == '#'){ //
@@ -114,6 +113,7 @@ t_Token getNextToken(int *error){
                     *error = ERROR_LEX;
                     stringClear(&sc_buffer);
                     fprintf(stderr, "ERROR_LEX: Unexpected symbol, line: %d.\n", sc_line_cnt);
+                    return sc_token;
                 }
                 break;
             case S_LINE_COMMENT: // #radkovy komentar
@@ -147,18 +147,22 @@ t_Token getNextToken(int *error){
                 break;
 
             case S_BLOCK_COMMENT: //zustan dokud nenarazis na end
-                if (symbol == '=' && isCmntEnd(&symbol)){
+                //fprintf(stderr, "sc_eol : %d\n", sc_was_eol);
+                if (sc_was_eol && symbol == '=' && isCmntEnd(&symbol)){
                     //pokud symbol po end byl \n
                     if (symbol == '\n'){
                         sc_line_cnt++;
-                        sc_was_eol = 0;
-                        sc_token.type = T_EOL;
-                        return sc_token;
+                        sc_was_eol = 1;
+                        state = S_START;
                     //pokud byl jiny whitespace znak, dokonci radek
                     }else{
                         state = S_BC_END;
                     }
+                }else if (symbol == '\n'){
+                    sc_was_eol = 1;
+                    state = S_BLOCK_COMMENT;
                 }else{
+                    sc_was_eol = 0;
                     state = S_BLOCK_COMMENT;
                 }
                 break;
@@ -211,10 +215,12 @@ t_Token getNextToken(int *error){
                     }
                 }else if (symbol == '?' || symbol == '!'){
                     strAdc(&sc_buffer, symbol);
+                    sc_was_eol = 0;
                     sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }else{
                     ungetc(symbol, stdin);
+                    sc_was_eol = 0;
                     sc_token.type = T_ID; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
                 }
@@ -257,18 +263,25 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
+                    return sc_token;
                 }
                 break;
 
             case S_STRING: //"string"
                 sc_was_eol = 0;
                 if (symbol == '"'){
+                    stringToIns(&sc_buffer);
                     sc_token.type = T_STRING; strCopy(&sc_token.attr, &sc_buffer);
                     return sc_token;
-                }else if (symbol > 31 && symbol != '\\'){ //znaky vetsi nez ascii 31
+                }else if (symbol == '\n'){
+                    fprintf(stderr, "ERROR_LEX: String must be on one line, line: %d\n", sc_line_cnt);
+                    *error = ERROR_LEX;
+                    state = S_START;
+                    return sc_token;
+                }else if (symbol != 92){ //znaky vetsi nez ascii 31
                     strAdc(&sc_buffer, symbol);
                     state = S_STRING;
-                }else if (symbol == '\\'){
+                }else if (symbol == 92){
                     //specialni znak
                     strAdc(&sc_buffer, symbol);
                     state = S_SPECIAL_SYMBOL;
@@ -278,6 +291,7 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
+                    return sc_token;
                 }
                 break;
 
@@ -288,23 +302,23 @@ t_Token getNextToken(int *error){
                     state = S_STRING;
                 }else if (symbol == 'x'){
                     string_hex_count = 0;
-                    stringClear(&sc_aux_buffer);
+                    strAdc(&sc_buffer, symbol);
                     state = S_SPECIAL_HEX;
                 }else{
                     /*fprintf(stderr, "ERROR_LEX: Invalid escape sequence symbol\n");
                     *error = ERROR_LEX; ==podle fora ok*/
                     state = S_STRING;
+                    ungetc(symbol, stdin);
                 }
                 break;
 
             case S_SPECIAL_HEX: //\xhh
                 sc_was_eol = 0;
+                // fprintf(stderr, "symb: %d, %c | SHC: %d |  isVH %d\n", symbol, symbol, string_hex_count, isValidHex(symbol));
                 if (isValidHex(symbol) && string_hex_count <= 2){ //max hex
                     string_hex_count++;
-                    strAdc(&sc_aux_buffer, symbol);
-                    // strAdc(&sc_buffer, symbol);
+                    strAdc(&sc_buffer, symbol);
                     if (string_hex_count == 2){
-                        sc_buffer.val[sc_buffer.length-1] = hexToChar(&sc_aux_buffer);
                         state = S_STRING;
                     }else{
                         state = S_SPECIAL_HEX;
@@ -312,7 +326,6 @@ t_Token getNextToken(int *error){
                 }else{
                     //pokud je hexa pouze jeden symbol
                     if (!isValidHex(symbol) && string_hex_count == 1){
-                        sc_buffer.val[sc_buffer.length-1] = hexToChar(&sc_aux_buffer);
                         state = S_STRING;
                         ungetc(symbol, stdin);
                     }else{
@@ -320,12 +333,13 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
+                        return sc_token;
+
                     }
                 }
                 break;
 
             case S_DIGIT: //vychozi stav pro cisla (kvuli poctu nul)
-                ////printf("DEBUG: WNZ %d | DZC %d | SYM %d \n", was_nonzero, digit_zc, symbol);
                 sc_was_eol = 0;
                 if (symbol == '0')
                     digit_zc++;
@@ -340,7 +354,8 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    digit_zc = 0;
+                    return sc_token;
+
                 //naschval tady
                 }else if (symbol == '.' && digit_zc <= 1){
                     strAdc(&sc_buffer, symbol);
@@ -372,16 +387,16 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
-                        double_sad = 0;
-                        digit_zc = 0;
+                        return sc_token;
+
                     }
                 }else{
                     fprintf(stderr, "ERROR_LEX: Wrong number format!, line: %d.\n", sc_line_cnt);
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    double_sad = 0;
-                    digit_zc = 0;
+                    return sc_token;
+
 
                 }
                 break;
@@ -403,10 +418,7 @@ t_Token getNextToken(int *error){
                         stringClear(&sc_buffer);
                         *error = ERROR_LEX;
                         state = S_START;
-                        exponent_sign = 0;
-                        digits_ae = 0;
-                        digit_zc = 0;
-
+                        return sc_token;
 
                     }
                 }else if (isdigit(symbol)){
@@ -422,10 +434,7 @@ t_Token getNextToken(int *error){
                     stringClear(&sc_buffer);
                     *error = ERROR_LEX;
                     state = S_START;
-                    exponent_sign = 0;
-                    digits_ae = 0;
-                    digit_zc = 0;
-
+                    return sc_token;
                 }
                 break;
 
@@ -447,31 +456,104 @@ t_Token getNextToken(int *error){
                     state = S_START;
                     double_sad = 0;
                     digit_zc = 0;
-
-
+                    return sc_token;
                 }
                 break;
         }
     }
 
 }
-
+void stringToIns(string *s){
+    string in_s;
+    stringInit(&in_s);
+    stringCopy(&in_s, s);
+    stringClear(s);
+    int esc_len = 0;
+    int length = stringGetLength(&in_s);
+    for (int i = 0; i < length; i++){
+        if (in_s.val[i] == 92){ // zpetne lomeno
+            /* specialni znak */
+            stringAddChar(s, 92);
+            char nextChar;
+            if (i + 1 < length){
+                nextChar = in_s.val[i+1];
+            }
+            if (nextChar == 'x'){
+                string tmp;
+                stringInit(&tmp);
+                if (i + 2 < length && isValidHex(in_s.val[i+2])){
+                    esc_len = 1;
+                    stringAddChar(&tmp, in_s.val[i+2]);
+                    if (i + 3 < length && isValidHex(in_s.val[i+3])){
+                        esc_len = 2;
+                        stringAddChar(&tmp, in_s.val[i+3]);
+                    }
+                }
+                sprintf(tmp.val, "%03ld", strtol(tmp.val, NULL, 16));
+                //prekopirovani tmp na korektni pozici v output stringu
+                for (unsigned int j = 0; j < strlen(tmp.val); j++){
+                    stringAddChar(s, tmp.val[j]);
+                }
+                stringFree(&tmp);
+                i += esc_len + 1; //zvys i o prectene znaky
+            }else if(nextChar == 'n' ){
+                stringAddChar(s, '0');
+                stringAddChar(s, '1');
+                stringAddChar(s, '0');
+                i++;
+            }else if(nextChar == 't' ){
+                stringAddChar(s, '0');
+                stringAddChar(s, '0');
+                stringAddChar(s, '9');
+                i++;
+            }else if(nextChar == 's'){
+                stringAddChar(s, '0');
+                stringAddChar(s, '3');
+                stringAddChar(s, '2');
+                i++;
+            }else if(nextChar == 92){
+                stringAddChar(s, '0');
+                stringAddChar(s, '9');
+                stringAddChar(s, '2');
+                i++;
+            }else if(nextChar == '"'){
+                stringAddChar(s, '0');
+                stringAddChar(s, '3');
+                stringAddChar(s, '4');
+                i++;
+            }else{
+                //odstrani vlozene zpetne lomitko a necha znak znakem
+                stringRemoveChar(s);
+            }
+        //prevod na nutne escape sekvence
+        }else if ((in_s.val[i] >= 0 && in_s.val[i] <= 32) || in_s.val[i] == 35){
+            char tmp[3];
+            sprintf(tmp, "%03u", in_s.val[i]);
+            //pridej \\xyz
+            stringAddChar(s, 92);
+            stringAddChar(s, tmp[0]);
+            stringAddChar(s, tmp[1]);
+            stringAddChar(s, tmp[2]);
+        }else{
+            //prevod vstupnich escape sekvenci
+            stringAddChar(s, in_s.val[i]);
+        }
+    }
+    stringFree(&in_s);
+}
 int isValidHex(char c){
     //if ((C >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
-    if ((c >= 47 && c <= 57) || (c >= 65 && c <= 70)){
+    if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')){
         return 1;
     }else{
         return 0;
     }
 }
 
-int hexToChar(string *s){
-    return (char)strtol(stringGet(s), NULL, 16); //16tkova soustava
-}
 
 int isNumberEnding(char c){
-    if (c == '+' || c == '-' || c == '*' || c == ')' || c == '='
-        || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' '){
+    if (c == '+' || c == '-' || c == '*' || c == ')' || c == '=' || c == '/'
+        || c == '<' || c == '>' || c == '!' || c == '\n' || c == ' ' || c == ',' || c == '#'){
         ungetc(c, stdin);
         return 1;
     }else{
@@ -481,20 +563,9 @@ int isNumberEnding(char c){
 
 int isKwEnd(){
     char symbol = getc(stdin);
-    if (isspace(symbol) || symbol == '#'){
+    if (!isalnum(symbol) || isspace(symbol) || symbol == '#'){
         //pokud bude eol, tak ho musime taky vratit
-        if (symbol == '\n'){
-            sc_line_cnt++;
-            sc_was_eol = 1;
-            t_Token ret;
-            ret.type = T_EOL;
-            stringInit(&ret.attr);
-            returnToken(ret);
-
-        }
-        if (symbol == '#'){
-            ungetc(symbol, stdin);
-        }
+        ungetc(symbol, stdin);
         return 1;
     }else{
         ungetc(symbol, stdin);
@@ -511,6 +582,7 @@ int scannerInit(){
     int ret_val = stringInit(&sc_buffer);
     ret_val += stringInit(&sc_aux_buffer);
     ret_val += stringInit(&sc_mem_token.attr);
+    ret_val += stringInit(&sc_token.attr);
     // ret_val += stringInit(&sc_token.attr);
     return (ret_val == 0) ? SUCCESS : ERROR_INTERNAL;
 }
@@ -520,6 +592,7 @@ void scannerClean(){
     stringFree(&sc_buffer);
     stringFree(&sc_aux_buffer);
     stringFree(&sc_mem_token.attr);
+    stringFree(&sc_token.attr);
 }
 
 int isCmntEnd(char *sym){

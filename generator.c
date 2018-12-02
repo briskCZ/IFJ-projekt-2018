@@ -863,7 +863,7 @@ void genDefVar(){
 			break;
 
 			default:
-				printf("WTF %d\n",a);
+				printf("WTF DFT DFTF FŘ%d\n",a);
 			break;
 		}
 
@@ -1094,7 +1094,6 @@ void convertTypeEqNeq(){
 
 void genIfStart(){
 	int odZdeny = list->first->data->adr1;
-	//fprintf(stderr, "kokoty if %d\n", odZdeny);
 	printf("DEFVAR %s@$podminka%d\n",ramec(),podminka_num);
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
 
@@ -1124,7 +1123,6 @@ void genIfStart(){
 }
 void genIfElse(){
 	int odZdeny = list->first->data->adr1;
-	//fprintf(stderr, "kokoty else %d\n", odZdeny);
 	printf("#if else\n");
 	printf("JUMP $IFEND%d\n",if_label + odZdeny);
 	printf("LABEL $IFL%d\n",if_label + odZdeny);
@@ -1133,7 +1131,6 @@ void genIfElse(){
 }
 void genIfEnd(){
 	int odZdeny = list->first->data->adr1;
-	//fprintf(stderr, "kokoty end %d\n", odZdeny);
 	printf("LABEL $IFEND%d\n",if_label + odZdeny);
 	if (odZdeny == 0){
 		if_label += if_max;
@@ -1325,8 +1322,9 @@ void genNeq(){
 }
 
 void genDekl(){
-	printf("#decklarace pred whilem\n");
+	printf("#decklarace pred whilem nebo ifem nebo cisle\n");
 	printf("DEFVAR %s@$%p\n",ramec(),list->first->data->adr1);
+	printf("MOVE %s@$%p nil@nil\n",ramec(),list->first->data->adr1);
 }
 
 //vypis na merlinovi
@@ -1465,8 +1463,8 @@ int generate()
 			case PI_WHILE_DECL:
 				genDekl();
 				break;
-
-
+				
+				
 			default:
 				break;
 		}
