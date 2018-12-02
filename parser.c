@@ -387,7 +387,7 @@ void param1(int *param_cnt){
 		{
             P("__def param11");
             (*param_cnt)++;
-            paramDefHandler(token, param_cnt);
+            paramDefHandler(token, *param_cnt);
 
 		}else{
             P("call param11");
@@ -414,7 +414,7 @@ void param11(int *param_cnt){
 		{
             P("__def param11");
             (*param_cnt)++;
-            paramDefHandler(token, param_cnt);
+            paramDefHandler(token, *param_cnt);
         }else{
             P("__fcall param11");
             (*param_cnt)++;
