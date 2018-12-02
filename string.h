@@ -8,16 +8,15 @@
  *  Hlavickovy soubor pro abstraktni datovy typ string
 */
 
-#ifndef STRING_H
-#define STRING_H
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "ret_vals.h"
 
-#define STR_ALLOC_INC 16    //blok po kterem se ma alokovat pamet pro s->val
+#ifndef STRING_H
+#define STRING_H
 
+#define STR_ALLOC_INC 16    //blok po kterem se ma alokovat pamet pro s->val
 
 /* Struktura string */
 typedef struct {
@@ -116,10 +115,14 @@ Vrati s->val (retezec se struktury string)
 */
 char * stringGet(string *s);
 
-
 /*
 Debugovaci funkce - vytiskne string
 */
 void stringPrint(string *s);
+/*
+Odstrani posledni znak ze stringu
+@param s - string ze ktereho se ma odstranit
+*/
+void stringRemoveChar(string *s);
 
 #endif

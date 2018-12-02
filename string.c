@@ -8,7 +8,6 @@
  *  Implementace funkci pro string
 */
 #include "string.h"
-
 //Inicialization of string structure
 int stringInit(string *s){
     s->val = malloc(STR_ALLOC_INC*sizeof(char));
@@ -44,7 +43,12 @@ int stringUngetChar(char c, string *s){
     s->val[0] = c;
     return MEMORY_OK;
 }
-
+void stringRemoveChar(string* s){
+    if (s->length - 1 >= 0){
+        s->val[s->length] == '\0';
+        s->length--;
+    }
+}
 //Vlozeni char *str do stringu s, s tim ze v pripade nedostatku pameti ji rozsiri TODO Bugged
 int stringInsert(string *s, char *str){
     int memory_blocks_needed = 0;   //pocet bloku, potrebnych pro ulozeni *str
@@ -71,7 +75,6 @@ int stringInsert(string *s, char *str){
         return MEMORY_OK;
     }
 }
-
 int stringCopy(string *sa, string *sb){
     if (sb->allocated_size > sa->allocated_size){
         sa->val = realloc(sa->val, sb->allocated_size * sizeof(char));
@@ -121,7 +124,7 @@ char *stringGet(string *s){
 }
 
 void stringPrint(string *s){
-    printf("%s | len: %d | alloc: %d\n", s->val, s->length, s->allocated_size);
+    fprintf(stderr, "%s | len: %d | alloc: %d\n", s->val, s->length, s->allocated_size);
 }
 /*
 int main(){

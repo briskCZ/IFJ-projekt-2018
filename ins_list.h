@@ -9,9 +9,10 @@
 */
 
 #ifndef INSLIST_H
-#define INSLIST_H 
+#define INSLIST_H
 
-#include "ret_vals.h" 
+#include "ret_vals.h"
+#include "symtable.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -89,13 +90,32 @@
 #define INS_DPRINT 55
 
 //definovani vlastnich instrukci
-#define PI_BEGINFUNC 60
-#define PI_ENDFUNC 61
+#define PI_BEGINFUNC 60	//def
+#define PI_ENDFUNC 61	//end
 
 #define PI_INIT 62
-/* addInst(INS_DEFVAR, NULL, NULL, NULL);
-	addInst(INS_MOVE, NULL, tabulka, NULL);
-*/
+#define PI_LTE 63
+#define PI_GTE 64
+#define PI_NEQ 65
+#define PI_ADDSTR 66 //secte dva strinky
+#define PI_ADD 67	//secte dve cisla
+#define PI_ASS 81 //expression je hotovy, ulozit promennou
+#define PI_ASS_FUNC 82	//prirazeni navratove hodnoty
+#define PI_ASS_DECL 83	//deklarace + prirazeni vyrazu/promenne
+#define PI_ASS_DECL_FUNC 84 //deklarace + prirazeni navr hodnoty funkce
+#define PI_DEF_PARAM 85	//parametr pri definici
+#define PI_FCALL 86 //volani funkce
+#define PI_FCALL_PARAMT 87 //parametr, ktery neni id
+#define PI_FCALL_PARAMID 88 //parametr promenna
+#define PI_IF_START 89 //zacatek ifu
+#define PI_IF_ELSE 90 //else
+#define PI_IF_END 91 //konec ifu
+#define PI_WHILE_START 92 //zacatek while navesti
+#define PI_WHILE_EX 93 //vyraz v ifu
+#define PI_WHILE_END 94 //konec ifu
+#define PI_WHILE_DECL 96	//deklarace promenne vyhozena pred while
+#define PI_WHILE_DECL_FUNC 96 //deklarace funkce vyhozena pred while
+#define PI_BUILTFUNC 95	//vestavene funkce
 
 typedef struct{
 	int ins_type;
@@ -127,4 +147,4 @@ void deleteFirst();
 void freeList();
 void printList();
 
-#endif //INSLIST_H 
+#endif //INSLIST_H

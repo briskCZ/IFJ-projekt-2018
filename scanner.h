@@ -14,7 +14,6 @@
 #include <limits.h>
 #include "string.h"
 #include "ret_vals.h"
-//#include "trash.h"
 
 #ifndef SCANNER_H
 #define SCANNER_H
@@ -55,6 +54,7 @@
 #define T_INT 24
 #define T_DOUBLE 25
 #define T_STRING 26
+#define T_PARAM 28
 
 
 /* Stavy pro konecny automat */
@@ -94,6 +94,7 @@ int sc_abi; //index v pomocnem bufferu
 int sc_line_cnt; //radek v souboru
 int sc_using_mem_token; //zda pouzivame vraceny token
 int sc_was_eol; //pokud byl eol
+t_Token sc_token;
 
 /* Vyprintuje token */
 void printToken(t_Token t, int error);
@@ -109,14 +110,6 @@ Test zda charakter odpovida hexa formatu
 @return - vraci 1 pokud je charakter validni, jinak 0
 */
 int isValidHex(char c);
-
-/*
-Vrati znak reprezentovany v sestnactkove soustave
-@param s - string, ve kterem je reprezentovanem
-
-@return - konvertovany znak
-*/
-int hexToChar(string *s);
 
 /*
 Test zda znak, muze byt validni konec cisla
@@ -161,4 +154,6 @@ Vrati token scanneru
 @return - uspesnost operace MEMORY_ERROR, pokud vracime vic nez 1 token
 */
 int returnToken(t_Token t);
+
+void stringToIns(string *s);
 #endif
