@@ -503,8 +503,8 @@ void stringToIns(string *s){
                 i++;
             }else if(nextChar == 't' ){
                 stringAddChar(s, '0');
-                stringAddChar(s, '1');
                 stringAddChar(s, '0');
+                stringAddChar(s, '9');
                 i++;
             }else if(nextChar == 's'){
                 stringAddChar(s, '0');
