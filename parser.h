@@ -18,7 +18,8 @@
 #include "token_array.h"
 
 struct table *pa_funcLocalTable; //NULL pokud je global scope, jinak v definici funkce
-int pa_while;
+int pa_while = 0;
+int pa_if = 0;
 int pa_if_count = 0;
 int pa_while_count = 0;
 int pa_node_cnt = 0;

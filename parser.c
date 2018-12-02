@@ -61,8 +61,8 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
 void f_callAssIns(int isNew, t_Node *left, t_Node *right){
     // fprintf(stderr, "DEBUG: func %s isNew %d wh %d, line %d\n", left->data->name->val, isNew, pa_while, sc_line_cnt);
     if (isNew){
-        if (pa_while){
-            addInst(PI_WHILE_DECL_FUNC, (void*)left, (void*)right, NULL, pa_while);
+        if (pa_while || pa_if){
+            addInst(PI_WHILE_DECL_FUNC, (void*)left, (void*)right, NULL, 1);
             addInst(PI_ASS_FUNC, (void*)left, (void*)right, NULL, 0);
         }else{
             addInst(PI_ASS_DECL_FUNC, (void*)left, (void*)right, NULL, 0);
@@ -76,8 +76,8 @@ void f_callAssIns(int isNew, t_Node *left, t_Node *right){
 void assIns(int isNew, t_Node *left){
     // fprintf(stderr, "DEBUG: var %s isNew %d wh %d, line %d\n", left->data->name->val, isNew, pa_while, sc_line_cnt);
     if(isNew){
-        if (pa_while){
-            addInst(PI_WHILE_DECL, (void*)left, NULL, NULL, pa_while);
+        if (pa_while || pa_if){
+            addInst(PI_WHILE_DECL, (void*)left, NULL, NULL, 1);
             addInst(PI_ASS, (void*)left, NULL, NULL, 0);
         }else{
             addInst(PI_ASS_DECL, (void*)left, NULL, NULL, 0);
@@ -535,7 +535,11 @@ void code(t_Token token){
             token = exprParse(token, token, pa_funcLocalTable, 0, &ret_type); //TODO
             addInst(PI_IF_START, (void*)pa_if_count, NULL, NULL, 0);
             pa_if_count++;
+            if (pa_while == 0 && pa_if == 0 ){
+                setActive(list->last);
+            }
             if (token.type == T_THEN){
+                pa_if = 1;
                 P("--then");
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_EOL){
@@ -544,6 +548,7 @@ void code(t_Token token){
                     addInst(PI_IF_ELSE, (void*)pa_if_count, NULL, NULL, 0);
                     pa_if_count++;
                     sec1();
+                    pa_if = 0;
                     pa_if_count--;
                     addInst(PI_IF_END, (void*)pa_if_count, NULL, NULL, 0);
                 }else{
@@ -558,7 +563,7 @@ void code(t_Token token){
             P("--WHILE");
             /* WHILE */
             token = tarrGetNextToken(&token_array);
-            if (pa_while_count == 0){
+            if (pa_while_count == 0 && pa_if == 0){
                 setActive(list->last);
             }
             addInst(PI_WHILE_START, (void*)pa_while_count, NULL, NULL, 0);
