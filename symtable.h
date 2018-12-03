@@ -57,32 +57,61 @@ typedef struct table
 };
 
 /*
-
+inicializuje tabulku symbolu
+@return t_symTable inicializovana tabulka symbolu
 */
 t_symTable tableInit();
 
 /*
-
+uvolni tabulky symbolu
+@param t_symTable ukazatel na tabulku symbolu, ktera se ma uvolnit
 */
 void tableDestroy(t_symTable *table);
 
 /*
-
+vlozi token do tabulky symbolu
+@param t_symTable ukazatel na tabulku symbolu
+@param t_Token vkladany token do tabulky symbolu
+@return t_Node ukazatel na uzel prave vytvoreny
 */
 t_Node* tableInsertToken(t_symTable *table, t_Token token);
 
 /*
-
+hleda v tabulce sombolu podle stringu
+@param t_symTable tabulka symbolu
+@param string klic
+@return t_Node ukazatel na uzel v tabulce symboly
 */
 t_Node* tableSearchItem(t_symTable *table, string s);
 
+/*
+zmeni obsah tabulky symbolu
+@param t_Node ukazatel na uzel v tabulce symbolu
+@@param int jestli se jedna o promennou, 0 neni to promena 
+@param int datovy typ
+@param int jestli je definovana
+@param int jestli je globalniparam int
+*/
 void tableChangeItemByNode(t_Node *node, int is_var, int data_type, int defined, int global);
+
+/*
+zmeni obsah tabulky symbolu
+@param t_symTable table ve ktere se bude hledat
+@param string klic
+@param int jestli se jedna o promennou, 0 neni to promena 
+@param int datovy typ
+@param int jestli je definovana
+@param int jestli je globalni
+*/
 void tableChangeItemByString(t_symTable *table, string *s, int is_var, int data_type, int defined, int global);
 
-/* debugovaci funkce */
+/*-------------------------------*/
+/* 		debugovaci funkce 		 */
+/*-------------------------------*/
 
 //vypise tabulku symbolu
 void tablePrint(t_symTable *table, int local);
+//vypise node v tabulce symbolu
 void tablePrintItem(t_Node *node);
 //vytvori token a vlozi to tabulky symbolu
 void sInsert(t_symTable *table, int itype, char *is);

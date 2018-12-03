@@ -5,7 +5,7 @@
  *      David Miksanik (xmiksa05)
  *  Fakulta informacnich technologii VUT v Brne
  *  Popis souboru:
- *  					TODO
+ * 	Hlavickovy soubor pro ADT dvojsmerne vazany seznam 
 */
 
 #ifndef INSLIST_H
@@ -89,14 +89,17 @@
 #define INS_BREAK 54
 #define INS_DPRINT 55
 
-//definovani vlastnich instrukci
-#define PI_BEGINFUNC 60	//def
-#define PI_ENDFUNC 61	//end
+/*----------------------------------*/
+/*	definovani vlastnich instrukci	*/
+/*----------------------------------*/
 
-#define PI_INIT 62
-#define PI_LTE 63
-#define PI_GTE 64
-#define PI_NEQ 65
+#define PI_BEGINFUNC 60	//zacatek funkce
+#define PI_ENDFUNC 61	//konec funkce
+
+#define PI_INIT 62 //inicializace promente
+#define PI_LTE 63 // instrokuce pro vykonani <=
+#define PI_GTE 64 // instrokuce pro vykonani >=
+#define PI_NEQ 65	// instrokuce pro vykonani !=
 #define PI_ADDSTR 66 //secte dva strinky
 #define PI_ADD 67	//secte dve cisla
 #define PI_ASS 81 //expression je hotovy, ulozit promennou
@@ -118,32 +121,78 @@
 #define PI_BUILTFUNC 95	//vestavene funkce
 
 typedef struct{
-	int ins_type;
-	void *adr1;
-	void *adr2;
-	void *adr3;
+	int ins_type; //typ instrukce
+	void *adr1; //pomocna adresa1
+	void *adr2; //pomocna adresa2
+	void *adr3; //pomocna adresa3
 }t_Ins;
 
 typedef struct element{
-	t_Ins *data;
-	struct element *next;
-	struct element *prev;
+	t_Ins *data; //uzitacne data elementu
+	struct element *next; //ukazatel na nasledujici prvek
+	struct element *prev; //ukazatel na predchozi prvek
 }t_Elem;
 
 typedef struct{
-	t_Elem *first;
-	t_Elem *act;
-	t_Elem *last;
+	t_Elem *first; //ukuzatel na prvni element v listu
+	t_Elem *act; //ukazatel na aktivni prvek v listu
+	t_Elem *last; //ukazatel na posledni prvek v listu
 }t_InsList;
-
 
 t_InsList *list; //globalni promenna na list obsahujici instrukce
 
+/*
+inicializuje list
+@return int MEMORY_OK v uspechu, jinak MEMORY_ERROR
+*/
 int listInit();
+
+/*
+prida instrukci do listu
+@param int typ instrukce
+@param void pomocna adresa1
+@param void pomocna adresa2
+@param void pomocna adresa3
+@return int MEMORY_OK v uspechu, jinak MEMORY_ERROR
+*/
 int addInst(int ins_type, void *adr1, void *adr2, void *adr3, int act);
+
+/*
+nastavi aktivni prvek
+@param t_Elem tento element se stane aktivni
+*/
 void setActive(t_Elem *elem);
+
+/*
+@param void typ instrukce
+@param void pomocna adresa1
+@param void pomocna adresa2
+@param void pomocna adresa3
+*/
+
 void rewriteActive(int ins_type, void *adr1, void *adr2, void *adr3);
+/*
+vymaze prvni element v listu
+*/
 void deleteFirst();
+
+/*
+vlozi instrukci na konec listu
+@param t_Ins insturkce ktere se vlozi 
+@return int MEMORY_OK v uspechu, jinak MEMORY_ERROR
+*/
+int insertLast(t_Ins *ins);
+
+/*
+vlozi instrukci pred aktivni prvek
+@param t_Ins insturkce ktere se vlozi 
+@return int MEMORY_OK v uspechu, jinak MEMORY_ERROR
+*/
+int insertBeforeActive(t_Ins *ins);
+
+/*----------------------*/
+/*	debugovaci funkce 	*/
+/*----------------------*/
 void freeList();
 void printList();
 

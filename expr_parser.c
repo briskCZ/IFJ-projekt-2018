@@ -18,7 +18,7 @@ int checkRule(t_IStack *s, int *type){
     int elem1, elem2, elem3;
 	int type1, type2, type3;
 
-    elem1 = i_topPop(s, &type1);																				//TODO
+    elem1 = i_topPop(s, &type1);
 	if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING || elem1 == T_NIL || elem1 == T_PARAM)
 	{
 		*type = type1;
@@ -104,6 +104,7 @@ int checkRule(t_IStack *s, int *type){
                 exit(ERROR_SYNTAX);
 		}
 
+		//nelze + - / se stringy
 		if(elem2 == T_MINUS || elem2 == T_MUL || elem2 == T_DIV)
 		{
 			if (*type == T_STRING)
@@ -166,7 +167,7 @@ int checkRule(t_IStack *s, int *type){
         exit(ERROR_SYNTAX);
     }
 }
-
+//mapovani ruznych symbolu na spravne misto do pole(precedencni tabulky)
 int tokenToIndex(int type){
     switch (type){
         case T_PLUS:
@@ -190,7 +191,7 @@ int tokenToIndex(int type){
         case T_DOUBLE:
         case T_INT:
         case T_ID:
-		case T_NIL: //TODO
+		case T_NIL:
         case T_PARAM:
 		    return 5;
         case T_EOL:
@@ -218,7 +219,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
         {PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
         {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
     };
-    int error, r, b, type, temp;
+    int r, b, type, temp;
 
     t_IStack s = i_stackInit();
     //vlozeni koncoveho symbolu na zasobnik
@@ -338,7 +339,6 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 {
 	t_Node *aux;
 	int b = b_token.type;
-	int found = 0; //indikator jestli se idendifikator tokenu nasel v lokalni tabulce symbolu
 
 	if (b == T_ID)
 	{
@@ -442,6 +442,6 @@ void debug_print(struct table *local_table, t_Token t, t_Token tb)
         tablePrint(local_table, 1);
     }
 	//fprintf(stderr, "**** EXPR ****\n");
-	printToken(t, 0);
-	printToken(tb, 0);
+	//printToken(t, 0);
+	//printToken(tb, 0);
 }

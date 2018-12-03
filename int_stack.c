@@ -69,16 +69,18 @@ int i_top(t_IStack *s, int *type)
 	*type = s->top->type;
 	return s->top->sym;
 }
+
+//vrati nejvysi terminal na zasobniku
 int i_termTop(t_IStack *s, int *type){
 	if (i_isEmpty(s))
 		return STACK_ERROR;
 
 	t_INode *node = s->top;
+
 	//tokeny 0 az 13
-	//while(!(node->sym >= 0 && node->sym <= 13)  || node->sym != T_INT){
 	while(node->sym < 0 || node->sym > 13)
 	{
-		if (node->sym == T_INT || node->sym == T_DOUBLE || node->sym == T_STRING || node->sym == T_NIL) //TODO pro double a string
+		if (node->sym == T_INT || node->sym == T_DOUBLE || node->sym == T_STRING || node->sym == T_NIL)
 			break;
 		node = node->next;
 		if (node == NULL) return STACK_ERROR;
@@ -88,6 +90,7 @@ int i_termTop(t_IStack *s, int *type){
 	return node->sym;
 }
 
+//vlozi symbol pres nejvyssi terminal na zasobniku
 int i_termTopPush(t_IStack *s, int sym, int type){
 	if (i_isEmpty(s))
 		return STACK_ERROR;
@@ -105,7 +108,7 @@ int i_termTopPush(t_IStack *s, int sym, int type){
 	//tokeny 0 az 13
 	while(node->sym < 0 || node->sym > 13)
 	{
-		if (node->sym == T_INT || node->sym == T_DOUBLE || node->sym == T_STRING || node->sym == T_NIL) //TODO pro double a string
+		if (node->sym == T_INT || node->sym == T_DOUBLE || node->sym == T_STRING || node->sym == T_NIL)
 			break;
 			
 		prev = node;
@@ -134,6 +137,10 @@ int i_isEmpty(t_IStack *s)
 {
 	return s->top == NULL ? 1 : 0;
 }
+
+/*--------------------------*/
+/*	 debugovaci funkce 		*/
+/*--------------------------*/
 
 // vypise obsah zasobniku
 void i_display(t_IStack *s)

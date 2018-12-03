@@ -124,6 +124,8 @@ t_Node *tableInsertToken(t_symTable *table, t_Token token)
 	return new;
 }
 
+//zmeni data v nodu, ktere je predan jak prvni parametru funkce
+//pokud -1 tak se data nemeni
 void tableChangeItemByNode(t_Node *n, int is_var, int data_type, int defined, int global)
 {
 	if (n->data != NULL)
@@ -133,13 +135,10 @@ void tableChangeItemByNode(t_Node *n, int is_var, int data_type, int defined, in
 		if (defined != -1) n->data->defined = defined;
 		if (global != -1) n->data->global = global;
 	}
-	else
-	{
-		fprintf(stderr, "error\n");; //TODO
-	}
 }
 
-/*kdyz -1 tak neupravuji*/
+//zmeni data v nodu, ktere se vyhleda podle stringu, ktery predan jak prvni parametru funkce
+//pokud -1 tak se data nemeni
 void tableChangeItemByString(t_symTable *table, string *s, int is_var, int data_type, int defined, int global)
 {
 	t_Node *data = tableSearchItem(table, *s);
@@ -149,10 +148,6 @@ void tableChangeItemByString(t_symTable *table, string *s, int is_var, int data_
 		if (data_type != -1) data->data->data_type = data_type;
 		if (defined != -1) data->data->defined = defined;
 		if (global != -1) data->data->global = global;
-	}
-	else
-	{
-		; //TODO
 	}
 }
 
