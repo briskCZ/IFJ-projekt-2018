@@ -1,0 +1,42 @@
+Prog -> def id l_par Param1 eol Sec1 Prog
+      | eof
+      | Code Prog.
+
+Code -> id eq Assign
+      | if Expr then eol Sec2 Sec1
+      | while Expr do eol Sec1
+      | Expr.
+
+Sec1 -> Code
+      | end eol.
+
+Sec2 -> Code
+      | else eol.
+
+Term -> id
+      | int
+      | float
+      | string
+      | nil.
+
+#v tomto pripade potrebujeme nacitat vice tokenu aby jsme se mohli rozhodnout
+#okomentovat
+Assign -> id FCall  #pokud je id funkce
+      | Expr        #pokud nasleduje za eq vyraz
+
+Expr -> expr_parser.c
+Param1 -> r_par
+      | Term Param11.
+
+Param11 -> comma Term Param11
+      | r_par.
+
+
+FCall -> l_par Param1
+      | Param2.
+
+Param2 -> eol
+      | Term Param22.
+
+Param22 -> comma Term Param22
+      | eol.
