@@ -10,6 +10,51 @@
 
 #include "generator.h"
 
+char* ramec();
+void buildChr();
+void buildinOrd();
+void builtinSubstr();
+void builtinLength();
+void genBeginFunc();
+void genEndFunc();
+void genBuiltFunc();
+void genFdefPar();
+void genFcall();
+void genFcallCreateFrame();
+void genFcallParT();
+void genFcallParID();
+void convertTypesAdd();
+void convertTypesSub();
+void convertTypesMul();
+void convertTypesDiv();
+void convertTypesIdiv();
+void genAddS();
+void genAddStr();
+void genSubS();
+void genMulS();
+void genDivS();
+void genIdivS();
+void genDefVar();
+void genAssignDecl();
+void genAssign();
+void genAssignFunc();
+void genAssignDeclFunc();
+void convertTypeLtGtLteGte();
+void convertTypeEqNeq();
+void genIfStart();
+void genIfElse();
+void genIfEnd();
+void genWhileStart();
+void genWhileEx();
+void genWhileEnd();
+void genGte();
+void genLte();
+void genEq();
+void genNeq();
+void genDekl();
+int generate();
+
+
 int is_in_func = 0;
 int built_func = 1;
 
@@ -24,6 +69,22 @@ void buildChr()
 	printf("DEFVAR LF@ascii\n");
 	printf("MOVE LF@ascii LF@$P1\n");
 
+	//kontrola 
+	printf("DEFVAR LF@$TYPE%d\n", temp_num);
+	
+	printf("TYPE LF@$TYPE%d LF@ascii\n", temp_num);	
+	printf("JUMPIFNEQ $LABELFLT%d LF@$TYPE%d string@float\n",  temp_label, temp_num);
+		printf("FLOAT2INT LF@ascii LF@ascii\n");
+		printf("JUMP $LABELFLT2%d\n", temp_label);
+	
+	printf("LABEL $LABELFLT%d\n", temp_label);
+	printf("JUMPIFEQ $LABELFLT2%d LF@$TYPE%d string@int\n", temp_label, temp_num++);
+		printf("EXIT int@4\n");
+		
+	printf("LABEL $LABELFLT2%d\n", temp_label++);
+	
+	
+	
 	printf("DEFVAR LF@aux1\n");
 	printf("DEFVAR LF@aux2\n");
 
@@ -40,7 +101,7 @@ void buildChr()
 	printf("LABEL LERROR%d\n",func_cnt);
 
 	printf("#ERROR index error 0-255 ascii\n");
-	printf("EXIT int@%d\n", 58); //TODO
+	printf("EXIT int@%d\n", 4);
 
 	printf("LABEL OK%d\n",func_cnt);
 	printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
@@ -55,6 +116,26 @@ void buildinOrd()
 	printf("DEFVAR LF@str_i\n");
 	printf("MOVE LF@str_i LF@$P2\n");
 
+	//kontrola typu
+	printf("DEFVAR LF@$TYPE%d\n", temp_num);
+	
+	printf("TYPE LF@$TYPE%d LF@str_i\n", temp_num);	
+	printf("JUMPIFNEQ $LABELFLT%d LF@$TYPE%d string@float\n",  temp_label, temp_num);
+		printf("FLOAT2INT LF@str_i LF@str_i\n");
+	
+	printf("LABEL $LABELFLT%d\n", temp_label);
+	
+	printf("TYPE LF@$TYPE%d LF@str_s\n", temp_num);	
+	printf("JUMPIFNEQ $LABELERR%d LF@$TYPE%d string@string\n",  temp_label, temp_num);
+		printf("TYPE LF@$TYPE%d LF@str_i\n", temp_num);
+		printf("JUMPIFNEQ $LABELERR%d LF@$TYPE%d string@int\n",  temp_label, temp_num++);
+			printf("JUMP $LABELOK%d\n", temp_label);
+					
+	printf("LABEL $LABELERR%d\n", temp_label);
+		printf("EXIT int@4\n");
+	
+	printf("LABEL $LABELOK%d\n", temp_label++);
+	
 	//delka stringu
 	printf("DEFVAR LF@str_length\n");
 	printf("STRLEN LF@str_length LF@str_s\n");
@@ -89,6 +170,36 @@ void builtinSubstr()
 	printf("DEFVAR LF@str_n\n");
 	printf("MOVE LF@str_n LF@$P3\n");
 
+
+	//kontrola typy
+	printf("DEFVAR LF@$TYPE%d\n", temp_num);
+	
+	printf("TYPE LF@$TYPE%d LF@str_i\n", temp_num);	
+	printf("JUMPIFNEQ $LABELFLT%d LF@$TYPE%d string@float\n",  temp_label, temp_num);
+		printf("FLOAT2INT LF@str_i LF@str_i\n");
+		
+	printf("LABEL $LABELFLT%d\n", temp_label);
+	printf("TYPE LF@$TYPE%d LF@str_n\n", temp_num);	
+	printf("JUMPIFNEQ $LABELFLT2%d LF@$TYPE%d string@float\n",  temp_label, temp_num);
+		printf("FLOAT2INT LF@str_n LF@str_n\n");
+	
+	printf("LABEL $LABELFLT2%d\n", temp_label);
+	
+	
+	printf("TYPE LF@$TYPE%d LF@str_s\n", temp_num);	
+	printf("JUMPIFNEQ $LABELERR%d LF@$TYPE%d string@string\n",  temp_label, temp_num);
+		printf("TYPE LF@$TYPE%d LF@str_i\n", temp_num);
+		printf("JUMPIFNEQ $LABELERR%d LF@$TYPE%d string@int\n",  temp_label, temp_num);
+			printf("TYPE LF@$TYPE%d LF@str_n\n", temp_num);
+			printf("JUMPIFNEQ $LABELERR%d LF@$TYPE%d string@int\n",  temp_label, temp_num++);
+				printf("JUMP $LABELOK%d\n", temp_label);
+	
+				
+	printf("LABEL $LABELERR%d\n", temp_label);
+		printf("EXIT int@4\n");
+	
+	printf("LABEL $LABELOK%d\n", temp_label++);
+	
 	//jednotlive znaky ktere se budou concatenovat
 	printf("DEFVAR LF@tmp_concat\n");
 
@@ -100,7 +211,7 @@ void builtinSubstr()
 	printf("DEFVAR LF@aux2\n"); // i < len(s)
 	//kontrola podminek
 	printf("GT LF@aux1 LF@str_i int@-1\n");
-	printf("LT LF@aux2 LF@$P2 LF@str_length\n");
+	printf("LT LF@aux2 LF@str_i LF@str_length\n");
 
 	printf("DEFVAR LF@aux3\n"); // i > 0 && i < len(s)
 	printf("AND LF@aux3 LF@aux1 LF@aux2\n");
@@ -137,9 +248,21 @@ void builtinSubstr()
 	printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
 }
 
+void builtinLength()
+{
+	printf("DEFVAR LF@$TYPE%d\n", temp_num);
+	printf("TYPE LF@$TYPE%d LF@$P1\n", temp_num);
+	
+	printf("JUMPIFEQ $LABEL%d LF@$TYPE%d string@string\n",  temp_label, temp_num++);
+	printf("EXIT int@4\n");
+	
+	printf("LABEL $LABEL%d\n", temp_label++);
+	printf("STRLEN LF@$RTVL%p LF@$P1\n", (void*)list->first->data->adr1);
+	printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
+}
+
 //potrebne veci pro zacatek definice funkce
 void genBeginFunc(){
-	fprintf(stderr, "pri vytvareni beg: %p\n", list->first->data->adr1);
 	printf("JUMP $FOOL%d\n", ++func_cnt);
 	printf("LABEL $FNAME%p\n", list->first->data->adr1);
 	printf("PUSHFRAME\n");
@@ -152,13 +275,11 @@ void genBeginFunc(){
 }
 //potrebne veci pro konec definice funkce
 void genEndFunc(){
-	fprintf(stderr, "pri vytvareni end: %p\n", list->first->data->adr1);
 	printf("POPS LF@$RTVL%p\n",list->first->data->adr1);
 	printf("POPFRAME\n");
 
 	printf("RETURN\n");
 	printf("LABEL $FOOL%d\n", func_cnt);
-	printf("\n");
 }
 //vestavene fce na zacatek
 void genBuiltFunc(){
@@ -189,8 +310,7 @@ void genBuiltFunc(){
 			break;
 		case 5:
 			genBeginFunc();
-			printf("STRLEN LF@$RTVL%p LF@$P1\n", (void*)list->first->data->adr1); //length - funguje
-			printf("PUSHS LF@$RTVL%p\n", (void*)list->first->data->adr1);
+			builtinLength(); //length - funguje
 			genEndFunc();
 			break;
 		case 6:
@@ -212,13 +332,11 @@ void genBuiltFunc(){
 }
 //parametry pri def fuknce vevnitr tela fce
 void genFdefPar(){
-	printf("#genFdefPar \n");
 	printf("DEFVAR LF@$%p\n",(void*)list->first->data->adr1);//tady mozna nemuze byt uniqueNum
 	printf("MOVE LF@$%p LF@$P%d\n",(void*)list->first->data->adr1,(void*)list->first->data->adr2);
 }
 //volani fuckne
 void genFcall(){
-	printf("#fcall\n");
 	printf("CALL $FNAME%p\n",list->first->data->adr1);
 }
 //CREATEFRAME
@@ -227,7 +345,6 @@ void genFcallCreateFrame(){
 }
 //parametgryT
 void genFcallParT(){
-	printf("#genFcallParT \n");
 	int i; double f;
 	int a = (void*)list->first->data->adr3;
 	printf("DEFVAR TF@$P%d\n",list->first->data->adr2);
@@ -254,8 +371,6 @@ void genFcallParT(){
 }
 //parametgryID pri volani funkce
 void genFcallParID(){
-	printf("#genFcallParID \n");
-
 	printf("DEFVAR TF@$P%d\n",list->first->data->adr2);
 	printf("MOVE TF@$P%d %s@$%p\n",list->first->data->adr2,ramec(),list->first->data->adr1);
 }
@@ -376,7 +491,7 @@ void convertTypesSub(){
 	/* 				kontrola typu */
 	printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label++, "LF", temp_num-1);
 		printf("JUMPIFNEQ $L%d string@string %s@$%d\n", temp_label, "LF", temp_num);
-			printf("EXIT int@1\n"); //ERROR prvni string, druhy neni
+			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni
 		printf("LABEL $L%d\n", temp_label--);
 			printf("EXIT int@4\n"); //ERROR prvni string, druhy neni
 
@@ -511,8 +626,6 @@ void convertTypesMul(){
 }
 
 void convertTypesDiv(){
-
-
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -611,14 +724,10 @@ void convertTypesDiv(){
 	temp_num++;
 	uniqueNum++;
 	printf("LABEL $LEND%d\n", aux);
-
-
 	printf("POPFRAME\n");
 }
 
 void convertTypesIdiv(){
-
-
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -717,24 +826,16 @@ void convertTypesIdiv(){
 	temp_num++;
 	uniqueNum++;
 	printf("LABEL $LEND%d\n", aux);
-
-
 	printf("POPFRAME\n");
 }
 
 
 //scitani
 void genAddS(){
-	printf("#add\n");
-	//kontrola typu
-	//convertTypesAdd(uniqueNum-3,uniqueNum-2);
 	printf("ADDS\n");
-	printf("\n");
 }
 //scitani stringu
 void genAddStr(){
-	printf("#addStr\n");
-	
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -750,27 +851,17 @@ void genAddStr(){
 	only_in_gen++;
 	
 	printf("POPFRAME\n");
-
-	printf("\n");
 }
 //odcitani
 void genSubS(){
-	printf("#sub\n");
-	//kontrola typu
 	printf("SUBS\n");
-	printf("\n");
 }
 //nasobeni
 void genMulS(){
-	printf("#mul\n");
-	//kontrola typu
 	printf("MULS\n");
-	printf("\n");
 }
 //deleni
 void genDivS(){
-	printf("#div\n");
-	
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -797,13 +888,9 @@ void genDivS(){
 	label_in_gen += 2;
 	
 	printf("POPFRAME\n");
-
-	printf("\n");
 }
 //deleni
 void genIdivS(){
-	printf("#idiv\n");
-	
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -830,15 +917,12 @@ void genIdivS(){
 	label_in_gen += 2;
 	
 	printf("POPFRAME\n");
-	
-	printf("\n");
 }
 //definice a inicializace promenne
 void genDefVar(){
 
-	printf("#defvar\n");
 	int i; double f;
-		int a = (void*)list->first->data->adr3;
+		int a = list->first->data->adr3;
 		switch(a){
 			case T_INT:
 				i = strtol(list->first->data->adr2, NULL, 10);
@@ -866,42 +950,31 @@ void genDefVar(){
 				printf("WTF DFT DFTF FŘ%d\n",a);
 			break;
 		}
-
 	uniqueNum++;
-	printf("\n");
 }
 //deklarace a prirazeni do idcka
 void genAssignDecl(){
-	printf("#prirazeni s declaraci\n");
 	printf("DEFVAR %s@$%p\n",ramec(),list->first->data->adr1);
 	printf("POPS %s@$%p\n",ramec(),list->first->data->adr1);
 	if(is_in_func == 1){
 		printf("PUSHS %s@$%p\n",ramec(),list->first->data->adr1); //kvuli navratove hodnotě fce
 	}
-	printf("\n");
 }
 //prirazeni do idcka
 void genAssign(){
-	printf("#prirazeni\n");
 	printf("POPS %s@$%p\n",ramec(),list->first->data->adr1);
 	if(is_in_func == 1){
 		printf("PUSHS %s@$%p\n",ramec(),list->first->data->adr1); //kvuli navratove hodnotě fce
 	}
-	
-	printf("\n");
 }
 //prirazeni do idcka z funkce
 void genAssignFunc(){//TODO otestovat
-	printf("#prirazeni z funkce\n");
 	printf("MOVE %s@$%p TF@$RTVL%p\n",ramec(),list->first->data->adr1,list->first->data->adr2); //tady potrebuju ukazatel na funkci do symtable
-	printf("\n");
 }
 //prirazeni do idcka z funkce
 void genAssignDeclFunc(){//TODO otestovat
-	printf("#prirazeni s deklaraci z funkce\n");
 	printf("DEFVAR %s@$%p\n",ramec(),list->first->data->adr1);
 	printf("MOVE %s@$%p TF@$RTVL%p\n",ramec(),list->first->data->adr1,list->first->data->adr2); //tady potrebuju ukazatel na funkci do symtable
-	printf("\n");
 }
 
 // > >= < <=
@@ -1093,12 +1166,10 @@ void convertTypeEqNeq(){
 }
 
 void genIfStart(){
-	int odZdeny = list->first->data->adr1;
+	int kolikrat_vnoreny = list->first->data->adr1;
 	printf("DEFVAR %s@$podminka%d\n",ramec(),podminka_num);
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
 
-	printf("#if start\n");
-	
 	//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
 	printf("DEFVAR %s@$Tpodminka%d\n",ramec(),podminka_num);
 	printf("TYPE %s@$Tpodminka%d %s@$podminka%d\n",ramec(),podminka_num,ramec(),podminka_num);
@@ -1115,41 +1186,33 @@ void genIfStart(){
 	printf("LABEL $LTESTEND%d\n",temp_label++);
 	//konec kontroly
 	
-	
-	
-	printf("JUMPIFNEQ $IFL%d %s@$podminka%d bool@true\n",if_label + odZdeny ,ramec(),podminka_num++); //todo
+	printf("JUMPIFNEQ $IFL%d %s@$podminka%d bool@true\n",if_label + kolikrat_vnoreny ,ramec(),podminka_num++); //todo
 	if_max++;
-	printf("\n");
+
 }
 void genIfElse(){
-	int odZdeny = list->first->data->adr1;
-	printf("#if else\n");
-	printf("JUMP $IFEND%d\n",if_label + odZdeny);
-	printf("LABEL $IFL%d\n",if_label + odZdeny);
-
-	printf("\n");
+	int kolikrat_vnoreny = list->first->data->adr1;
+	printf("JUMP $IFEND%d\n",if_label + kolikrat_vnoreny);
+	printf("LABEL $IFL%d\n",if_label + kolikrat_vnoreny);
 }
 void genIfEnd(){
-	int odZdeny = list->first->data->adr1;
-	printf("LABEL $IFEND%d\n",if_label + odZdeny);
-	if (odZdeny == 0){
+	int kolikrat_vnoreny = list->first->data->adr1;
+	printf("LABEL $IFEND%d\n",if_label + kolikrat_vnoreny);
+	if (kolikrat_vnoreny == 0){
 		if_label += if_max;
 		if_max = 0;
 	}
 }
 
 void genWhileStart(){
-	int odZdeny = list->first->data->adr1;
-	printf("#while start\n");
+	int kolikrat_vnoreny = list->first->data->adr1;
 	printf("DEFVAR %s@$podminka%d\n",ramec(),podminka_num);
 	printf("DEFVAR %s@$Tpodminka%d\n",ramec(),podminka_num);
-	printf("LABEL $WHILE%d\n",(while_label + odZdeny));
+	printf("LABEL $WHILE%d\n",(while_label + kolikrat_vnoreny));
 	while_max++;
 }
 void genWhileEx(){
-	int odZdeny = list->first->data->adr1;
-
-	printf("#while ex\n");
+	
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
 	
 	//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
@@ -1170,25 +1233,20 @@ void genWhileEx(){
 	printf("JUMPIFNEQ $WHILEEND%d %s@$podminka%d bool@true\n",while_label ,ramec(),podminka_num++); //todo
 }
 void genWhileEnd(){
-	int odZdeny = list->first->data->adr1;
-	printf("#while end\n");
-	printf("JUMP $WHILE%d\n",while_label + odZdeny);
-	printf("LABEL $WHILEEND%d\n",while_label + odZdeny);
+	int kolikrat_vnoreny = list->first->data->adr1;
+	printf("JUMP $WHILE%d\n",while_label + kolikrat_vnoreny);
+	printf("LABEL $WHILEEND%d\n",while_label + kolikrat_vnoreny);
 	if(is_in_func == 1){
 		printf("PUSHS nil@nil\n"); // while vzdycky vraci nil
 	}
-	
 
-	if (odZdeny == 0){
+	if (kolikrat_vnoreny == 0){
 		while_label += while_max;
 		while_max = 0;
 	}
 }
 
 void genGte(){
-	printf("#Gte\n");
-
-
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -1207,14 +1265,10 @@ void genGte(){
 
 	printf("ORS\n");
 
-
 	printf("POPFRAME\n");
 }
 
 void genLte(){
-	printf("#Lte\n");
-
-
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -1232,7 +1286,6 @@ void genLte(){
 	printf("PUSHS %s@$LTE%d\n","LF",only_in_gen-1);
 
 	printf("ORS\n");
-
 
 	printf("POPFRAME\n");
 }
@@ -1287,17 +1340,13 @@ void genEq(){
 }
 
 void genNeq(){
-
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
 	printf("DEFVAR %s@$ISNIL%d\n","LF",temp_num);
 	printf("POPS %s@$ISNIL%d\n","LF",temp_num++);
-
 	printf("DEFVAR %s@$type%d\n","LF",temp_num);
 	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num, "LF",temp_num-1);
-
-
 	printf("JUMPIFEQ $LISNIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num);
 
 	printf("PUSHS %s@$ISNIL%d\n","LF",temp_num-1);
@@ -1316,13 +1365,10 @@ void genNeq(){
 	printf("LABEL $LENDISNIL%d\n",temp_label-1);
 	temp_label++;
 	temp_num++;
-
-
 	printf("POPFRAME\n");
 }
 
 void genDekl(){
-	printf("#decklarace pred whilem nebo ifem nebo cisle\n");
 	printf("DEFVAR %s@$%p\n",ramec(),list->first->data->adr1);
 	printf("MOVE %s@$%p nil@nil\n",ramec(),list->first->data->adr1);
 }
@@ -1333,8 +1379,6 @@ void genDekl(){
 //generovani kodu
 int generate()
 {
-	int test;
-
 	printf(".IFJcode18\n");
 
 	uniqueNum = 0;
@@ -1348,8 +1392,6 @@ int generate()
 	if_max = 0;
 	if_label = 0;
 
-
-	//printList();
 	while (list->first != NULL)
 	{
 		switch(list->first->data->ins_type)
@@ -1464,11 +1506,9 @@ int generate()
 				genDekl();
 				break;
 				
-				
 			default:
 				break;
 		}
-		//test = (void*)list->first->data->adr1; //vypis posledniho vysledku prirazeni
 		deleteFirst();
 	}
 	printf("EXIT int@0\n");
