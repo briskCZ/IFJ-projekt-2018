@@ -23,6 +23,6 @@ end
 
 def hoo(a, a)
 end
-max = inputi
+max = 20
 string = "ah"
 boo string, max

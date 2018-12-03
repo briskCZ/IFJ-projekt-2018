@@ -139,11 +139,11 @@ void builtinSubstr()
 
 //potrebne veci pro zacatek definice funkce
 void genBeginFunc(){
-	//fprintf(stderr, "pri vytvareni beg: %p\n", list->first->data->adr1);
+	fprintf(stderr, "pri vytvareni beg: %p\n", list->first->data->adr1);
 	printf("JUMP $FOOL%d\n", ++func_cnt);
 	printf("LABEL $FNAME%p\n", list->first->data->adr1);
 	printf("PUSHFRAME\n");
-
+	
 	//vytvor navratovou promennou
 	printf("DEFVAR LF@$RTVL%p\n",list->first->data->adr1); //TODO mozna menit ramec
 	printf("MOVE LF@$RTVL%p nil@nil\n",list->first->data->adr1);//TODO mozna menit ramec
@@ -152,7 +152,7 @@ void genBeginFunc(){
 }
 //potrebne veci pro konec definice funkce
 void genEndFunc(){
-	//fprintf(stderr, "pri vytvareni end: %p\n", list->first->data->adr1);
+	fprintf(stderr, "pri vytvareni end: %p\n", list->first->data->adr1);
 	printf("POPS LF@$RTVL%p\n",list->first->data->adr1);
 	printf("POPFRAME\n");
 
@@ -734,7 +734,7 @@ void genAddS(){
 //scitani stringu
 void genAddStr(){
 	printf("#addStr\n");
-
+	
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
@@ -748,7 +748,7 @@ void genAddStr(){
 
 	printf("PUSHS %s@$STR%d\n","LF",only_in_gen);
 	only_in_gen++;
-
+	
 	printf("POPFRAME\n");
 
 	printf("\n");
@@ -770,16 +770,19 @@ void genMulS(){
 //deleni
 void genDivS(){
 	printf("#div\n");
+	
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
 
-	printf("DEFVAR %s@$DIV%d\n",ramec(),only_in_gen);
-	printf("POPS %s@$DIV%d\n",ramec(),only_in_gen++);
-	printf("DEFVAR %s@$DIV%d\n",ramec(),only_in_gen);
-	printf("POPS %s@$DIV%d\n",ramec(),only_in_gen++);
+	printf("DEFVAR %s@$DIV%d\n","LF",only_in_gen);
+	printf("POPS %s@$DIV%d\n","LF",only_in_gen++);
+	printf("DEFVAR %s@$DIV%d\n","LF",only_in_gen);
+	printf("POPS %s@$DIV%d\n","LF",only_in_gen++);
 
-	printf("PUSHS %s@$DIV%d\n",ramec(),only_in_gen - 1);
-	printf("PUSHS %s@$DIV%d\n",ramec(),only_in_gen - 2);
+	printf("PUSHS %s@$DIV%d\n","LF",only_in_gen - 1);
+	printf("PUSHS %s@$DIV%d\n","LF",only_in_gen - 2);
 
-	printf("JUMPIFEQ $DIVL%d float@%a %s@$DIV%d\n", label_in_gen + 1, 0.0, ramec(), only_in_gen - 2); //osetrit ramce
+	printf("JUMPIFEQ $DIVL%d float@%a %s@$DIV%d\n", label_in_gen + 1, 0.0, "LF", only_in_gen - 2); //osetrit ramce
 
 	printf("DIVS\n");
 	printf("JUMP $DIVL%d\n", label_in_gen++);
@@ -792,22 +795,27 @@ void genDivS(){
 
 	printf("LABEL $DIVL%d\n",label_in_gen);
 	label_in_gen += 2;
+	
+	printf("POPFRAME\n");
 
 	printf("\n");
 }
 //deleni
 void genIdivS(){
 	printf("#idiv\n");
+	
+	printf("CREATEFRAME\n");
+	printf("PUSHFRAME\n");
 
-	printf("DEFVAR %s@IDIV$%d\n",ramec(),only_in_gen);
-	printf("POPS %s@IDIV$%d\n",ramec(),only_in_gen++);
-	printf("DEFVAR %s@IDIV$%d\n",ramec(),only_in_gen);
-	printf("POPS %s@IDIV$%d\n",ramec(),only_in_gen++);
+	printf("DEFVAR %s@IDIV$%d\n","LF",only_in_gen);
+	printf("POPS %s@IDIV$%d\n","LF",only_in_gen++);
+	printf("DEFVAR %s@IDIV$%d\n","LF",only_in_gen);
+	printf("POPS %s@IDIV$%d\n","LF",only_in_gen++);
 
-	printf("PUSHS %s@IDIV$%d\n",ramec(),only_in_gen - 1);
-	printf("PUSHS %s@IDIV$%d\n",ramec(),only_in_gen - 2);
+	printf("PUSHS %s@IDIV$%d\n","LF",only_in_gen - 1);
+	printf("PUSHS %s@IDIV$%d\n","LF",only_in_gen - 2);
 
-	printf("JUMPIFEQ $IDIVL%d int@0 %s@IDIV$%d\n", label_in_gen+1, ramec(), only_in_gen - 2); //osetrit ramce
+	printf("JUMPIFEQ $IDIVL%d int@0 %s@IDIV$%d\n", label_in_gen+1, "LF", only_in_gen - 2); //osetrit ramce
 
 	printf("IDIVS\n");
 	printf("JUMP $IDIVL%d\n", label_in_gen++);
@@ -820,6 +828,9 @@ void genIdivS(){
 
 	printf("LABEL $IDIVL%d\n",label_in_gen);
 	label_in_gen += 2;
+	
+	printf("POPFRAME\n");
+	
 	printf("\n");
 }
 //definice a inicializace promenne
@@ -876,7 +887,7 @@ void genAssign(){
 	if(is_in_func == 1){
 		printf("PUSHS %s@$%p\n",ramec(),list->first->data->adr1); //kvuli navratove hodnotě fce
 	}
-
+	
 	printf("\n");
 }
 //prirazeni do idcka z funkce
@@ -1078,7 +1089,6 @@ void convertTypeEqNeq(){
 	uniqueNum++;
 	printf("LABEL $LEND%d\n", aux);
 
-
 	printf("POPFRAME\n");
 }
 
@@ -1089,25 +1099,25 @@ void genIfStart(){
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
 
 	printf("#if start\n");
-
+	
 	//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
 	printf("DEFVAR %s@$Tpodminka%d\n",ramec(),podminka_num);
 	printf("TYPE %s@$Tpodminka%d %s@$podminka%d\n",ramec(),podminka_num,ramec(),podminka_num);
-
+	
 	printf("JUMPIFEQ $LTESTEND%d %s@$Tpodminka%d string@bool\n",temp_label,ramec(),podminka_num);
 	printf("JUMPIFEQ $LTEST%d %s@$Tpodminka%d string@nil\n",temp_label,ramec(),podminka_num);
-
+	
 	printf("MOVE %s@$podminka%d bool@true\n",ramec(),podminka_num);
 	printf("JUMP $LTESTEND%d\n",temp_label);
-
+	
 	printf("LABEL $LTEST%d\n",temp_label);
-
+	
 	printf("MOVE %s@$podminka%d bool@false\n",ramec(),podminka_num);
 	printf("LABEL $LTESTEND%d\n",temp_label++);
 	//konec kontroly
-
-
-
+	
+	
+	
 	printf("JUMPIFNEQ $IFL%d %s@$podminka%d bool@true\n",if_label + odZdeny ,ramec(),podminka_num++); //todo
 	if_max++;
 	printf("\n");
@@ -1144,22 +1154,22 @@ void genWhileEx(){
 
 	printf("#while ex\n");
 	printf("POPS %s@$podminka%d\n",ramec(),podminka_num);
-
+	
 	//kontrola podminky, pokud neni bool, nil=> false, ostatní věci true
 	printf("TYPE %s@$Tpodminka%d %s@$podminka%d\n",ramec(),podminka_num,ramec(),podminka_num);
-
+	
 	printf("JUMPIFEQ $LTESTEND%d %s@$Tpodminka%d string@bool\n",temp_label,ramec(),podminka_num);
 	printf("JUMPIFEQ $LTEST%d %s@$Tpodminka%d string@nil\n",temp_label,ramec(),podminka_num);
-
+	
 	printf("MOVE %s@$podminka%d bool@true\n",ramec(),podminka_num);
 	printf("JUMP $LTESTEND%d\n",temp_label);
-
+	
 	printf("LABEL $LTEST%d\n",temp_label);
-
+	
 	printf("MOVE %s@$podminka%d bool@false\n",ramec(),podminka_num);
 	printf("LABEL $LTESTEND%d\n",temp_label++);
 	//konec kontroly
-
+	
 	printf("JUMPIFNEQ $WHILEEND%d %s@$podminka%d bool@true\n",while_label ,ramec(),podminka_num++); //todo
 }
 void genWhileEnd(){
@@ -1170,7 +1180,7 @@ void genWhileEnd(){
 	if(is_in_func == 1){
 		printf("PUSHS nil@nil\n"); // while vzdycky vraci nil
 	}
-
+	
 
 	if (odZdeny == 0){
 		while_label += while_max;
@@ -1231,37 +1241,52 @@ void genLte(){
 }
 
 void genEq(){
-
-
 	printf("CREATEFRAME\n");
 	printf("PUSHFRAME\n");
 
 	printf("DEFVAR %s@$ISNIL%d\n","LF",temp_num);
-	printf("POPS %s@$ISNIL%d\n","LF",temp_num++);
+	printf("POPS %s@$ISNIL%d\n","LF",temp_num);
 
 	printf("DEFVAR %s@$type%d\n","LF",temp_num);
-	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num, "LF",temp_num-1);
+	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num, "LF",temp_num);
+	temp_num++;
 
-
-	printf("JUMPIFEQ $LISNIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num);
+	printf("JUMPIFEQ $LISNIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num-1);
 
 	printf("PUSHS %s@$ISNIL%d\n","LF",temp_num-1);
 	printf("EQS\n");
 	printf("JUMP $LENDISNIL%d\n",temp_label);
 
 	printf("LABEL $LISNIL%d\n",temp_label++);
-
-	printf("POPS %s@$ISNIL%d\n","LF",temp_num-1);
-	printf("POPS %s@$ISNIL%d\n","LF",temp_num-1);
-
-	printf("PUSHS bool@false\n");
+	temp_num++;
+	
+	printf("DEFVAR %s@$ISNIL%d\n","LF",temp_num);
+	printf("POPS %s@$ISNIL%d\n","LF",temp_num);
+	printf("DEFVAR %s@$type%d\n","LF",temp_num);
+	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num-1, "LF",temp_num++);
+	
+	printf("DEFVAR %s@$ISNIL%d\n","LF",temp_num);
+	printf("POPS %s@$ISNIL%d\n","LF",temp_num);
+	printf("DEFVAR %s@$type%d\n","LF",temp_num);
+	printf("TYPE %s@$type%d %s@$ISNIL%d\n", "LF",temp_num-1, "LF",temp_num++);
+	
+	printf("JUMPIFEQ $LONENIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num-2);//jeden je nil
+	printf("JUMP $FALSENIL%d\n",temp_label);
+	
+	printf("LABEL $LONENIL%d\n",temp_label);
+	printf("JUMPIFNEQ $FALSENIL%d %s@$type%d string@nil\n",temp_label,"LF",temp_num-1);//druhy je nil
+	printf("PUSHS bool@true\n");//jsou to dva nily
+	printf("JUMP $LENDISNIL%d\n",temp_label-1);
+	
+	printf("LABEL $FALSENIL%d\n",temp_label);
+	printf("PUSHS bool@false\n");//nejsou to stejne typy
 
 	printf("LABEL $LENDISNIL%d\n",temp_label-1);
 	temp_label++;
 	temp_num++;
 
-
 	printf("POPFRAME\n");
+
 }
 
 void genNeq(){
@@ -1299,7 +1324,10 @@ void genNeq(){
 	printf("POPFRAME\n");
 }
 
-
+void genDekl(){
+	printf("#decklarace pred whilem\n");
+	printf("DEFVAR %s@$%p\n",ramec(),list->first->data->adr1);
+}
 
 //vypis na merlinovi
 // ./main < test2 1> out.ass ; ../rubyset/ic18int ./out.ass
@@ -1432,6 +1460,10 @@ int generate()
 			case PI_LTE:
 				convertTypeLtGtLteGte();
 				genLte();
+				break;
+				
+			case PI_WHILE_DECL:
+				genDekl();
 				break;
 
 

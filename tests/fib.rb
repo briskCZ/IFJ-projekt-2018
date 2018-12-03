@@ -24,6 +24,6 @@ def fib(n)
 end
 
 
-n = inputi
+n = 10
 rv = fib n
 print rv, "\n"

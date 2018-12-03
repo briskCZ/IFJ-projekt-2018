@@ -42,14 +42,14 @@ def ifwhiletest(x)
     end
 
 end
-x = inputi
+x = 4
 ret = iftest x
 print "retval iftest",ret, "\n"
 
-x = inputi
+x = 5
 ret = ififtest x
 print "retval ififif test: ", ret, "\n"
 
-x = inputi
+x = 6
 ret = ifwhiletest x
 print "retval ifwhiletest:  ", ret, "\n"

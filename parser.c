@@ -9,14 +9,11 @@
 */
 #include "parser.h"
 
-//#define CHECK_ERROR(err) if (err == ERROR_INTERNAL || err == ERROR_LEX) {fprintf(stderr, "INTERNAL ERROR\n"); cleanAll(); exit(err);}
 
 #define PRINT_SYNTAX_ERROR(symbol) {fprintf(stderr, "ERROR_SYNTAX: %s expected on line %d\n", symbol, sc_line_cnt);\
                                    cleanAll(); exit(ERROR_SYNTAX);}
 #define SAVE_ERROR(error){if (ERROR == 0) ERROR = error;}
 
-//#define P(a) fprintf(stderr, "%s\n", a);
-//int ERROR = 0;
 int isGlobal(){
     return (pa_funcLocalTable == NULL) ? 1 : 0;
 }
@@ -59,7 +56,6 @@ t_Node* isAssignable(t_Token left, int type, int *isNew, t_symTable *scope){
 }
 /* instrukce pro generator, podle toho zda je leva strana nova a jedna se o volani funkce*/
 void f_callAssIns(int isNew, t_Node *left, t_Node *right){
-    // fprintf(stderr, "DEBUG: func %s isNew %d wh %d, line %d\n", left->data->name->val, isNew, pa_while, sc_line_cnt);
     if (isNew){
         if (pa_while || pa_if){
             addInst(PI_WHILE_DECL_FUNC, (void*)left, (void*)right, NULL, 1);
@@ -74,7 +70,6 @@ void f_callAssIns(int isNew, t_Node *left, t_Node *right){
 
 /* instrukce pro generator, podle toho zda je leva strana nova pri prirazeni*/
 void assIns(int isNew, t_Node *left){
-    // fprintf(stderr, "DEBUG: var %s isNew %d wh %d, line %d\n", left->data->name->val, isNew, pa_while, sc_line_cnt);
     if(isNew){
         if (pa_while || pa_if){
             addInst(PI_WHILE_DECL, (void*)left, NULL, NULL, 1);
@@ -118,7 +113,6 @@ void assign(t_Token left){
                             /* promenan je parametr a nebo lokalni */
                             P(">a>local_scope>param|locvar");
                             exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
-                            // fprintf(stderr, "DEBUG: >>a>local_scope>param|locvar>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 0);
                             assIns(isNew, leftVar);
                             return;
@@ -127,7 +121,6 @@ void assign(t_Token left){
                             P(">a>local_scope>a=a");
                             ta.type = T_NIL;
                             exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
-                            // sfprintf(stderr, "DEBUG: >>a>local_scope>a=a>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 0);
                             assIns(isNew, leftVar);
                             return;
@@ -146,7 +139,6 @@ void assign(t_Token left){
                             /* promenna */
                             P(">a>global_scope>a=var");
                             exprParse(ta, tb, NULL, 1, &ret_type);
-                            // fprintf(stderr, "DEBUG: >a>global_scope>a=var>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 1);
                             assIns(isNew, leftVar);
                             return;
@@ -170,7 +162,6 @@ void assign(t_Token left){
                             //promenna je urcite nova, nebyla v tabulce symbolu
                             t_Node *leftVar = isAssignable(left, ta.type, &isNew, &table);
                             exprParse(ta, tb, NULL, 1, &ret_type);
-                            // fprintf(stderr, ">a>global_scope>navrTypExpr: %d\n", ret_type);
                             tableChangeItemByNode(leftVar, 1, ret_type, 1, 1);
                             assIns(isNew, leftVar);
                             return;
@@ -187,6 +178,7 @@ void assign(t_Token left){
             case T_LEFT_PAR:
             case T_DOUBLE:
             case T_INT:
+            case T_NIL:
             case T_STRING:{
                 t_Node *leftVar = isAssignable(left, ta.type, &isNew, getScopeTable());
                 t_Node *rightVar = tableSearchItem(&table, ta.attr);
@@ -225,11 +217,8 @@ void assign(t_Token left){
             case T_NOT_EQ:{
                 P(">a>expr");
                 t_symTable *tablet = getScopeTable();
-                //fprintf(stderr, "PA: %p\n", pa_funcLocalTable);
-                tablePrint(tablet, 0);
                 t_Node *leftVar = isAssignable(left, ta.type, &isNew, getScopeTable());
                 t_Token t = exprParse(ta, tb, pa_funcLocalTable, 1, &ret_type);
-                //fprintf(stderr, ">a>expr ret_val %d, isNew %d\n", ret_type, isNew);
                 if (t.type != T_EOL) PRINT_SYNTAX_ERROR("EOL after expr assign");
                 tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
                 assIns(isNew, leftVar);
@@ -246,7 +235,6 @@ void assign(t_Token left){
         t_Node *leftVar = isAssignable(left, ta.type, &isNew, getScopeTable());
         t_Token t = exprParse(ta, ta, getScopeTable(), 0, &ret_type);
         if (t.type != T_EOL) PRINT_SYNTAX_ERROR("EOL after term assign");
-        //fprintf(stderr, ">a>ret_Type: %d\n", ret_type);
         tableChangeItemByNode(leftVar, 1, ret_type, 1, isGlobal());
         assIns(isNew, leftVar);
     }else{
@@ -259,11 +247,7 @@ void f_call(t_Token ta, t_Token tb){
     int param_cnt = 0;
     t_Elem *prevActive = list->act;
     P("--fcall");
-    if (!isGlobal() && !stringCompare(&ta.attr, node->data->name)){
-        fprintf(stderr, "Rekurzivni volani %s \n", ta.attr.val);
-    }
     /* pripadne vlozeni do tabulky symbolu */
-    //fprintf(stderr, "funkce: %s\n", ta.attr.val);
     t_Node *temp = tableSearchItem(&table, ta.attr);
     if (temp == NULL){
         fprintf(stderr, "ERROR_SEMANTIC: Undefined function call %s on_line %d\n", ta.attr.val, sc_line_cnt);
@@ -293,6 +277,7 @@ void f_call(t_Token ta, t_Token tb){
         case T_DOUBLE:
         case T_INT:
         case T_STRING:
+        case T_NIL:
             // uz je prvni parametr funkce, ukladat nekam !!!
             param2(tb, &param_cnt);
             break;
@@ -311,10 +296,7 @@ void f_call(t_Token ta, t_Token tb){
         exit(ERROR_SEM_PARAM);
     }
     setActive(prevActive);
-    //////////////////////
-    //JESTE NEBYLA DEFINOVANA, ale byla zavolana
-    //GENERACE FCALL INSTRUKCI
-    //fprintf(stderr, "%s called with: %d params\n", stringGet(node->data->name) ,node->data->params_cnt);
+
 }
 void paramHandler(t_Token token, int param_cnt){
     if (node == NULL){
@@ -472,6 +454,7 @@ void term(t_Token token){
         case T_INT:
         case T_DOUBLE:
         case T_STRING:
+        case T_NIL:
             return;
         default:
             PRINT_SYNTAX_ERROR("TERM");
