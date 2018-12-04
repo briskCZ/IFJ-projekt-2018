@@ -633,9 +633,6 @@ void convertTypesDiv(){
 	printf("DEFVAR %s@$t%d\n", "LF", uniqueNum);
 	printf("POPS %s@$t%d\n", "LF", uniqueNum);
 
-	//printf("DPRINT %s@$t%d\n", "LF", 0); DEBUG
-	//printf("DPRINT %s@$t%d\n", "LF", 1); DEBUG
-
 	printf("TYPE %s@$%d %s@$t%d\n", "LF", temp_num-1, "LF", uniqueNum-1);
 	printf("TYPE %s@$%d %s@$t%d\n", "LF", temp_num, "LF", uniqueNum);
 
@@ -653,11 +650,7 @@ void convertTypesDiv(){
 				printf("PUSHS %s@$t%d\n", "LF", uniqueNum);
 				printf("PUSHS %s@$t%d\n", "LF", uniqueNum-1);
 
-				//tmp = uniqueNum;
-				//tmpl = temp_label;
-				genDivS();
-				//uniqueNum = tmp;
-				//temp_label = tmpl;
+				genIdivS();
 
 				printf("JUMP $LEND%d\n", aux); //oba int
 			printf("LABEL $L%d\n", temp_label++); //prvni int | druhy neni int
@@ -666,11 +659,7 @@ void convertTypesDiv(){
 					printf("PUSHS %s@$t%d\n", "LF", uniqueNum-1);
 					printf("INT2FLOATS\n");
 
-					//tmp = uniqueNum;
-					//tmpl = temp_label;
 					genDivS();
-					//uniqueNum = tmp;
-					//temp_label = tmpl;
 
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
@@ -684,11 +673,7 @@ void convertTypesDiv(){
 					printf("PUSHS %s@$t%d\n", "LF", uniqueNum);
 					printf("PUSHS %s@$t%d\n", "LF", uniqueNum-1);
 
-					//tmp = uniqueNum;
-					//tmpl = temp_label;
 					genDivS();
-					//uniqueNum = tmp;
-					//temp_label = tmpl;
 
 					printf("JUMP $LEND%d\n", aux); //prvni float |  druhy float
 				printf("LABEL $L%d\n", temp_label++);
@@ -697,11 +682,7 @@ void convertTypesDiv(){
 						printf("INT2FLOATS\n");
 						printf("PUSHS %s@$t%d\n", "LF", uniqueNum-1);
 
-						//tmp = uniqueNum;
-						//tmpl = temp_label;
 						genDivS();
-						//uniqueNum = tmp;
-						//temp_label = tmpl;
 
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
@@ -735,9 +716,6 @@ void convertTypesIdiv(){
 	printf("DEFVAR %s@$t%d\n", "LF", uniqueNum);
 	printf("POPS %s@$t%d\n", "LF", uniqueNum);
 
-	//printf("DPRINT %s@$t%d\n", "LF", 0); DEBUG
-	//printf("DPRINT %s@$t%d\n", "LF", 1); DEBUG
-
 	printf("TYPE %s@$%d %s@$t%d\n", "LF", temp_num-1, "LF", uniqueNum-1);
 	printf("TYPE %s@$%d %s@$t%d\n", "LF", temp_num, "LF", uniqueNum);
 
@@ -755,11 +733,7 @@ void convertTypesIdiv(){
 				printf("PUSHS %s@$t%d\n", "LF", uniqueNum);
 				printf("PUSHS %s@$t%d\n", "LF", uniqueNum-1);
 
-					//tmp = uniqueNum;
-					//tmpl = temp_label;
 					genIdivS();
-					//uniqueNum = tmp;
-					//temp_label = tmpl;
 
 				printf("JUMP $LEND%d\n", aux); //oba int
 			printf("LABEL $L%d\n", temp_label++); //prvni int | druhy neni int
@@ -768,11 +742,7 @@ void convertTypesIdiv(){
 					printf("PUSHS %s@$t%d\n", "LF", uniqueNum-1);
 					printf("INT2FLOATS\n");
 
-					//tmp = uniqueNum;
-					//tmpl = temp_label;
 					genIdivS();
-					//uniqueNum = tmp;
-					//temp_label = tmpl;
 
 					printf("JUMP $LEND%d\n", aux); //prvni int | druhy float
 				printf("LABEL $L%d\n", temp_label);
@@ -786,11 +756,7 @@ void convertTypesIdiv(){
 					printf("PUSHS %s@$t%d\n", "LF", uniqueNum);
 					printf("PUSHS %s@$t%d\n", "LF", uniqueNum-1);
 
-					//tmp = uniqueNum;
-					//tmpl = temp_label;
 					genIdivS();
-					//uniqueNum = tmp;
-					//temp_label = tmpl;
 
 					printf("JUMP $LEND%d\n", aux); //prvni float |  druhy float
 				printf("LABEL $L%d\n", temp_label++);
@@ -799,11 +765,7 @@ void convertTypesIdiv(){
 						printf("INT2FLOATS\n");
 						printf("PUSHS %s@$t%d\n", "LF", uniqueNum-1);
 
-						//tmp = uniqueNum;
-						//tmpl = temp_label;
 						genIdivS();
-						//uniqueNum = tmp;
-						//temp_label = tmpl;
 
 						printf("JUMP $LEND%d\n", aux); //prvni float | druhy int
 					printf("LABEL $L%d\n", temp_label);
