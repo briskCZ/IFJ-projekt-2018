@@ -398,6 +398,7 @@ t_Token getNextToken(int *error){
                         *error = ERROR_LEX;
                         return sc_token;
                     }else{
+                        strCopy(&sc_token.attr, &sc_buffer);
                         sc_token.type = T_FLOAT;
                         return sc_token;
                     }
@@ -419,8 +420,8 @@ t_Token getNextToken(int *error){
 
             case S_EXPONENT:
                 if (exp_nc == 0){
-                    strAdc(&sc_buffer, symbol);
                     if ((symbol == '+' || symbol == '-') && exp_sign == 0){
+                        strAdc(&sc_buffer, symbol);
                         exp_sign = 1;
                         state = S_EXPONENT;
                         //precteni dalsiho znaku kvuli pokracovani exponentu
@@ -646,7 +647,7 @@ int isNumberEnding(char c){
 
 int isKwEnd(){
     char symbol = getc(stdin);
-    if (!isalnum(symbol) || isspace(symbol) || symbol == '#'){
+    if ((!isalnum(symbol) && symbol != '_') || isspace(symbol) || symbol == '#'){
         //pokud bude eol, tak ho musime taky vratit
         ungetc(symbol, stdin);
         return 1;
