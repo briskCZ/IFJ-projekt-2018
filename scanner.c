@@ -399,6 +399,7 @@ t_Token getNextToken(int *error){
                         return sc_token;
                     }else{
                         sc_token.type = T_FLOAT;
+						strCopy(&sc_token.attr, &sc_buffer);
                         return sc_token;
                     }
                 }else if (symbol == 'e' || symbol == 'E'){

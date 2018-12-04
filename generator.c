@@ -858,7 +858,7 @@ void genDivS(){
 	printf("POPS %s@$DIV%d\n","LF",only_in_gen++);
 	printf("DEFVAR %s@$DIV%d\n","LF",only_in_gen);
 	printf("POPS %s@$DIV%d\n","LF",only_in_gen++);
-
+	
 	printf("PUSHS %s@$DIV%d\n","LF",only_in_gen - 1);
 	printf("PUSHS %s@$DIV%d\n","LF",only_in_gen - 2);
 
