@@ -4,4 +4,7 @@ DATA=token_array.c token_array.h
 GEN=ins_list.c ins_list.h generator.h generator.c
 
 main: $(PARSER) $(GEN) ret_vals.h scanner.c scanner.h symtable.c symtable.h $(DATA) $(AUX)
-	gcc -Wall $(PARSER) $(GEN) ret_vals.h scanner.c scanner.h symtable.c symtable.h $(DATA) $(AUX) -o main
+	gcc $(PARSER) $(GEN) ret_vals.h scanner.c scanner.h symtable.c symtable.h $(DATA) $(AUX) -o main
+	
+test:
+	sh ./test.sh

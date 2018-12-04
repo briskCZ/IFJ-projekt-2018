@@ -18,8 +18,8 @@ int checkRule(t_IStack *s, int *type){
     int elem1, elem2, elem3;
 	int type1, type2, type3;
 
-    elem1 = i_topPop(s, &type1);																				//TODO
-	if (elem1 == T_ID || elem1 == T_DOUBLE || elem1 == T_INT || elem1 == T_STRING || elem1 == T_NIL || elem1 == T_PARAM)
+    elem1 = i_topPop(s, &type1);
+	if (elem1 == T_ID || elem1 == T_FLOAT || elem1 == T_INT || elem1 == T_STRING || elem1 == T_NIL || elem1 == T_PARAM)
 	{
 		*type = type1;
 		return R_ID;
@@ -46,7 +46,7 @@ int checkRule(t_IStack *s, int *type){
             case T_PLUS:
 				if (*type == T_STRING)
 					addInst(PI_ADDSTR, NULL, NULL, NULL, 0);
-                else if (*type == T_INT || *type == T_DOUBLE)
+                else if (*type == T_INT || *type == T_FLOAT)
 					addInst(PI_ADD, NULL, NULL, NULL, 0);
 				else if (*type == T_PARAM)
 					addInst(INS_ADD, NULL, NULL, NULL, 0);
@@ -104,6 +104,7 @@ int checkRule(t_IStack *s, int *type){
                 exit(ERROR_SYNTAX);
 		}
 
+		//nelze + - / se stringy
 		if(elem2 == T_MINUS || elem2 == T_MUL || elem2 == T_DIV)
 		{
 			if (*type == T_STRING)
@@ -166,7 +167,7 @@ int checkRule(t_IStack *s, int *type){
         exit(ERROR_SYNTAX);
     }
 }
-
+//mapovani ruznych symbolu na spravne misto do pole(precedencni tabulky)
 int tokenToIndex(int type){
     switch (type){
         case T_PLUS:
@@ -187,10 +188,10 @@ int tokenToIndex(int type){
         case T_RIGHT_PAR:
             return 4;
         case T_STRING:
-        case T_DOUBLE:
+        case T_FLOAT:
         case T_INT:
         case T_ID:
-		case T_NIL: //TODO
+		case T_NIL:
         case T_PARAM:
 		    return 5;
         case T_EOL:
@@ -218,7 +219,7 @@ t_Token exprParse(t_Token t, t_Token tb, struct table *local_table, int usingTb,
         {PT_R, PT_R, PT_R, PT_X, PT_R, PT_X, PT_R},
         {PT_L, PT_L, PT_L, PT_L, PT_L, PT_L, PT_X}
     };
-    int error, r, b, type, temp;
+    int r, b, type, temp;
 
     t_IStack s = i_stackInit();
     //vlozeni koncoveho symbolu na zasobnik
@@ -319,10 +320,10 @@ int resultType(int t1, int t2)
 {
 	if (t1 == t2)
 		return t1;
-	else if (t1 == T_INT && t2 == T_DOUBLE)
-		return T_DOUBLE;
-	else if (t2 == T_INT && t1 == T_DOUBLE)
-		return T_DOUBLE;
+	else if (t1 == T_INT && t2 == T_FLOAT)
+		return T_FLOAT;
+	else if (t2 == T_INT && t1 == T_FLOAT)
+		return T_FLOAT;
 	else if (t1 == T_NIL || t2 == T_NIL)
 		return T_NIL;
 	else if ((t1 == T_STRING && t2 == T_PARAM) || (t2 == T_STRING && t1 == T_PARAM)) //TODO new
@@ -338,7 +339,6 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 {
 	t_Node *aux;
 	int b = b_token.type;
-	int found = 0; //indikator jestli se idendifikator tokenu nasel v lokalni tabulce symbolu
 
 	if (b == T_ID)
 	{
@@ -405,10 +405,10 @@ void addInitInstruction(t_IStack *s, struct table *local_table, t_Token b_token)
 		i_push(s, b, b);
 		addInst(PI_INIT, NULL, (void*)b_token.attr.val, (void*)T_INT, 0);
 	}
-	else if (b == T_DOUBLE)
+	else if (b == T_FLOAT)
 	{
 		i_push(s, b, b);
-		addInst(PI_INIT, NULL, (void*)b_token.attr.val, (void*)T_DOUBLE, 0);
+		addInst(PI_INIT, NULL, (void*)b_token.attr.val, (void*)T_FLOAT, 0);
 	}
 	else if (b == T_STRING)
 	{
@@ -442,6 +442,6 @@ void debug_print(struct table *local_table, t_Token t, t_Token tb)
         tablePrint(local_table, 1);
     }
 	//fprintf(stderr, "**** EXPR ****\n");
-	printToken(t, 0);
-	printToken(tb, 0);
+	//printToken(t, 0);
+	//printToken(tb, 0);
 }

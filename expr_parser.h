@@ -19,33 +19,62 @@
 #include "ins_list.h"
 #include "token_array.h"
 
-#define PT_SIZE 7
-#define PT_X 102
-#define PT_R 101
-#define PT_E 100
-#define PT_L -100
+#define PT_SIZE 7 //velikost precedencni tabulky
+#define PT_X 102 //prazdne misto v tabulce symbolu
+#define PT_R 101 //symbol >
+#define PT_E 100 //symbol =
+#define PT_L -100 //symbol <
 #define PT_END 13 //musi byt vetsi nez 12 moznych tokenu co muzou prijit
-#define PT_E_RULE 103
-#define NON_TYPE -104
+#define PT_E_RULE 103 //symbyl E 
+#define NON_TYPE -104 //znak pro vysledek vyrazu, ktery name vysledek, typicky ma hodnotu BOOL
 
+/*
+zjisti jake pravidlo se ma pouzit
+@param t_IStack zasobnik pro precedenci tabulku
+@param int slouzi pro zjisteni typu vysledne vyrazu
+@return int cislo pravidla
+*/
 int checkRule(t_IStack *stack, int *type);
+
+/*
+zjisti jestli symbol je koncovy($) nebo ne
+@param int cislo symbolu
+@return int 0 ne, jinak ano
+*/
 int isEnd(int val);
+
+/*
+@param t_Token nacteny token
+@param t_Token dalsi nacteny token pokud se nemuzeme hned rozhodnout jestli budeme zpracovavat vyraz
+@param t_symTable ukazatel na lokalni tabulku symbolu, pokud je null tak jsem na globalni urovni
+@param usingTb jestli pouzivame druhy token
+@param int vysledek vyrazu
+@return t_Token nacteny token, ktery neni uz neni ve vyrazu
+*/
 t_Token exprParse(t_Token t, t_Token tb, t_symTable *local_table, int usingTb, int *return_type);
+
+/*
+prida instrukci do listu instrukci
+@param t_IStack zasobnik pro precedencni tabulku
+@param t_symTable ukazatel na lokalni tabulku symbolu, pokud je null tak jsem na globalni urovni
+@param t_Token ktery dostaneme ze scanneru
+*/
 void addInitInstruction(t_IStack *s, t_symTable *local_table, t_Token b_token);
 
+
 typedef enum{
-    R_PLUS = 200,
-    R_MINUS = 201,
-    R_MUL = 202,
-    R_DIV = 203,
-    R_PAR = 204,
-    R_ID = 205,
-    R_LESS = 206,
-    R_MORE = 207,
-    R_LESSEQ = 208,
-    R_MOREEQ = 209,
-    R_EQ = 210,
-    R_NEQ = 211
+    R_PLUS = 200,	// E --> E + E
+    R_MINUS = 201,	// E --> E - E
+    R_MUL = 202,	// E --> E *E
+    R_DIV = 203,	// E --> E / E
+    R_PAR = 204,	// E --> (E)
+    R_ID = 205,		// E --> i
+    R_LESS = 206,	// E --> E < E
+    R_MORE = 207,	// E --> E > E
+    R_LESSEQ = 208,	// E --> E <= E
+    R_MOREEQ = 209,	// E --> E >= E
+    R_EQ = 210,		// E --> E == E
+    R_NEQ = 211		// E --> E != E
 } expr_rules;
 
 #endif

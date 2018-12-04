@@ -23,14 +23,13 @@ t_Token getNextToken(int *error){
     stringClear(&sc_buffer);
     stringClear(&sc_token.attr);
     char symbol = 0;
-    //int sc_abi = 0;
     int double_sad = 0;         //symbolu zateckou v double
+    int exp_sign = 0;           //urcuje zda bylo znamenko v exponentu
+    int exp_nc = 0;             //pocet cisel v exponentu
     int string_hex_count = 0;   //pocet cisel za x
+
     int state = S_START;        //stav automatu
-    int digit_zc = 0;           //pocet nul v cisle
-    int exponent_sign = 0;      //pomocna promena pro znamenko,
-    int digits_ae = 0;          //cisla po exponentu
-                                //pokud je desetine cislo v exponencialnim format
+
     while(42){
         // Rozhodnuti ktery buffer pouzivat
         if(sc_uab == 0){
@@ -77,9 +76,12 @@ t_Token getNextToken(int *error){
                     strAdc(&sc_buffer, symbol);
                     state = S_ID_KW;
                 }else if (isdigit(symbol)){
-                    if(symbol == '0') digit_zc++;
                     strAdc(&sc_buffer, symbol);
-                    state = S_DIGIT;
+                    if(symbol == '0'){
+                        state = S_ZERO;
+                    }else{
+                        state = S_INT;
+                    }
                 }else if (symbol == '<'){
                     state = S_LESS;
                 }else if (symbol == '>'){
@@ -339,126 +341,208 @@ t_Token getNextToken(int *error){
                 }
                 break;
 
-            case S_DIGIT: //vychozi stav pro cisla (kvuli poctu nul)
-                sc_was_eol = 0;
-                if (symbol == '0')
-                    digit_zc++;
-                if ((isdigit(symbol) && symbol != '0' && digit_zc == 0) || (isdigit(symbol) && sc_buffer.val[0] != '0')){
-                    strAdc(&sc_buffer, symbol);
-                    state = S_INT;
-                }else if (isNumberEnding(symbol) && digit_zc <= 1){
-                    sc_token.type = T_INT; strCopy(&sc_token.attr, &sc_buffer);
-                    return sc_token;
-                }else if (isNumberEnding(symbol) && digit_zc > 1){  //maximum nul pred cislem
-                    fprintf(stderr, "ERROR_LEX: Too many 0s in whole number part, line: %d.\n", sc_line_cnt);
-                    stringClear(&sc_buffer);
-                    *error = ERROR_LEX;
-                    state = S_START;
-                    return sc_token;
-
-                //naschval tady
-                }else if (symbol == '.' && digit_zc <= 1){
-                    strAdc(&sc_buffer, symbol);
-                    state = S_DOUBLE;
-                }else if ((symbol == 'e' || symbol == 'E') && digit_zc <= 1){
-                    strAdc(&sc_buffer, symbol);
-                    state = S_EXPONENT;
-                }
-                break;
-
             case S_INT:
                 sc_was_eol = 0;
                 if (isdigit(symbol)){
                     strAdc(&sc_buffer, symbol);
                     state = S_INT;
-                }else if (symbol ==  'e' || symbol == 'E'){
+                }else if (symbol == '.'){
+                    strAdc(&sc_buffer, symbol);
+                    state = S_FLOAT;
+                }else if (symbol == 'e' || symbol == 'E'){
+                    strAdc(&sc_buffer, symbol);
+                    state = S_EXPONENT;
+                }else if (isNumberEnding(symbol)){
+                    sc_token.type = T_INT; strCopy(&sc_token.attr, &sc_buffer);
+                    return sc_token;
+                }else{
+                    fprintf(stderr, "ERROR_LEX: Wrong int format on line %d\n", sc_line_cnt);
+                    *error = ERROR_LEX;
+                    return sc_token;
+                }
+                break;
+
+            case S_ZERO:
+                if (symbol >= '0' && symbol <= '7'){
+                    strAdc(&sc_buffer, symbol);
+                    state = S_OCTAL;
+                }else if (isNumberEnding(symbol)){
+                    sc_token.type = T_INT; strCopy(&sc_token.attr, &sc_buffer);
+                    return sc_token;
+                }else if (symbol == 'b'){
+                    //strAdc(&sc_buffer, symbol);
+                    state = S_BIN;
+                }else if (symbol == 'x'){
+                    //strAdc(&sc_buffer, symbol);
+                    state = S_HEX;
+                }else if (symbol == 'e' || symbol == 'E'){
                     strAdc(&sc_buffer, symbol);
                     state = S_EXPONENT;
                 }else if (symbol == '.'){
                     strAdc(&sc_buffer, symbol);
-                    state = S_DOUBLE;
-                    double_sad = 0;
+                    state = S_FLOAT;
+                }else{
+                    fprintf(stderr, "ERROR_LEX: Wrong symbol after 0 on line: %d\n", sc_line_cnt);
+                    *error = ERROR_LEX;
+                    return sc_token;
+                }
+                break;
+
+            case S_FLOAT:
+                if (isdigit(symbol)){
+                    strAdc(&sc_buffer, symbol);
+                    double_sad++;
                 }else if (isNumberEnding(symbol)){
-                    if(strtol(stringGet(&sc_buffer), NULL, 10) <= INT_MAX){
-                        sc_token.type = T_INT; strCopy(&sc_token.attr, &sc_buffer);
+                    if (double_sad == 0){
+                        fprintf(stderr, "ERROR_LEX: Zero numbers after . on_line: %d\n", sc_line_cnt);
+                        *error = ERROR_LEX;
                         return sc_token;
                     }else{
-                        fprintf(stderr, "ERROR_LEX: Number limit!, line: %d.\n", sc_line_cnt);
-                        stringClear(&sc_buffer);
-                        *error = ERROR_LEX;
-                        state = S_START;
+                        sc_token.type = T_FLOAT;
                         return sc_token;
-
+                    }
+                }else if (symbol == 'e' || symbol == 'E'){
+                    if (double_sad == 0){
+                        fprintf(stderr, "ERROR_LEX: Zero numbers after . on_line: %d\n", sc_line_cnt);
+                        *error = ERROR_LEX;
+                        return sc_token;
+                    }else{
+                        strAdc(&sc_buffer, symbol);
+                        state = S_EXPONENT;
                     }
                 }else{
-                    fprintf(stderr, "ERROR_LEX: Wrong number format!, line: %d.\n", sc_line_cnt);
-                    stringClear(&sc_buffer);
+                    fprintf(stderr, "ERROR_LEX: Invalid symbol in float on line: %d\n", sc_line_cnt);
                     *error = ERROR_LEX;
-                    state = S_START;
                     return sc_token;
-
-
                 }
                 break;
 
             case S_EXPONENT:
-                sc_was_eol = 0;
-                if ((symbol == '+' || symbol == '-') && exponent_sign == 0){
-                    exponent_sign = 1;
+                if (exp_nc == 0){
                     strAdc(&sc_buffer, symbol);
-                }else if (exponent_sign == 1){
-                    //je to ok, za exponentem je jeste nejake cislo
-                    if (isdigit(symbol)){
-                        digits_ae++;
-                        strAdc(&sc_buffer, symbol);
-                        //aby se do teto vetve nedostal znovu
-                        exponent_sign++;
-                    }else{
-                        fprintf(stderr, "ERROR_LEX: Wrong exponent format!, line: %d.\n", sc_line_cnt);
-                        stringClear(&sc_buffer);
+                    if ((symbol == '+' || symbol == '-') && exp_sign == 0){
+                        exp_sign = 1;
+                        state = S_EXPONENT;
+                        //precteni dalsiho znaku kvuli pokracovani exponentu
+                        symbol = getc(stdin);
+                    }else if (!isdigit(symbol)){
+                        fprintf(stderr, "ERROR_LEX: +, - or digit expected after exponent on line %d\n", sc_line_cnt);
                         *error = ERROR_LEX;
-                        state = S_START;
                         return sc_token;
-
                     }
-                }else if (isdigit(symbol)){
-                    digits_ae++;
+                }
+                if (isdigit(symbol)){
+                    if (isdigit(symbol)){
+                        exp_nc++;
+                    }
                     strAdc(&sc_buffer, symbol);
                     state = S_EXPONENT;
-                }else if (isNumberEnding(symbol) && digits_ae >= 1  ){
-                    sc_token.type = T_DOUBLE;
-                    strCopy(&sc_token.attr, &sc_buffer);
+                }else if (isNumberEnding(symbol)){
+                    if (exp_nc > 0){
+                        sc_token.type = T_FLOAT; strCopy(&sc_token.attr, &sc_buffer);
+                        return sc_token;
+                    }else{
+                        fprintf(stderr, "ERROR_LEX: Literal expected after exponent on line: %d\n", sc_line_cnt);
+                        *error = ERROR_LEX;
+                        return sc_token;
+                    }
+                }else{
+                    fprintf(stderr, "ERROR_LEX: Invalid symbol in exponent on line: %d\n", sc_line_cnt);
+                    *error = ERROR_LEX;
+                    return sc_token;
+                }
+
+                break;
+
+            case S_OCTAL:
+                if (stringGetLength(&sc_buffer) == 2 && symbol == '0'){
+                    fprintf(stderr, "ERROR_LEX: Too many 0s in whole part on line: %d\n", sc_line_cnt);
+                    *error = ERROR_LEX;
+                    return sc_token;
+                }else if (symbol >= '0' && symbol <= '7'){
+                    strAdc(&sc_buffer, symbol);
+                    state = S_OCTAL;
+                }else if (isNumberEnding(symbol)){
+                    /*TODO prevod do int */
+                    char int_str[INT_LENGTH];
+                    int value = strtol(stringGet(&sc_buffer), NULL, 8);
+                    if (value == -1){
+                        fprintf(stderr, "ERROR_LEX: Overflow of number on line: %d\n", sc_line_cnt);
+                        *error = ERROR_LEX;
+                        return sc_token;
+                    }
+                    sprintf(int_str, "%d", value);
+                    stringInsert(&sc_token.attr, int_str);
+                    sc_token.type = T_INT;
                     return sc_token;
                 }else{
-                    fprintf(stderr, "ERROR_LEX: Wrong exponent format!, line: %d.\n", sc_line_cnt);
-                    stringClear(&sc_buffer);
+                    fprintf(stderr, "ERROR_LEX: Invalid symbol in octal on line: %d\n", sc_line_cnt);
                     *error = ERROR_LEX;
-                    state = S_START;
                     return sc_token;
                 }
                 break;
 
-            case S_DOUBLE:
-                sc_was_eol = 0;
-                if (isdigit(symbol)){
+            case S_BIN:
+                if (symbol == '0' || symbol == '1'){
                     strAdc(&sc_buffer, symbol);
-                    double_sad++;
-                }else if ((symbol == 'e' || symbol == 'E') && double_sad > 0){
-                    strAdc(&sc_buffer, symbol);
-                    state = S_EXPONENT;
-                }else if (isNumberEnding(symbol) && double_sad >= 1){
-                    sc_token.type = T_DOUBLE; strCopy(&sc_token.attr, &sc_buffer);
-                    return sc_token;
+                    state = S_BIN;
+                }else if (isNumberEnding(symbol)){
+                    //pouze 0b
+                    if (stringGetLength(&sc_buffer) == 1){
+                        fprintf(stderr, "ERROR_LEX: Binary literal without digits on line: %d\n", sc_line_cnt);
+                        *error = ERROR_LEX;
+                        return sc_token;
+                    }else{
+                        /*TODO prevod do int */
+                        char int_str[INT_LENGTH];
+                        int value = strtol(stringGet(&sc_buffer), NULL, 2);
+                        if (value == -1){
+                            fprintf(stderr, "ERROR_LEX: Overflow of number on line: %d\n", sc_line_cnt);
+                            *error = ERROR_LEX;
+                            return sc_token;
+                        }
+                        sprintf(int_str, "%d", value);
+                        stringInsert(&sc_token.attr, int_str);
+                        sc_token.type = T_INT;
+                        return sc_token;
+                    }
                 }else{
-                    fprintf(stderr, "ERROR_LEX: Wrong double format!, line: %d.\n", sc_line_cnt);
-                    stringClear(&sc_buffer);
+                    fprintf(stderr, "ERROR_LEX: Invalid symbol in binary on line: %d\n", sc_line_cnt);
                     *error = ERROR_LEX;
-                    state = S_START;
-                    double_sad = 0;
-                    digit_zc = 0;
                     return sc_token;
                 }
                 break;
+
+            case S_HEX:
+                if (isValidHex(symbol)){
+                    strAdc(&sc_buffer, symbol);
+                    state = S_HEX;
+                }else if (isNumberEnding(symbol) && !isValidHex(symbol)){
+                    if (stringGetLength(&sc_buffer) == 1){
+                        fprintf(stderr, "ERROR_LEX: Hexadecimal literal without digits on line: %d\n", sc_line_cnt);
+                        *error = ERROR_LEX;
+                        return sc_token;
+                    }else{
+                        /*TODO prevod do int */
+                        char int_str[INT_LENGTH];
+                        int value = strtol(stringGet(&sc_buffer), NULL, 16);
+                        if (value == -1){
+                            fprintf(stderr, "ERROR_LEX: Overflow of number on line: %d\n", sc_line_cnt);
+                            *error = ERROR_LEX;
+                            return sc_token;
+                        }
+                        sprintf(int_str, "%d", value);
+                        stringInsert(&sc_token.attr, int_str);
+                        sc_token.type = T_INT;
+                        return sc_token;
+                    }
+                }else{
+                    fprintf(stderr, "ERROR_LEX: Invalid symbol in hexadecimal on line: %d\n", sc_line_cnt);
+                    *error = ERROR_LEX;
+                    return sc_token;
+                }
+                break;
+
         }
     }
 
@@ -541,15 +625,14 @@ void stringToIns(string *s){
     }
     stringFree(&in_s);
 }
+
 int isValidHex(char c){
-    //if ((C >= '0' && c <= '9') || (c >= 'A' && c <= 'F'))
     if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')){
         return 1;
     }else{
         return 0;
     }
 }
-
 
 int isNumberEnding(char c){
     if (c == '+' || c == '-' || c == '*' || c == ')' || c == '=' || c == '/'
@@ -670,7 +753,7 @@ void printToken(t_Token t, int error){
         case T_EOF: type = "EOF"; break;
         case T_ID: type = "ID"; break;
         case T_INT: type = "INT"; break;
-        case T_DOUBLE: type = "DOUBLE"; break;
+        case T_FLOAT: type = "FLOAT"; break;
         case T_STRING: type = "STRING"; break;
         case T_EOL: type = "EOL"; break;
     }

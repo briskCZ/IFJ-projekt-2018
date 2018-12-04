@@ -5,16 +5,12 @@
  *      David Miksanik (xmiksa05)
  *  Fakulta informacnich technologii VUT v Brne
  *  Popis souboru:
- *  					TODO
+ *  implementace funkci pracujici nad ADT dvojsmerne vazany seznamem
 */
 
 #include "ins_list.h"
 
-int insertLast(t_Ins *ins);
-int insertBeforeActive(t_Ins *ins);
-
 // vytvori list pro instrukce
-// @return t_InsList
 int listInit(){
 
 	list = malloc(sizeof(t_InsList));
@@ -27,11 +23,13 @@ int listInit(){
 	return MEMORY_OK;
 }
 
+// nastavi aktivni prvek
 void setActive(t_Elem *elem)
 {
 	list->act = elem;
 }
 
+//prida instrukci
 int addInst(int ins_type, void *adr1, void *adr2, void *adr3, int act)
 {
 	t_Ins *new = malloc(sizeof(t_Ins));
@@ -50,6 +48,7 @@ int addInst(int ins_type, void *adr1, void *adr2, void *adr3, int act)
 	return MEMORY_OK;
 }
 
+//vlozi na posledni prvek seznamu
 int insertLast(t_Ins *ins)
 {
 	if (list == NULL)
@@ -79,7 +78,7 @@ int insertLast(t_Ins *ins)
 	return MEMORY_OK;
 }
 
-
+//vlozi pred aktivni prvek
 int insertBeforeActive(t_Ins *ins)
 {
 	if (list->act == NULL)
@@ -109,6 +108,7 @@ int insertBeforeActive(t_Ins *ins)
 	return MEMORY_OK;
 }
 
+//prepise aktivni prvek
 void rewriteActive(int ins_type, void *adr1, void *adr2, void *adr3)
 {
 	if (list->act == NULL)
@@ -123,6 +123,7 @@ void rewriteActive(int ins_type, void *adr1, void *adr2, void *adr3)
 	list->act->data->adr3 = adr3;
 }
 
+//samze prvni prvek
 void deleteFirst()
 {
 	if (list->first == list->act)
@@ -137,6 +138,7 @@ void deleteFirst()
 	free(temp);
 }
 
+//uvolni list
 void freeList()
 {
 	while(list->first != NULL)
@@ -151,6 +153,11 @@ void freeList()
 	free(list);
 }
 
+/*----------------------*/
+/*	debugovaci funkce	*/
+/*----------------------*/
+
+//vypise list
 void printList()
 {
 	t_Elem *temp = list->first;

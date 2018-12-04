@@ -14,8 +14,6 @@
 #include <stdio.h>
 #include "ret_vals.h"
 #include "ins_list.h"
-#include "scanner.h"
-
 
 unsigned uniqueNum; //pocitadlo promennych
 unsigned func_cnt; //pocitadlo funkci
