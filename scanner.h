@@ -52,7 +52,7 @@
 #define T_EOL 27
 /* Typy */
 #define T_INT 24
-#define T_DOUBLE 25
+#define T_FLOAT 25
 #define T_STRING 26
 #define T_PARAM 28
 
@@ -71,9 +71,15 @@
 #define S_SPECIAL_HEX 11
 #define S_DIGIT 12
 #define S_INT 13
-#define S_DOUBLE 14
+#define S_FLOAT 14
 #define S_EXPONENT 15
-#define S_BC_END 16
+#define S_OCTAL 16
+#define S_BIN 17
+#define S_HEX 18
+#define S_ZERO 19
+#define S_BC_END 20
+
+#define INT_LENGTH 12
 
 /* Makra pro zjednoduseni programu */
 #define strAdc(a, b) if(stringAddChar(a, b) == MEMORY_ERROR){ *error = ERROR_INTERNAL; fprintf(stderr, "INTERNAL_ERROR: STR_ERROR: Memory\n");return sc_token;}
@@ -150,10 +156,14 @@ t_Token getPrintNextToken(int *error);
 
 /*
 Vrati token scanneru
-@param - vraceny token
+@param t - vraceny token
 @return - uspesnost operace MEMORY_ERROR, pokud vracime vic nez 1 token
 */
 int returnToken(t_Token t);
 
+/*
+Prevede string s na interni reprezentaci IFJcode18
+@param s - prevadeny string
+*/
 void stringToIns(string *s);
 #endif

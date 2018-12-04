@@ -676,7 +676,6 @@ void program(){
                     }
                 }
                 addInst(PI_BEGINFUNC, (void*)node, NULL, NULL, 0);
-                pa_node_cnt++;
                 token = tarrGetNextToken(&token_array);
                 if (token.type == T_LEFT_PAR){
                     //param11 pohlida eol za )
@@ -741,16 +740,10 @@ int main(){
     listInit();
     tarrInit(&token_array);
     tarrFill(&token_array);
-    // tarrPrint(&token_array);
     tarrGetFuncInfo(&token_array);
     addBuiltins();
-    //tablePrint(&table, 0);
     program();
-    P("--------------SYMTABLE-----------");
-    //dtablePrint(&table, 0);
-    //printList();
     generate();
     cleanAll();
-
     return SUCCESS;
 }
